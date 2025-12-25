@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { MousePointer, Eye, ArrowDown, LogOut, Zap } from 'lucide-react';
+import { MousePointer, Eye, ArrowDown, LogOut, Zap, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -95,6 +95,28 @@ export function LiveActivityFeed() {
     return username;
   };
 
+  const extractReferrer = (activity: ActivityLog): string | null => {
+    if (activity.event_type !== 'page_view') return null;
+    const eventData = activity.event_data as Record<string, unknown> | null;
+    const referrer = eventData?.referrer as string | undefined;
+    if (!referrer || referrer.length < 5) return null;
+    return referrer;
+  };
+
+  const isFromLandingPage = (referrer: string | null): boolean => {
+    if (!referrer) return false;
+    return referrer.includes('tribe-swipe-launch') || referrer.includes('tribe-swipe-lauch');
+  };
+
+  const formatReferrerShort = (referrer: string): string => {
+    try {
+      const url = new URL(referrer);
+      return url.hostname.replace('www.', '');
+    } catch {
+      return referrer.slice(0, 30);
+    }
+  };
+
   const formatEventDetails = (activity: ActivityLog): { text: string; showPreview: boolean } => {
     switch (activity.event_type) {
       case 'click':
@@ -139,14 +161,20 @@ export function LiveActivityFeed() {
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
           <AnimatePresence>
-            {activities.map((activity, index) => (
+            {activities.map((activity, index) => {
+              const referrer = extractReferrer(activity);
+              const fromLanding = isFromLandingPage(referrer);
+              
+              return (
               <motion.div
                 key={activity.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ delay: index * 0.02 }}
-                className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0"
+                className={`flex items-center gap-3 py-2 border-b border-border/50 last:border-0 ${
+                  fromLanding ? 'bg-green-500/10 rounded-lg px-2 -mx-2' : ''
+                }`}
               >
                 <Badge 
                   variant="secondary" 
@@ -156,14 +184,27 @@ export function LiveActivityFeed() {
                 </Badge>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {formatUsername(activity.username)}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium truncate">
+                      {formatUsername(activity.username)}
+                    </p>
+                    {fromLanding && (
+                      <Badge className="bg-green-500 text-white text-[10px] px-1.5 py-0">
+                        Landing
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                     <span>{formatEventDetails(activity).text}</span>
                     {formatEventDetails(activity).showPreview && activity.event_target && (
                       <span className="font-medium text-foreground bg-muted px-2 py-0.5 rounded text-xs max-w-[200px] truncate">
                         "{activity.event_target}"
+                      </span>
+                    )}
+                    {referrer && (
+                      <span className="flex items-center gap-1 text-[10px] text-blue-500">
+                        <ExternalLink className="w-2.5 h-2.5" />
+                        {formatReferrerShort(referrer)}
                       </span>
                     )}
                   </div>
@@ -181,7 +222,8 @@ export function LiveActivityFeed() {
                   </p>
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
           </AnimatePresence>
 
           {activities.length === 0 && (
