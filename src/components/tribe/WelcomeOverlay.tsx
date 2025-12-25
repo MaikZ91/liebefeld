@@ -3,11 +3,6 @@ import { UserProfile } from '@/types/tribe';
 import { supabase } from '@/integrations/supabase/client';
 import { Heart, ChevronRight } from 'lucide-react';
 
-// Import welcome videos
-import ausgehenVideo from '@/assets/welcome/ausgehen.mp4';
-import kreativitaetVideo from '@/assets/welcome/kreativitaet.mp4';
-import sportVideo from '@/assets/welcome/sport.mp4';
-
 interface WelcomeOverlayProps {
   onLogin: (profile: UserProfile) => void;
   initialUsername?: string;
@@ -22,61 +17,55 @@ const AVATAR_OPTIONS = [
   "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=150&h=150"
 ];
 
-interface CategorySection {
+interface CategoryOption {
   id: string;
   label: string;
-  hashtag: string;
-  video: string;
+  emoji: string;
   mappedCategories: string[];
 }
 
-const SECTIONS: CategorySection[] = [
+const CATEGORIES: CategoryOption[] = [
   { 
     id: 'ausgehen', 
     label: 'Ausgehen', 
-    hashtag: '#ausgehen',
-    video: ausgehenVideo,
+    emoji: '🎉',
     mappedCategories: ['Ausgehen', 'Bar', 'Club', 'Nightlife', 'Party', 'Sonstiges']
   },
   { 
     id: 'kreativitaet', 
     label: 'Kreativität', 
-    hashtag: '#kreativität',
-    video: kreativitaetVideo,
+    emoji: '🎨',
     mappedCategories: ['Kreativität', 'Kunst', 'Art', 'Workshop', 'Kultur', 'Konzert', 'Musik']
   },
   { 
     id: 'sport', 
     label: 'Sport', 
-    hashtag: '#sport',
-    video: sportVideo,
+    emoji: '⚽',
     mappedCategories: ['Sport', 'Hochschulsport', 'Fitness', 'Outdoor', 'Laufen', 'Yoga']
   },
 ];
 
-export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initialUsername }) => {
-  const [likedSections, setLikedSections] = useState<Set<string>>(new Set());
+export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin }) => {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const toggleLike = (sectionId: string) => {
-    setLikedSections(prev => {
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
       const next = new Set(prev);
-      if (next.has(sectionId)) {
-        next.delete(sectionId);
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        next.add(sectionId);
+        next.add(id);
       }
       return next;
     });
   };
 
   const handleContinue = async () => {
-    // Save liked categories to localStorage for personalization
-    const likedCategories = Array.from(likedSections);
-    if (likedCategories.length > 0) {
-      localStorage.setItem('tribe_preferred_categories', JSON.stringify(likedCategories));
+    const selectedCategories = Array.from(selected);
+    if (selectedCategories.length > 0) {
+      localStorage.setItem('tribe_preferred_categories', JSON.stringify(selectedCategories));
     }
 
-    // Get or create username
     const savedProfile = localStorage.getItem('tribe_user_profile');
     let username = `Guest_${Date.now().toString().slice(-4)}`;
     let avatarUrl = AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
@@ -94,13 +83,11 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initial
       avatarUrl,
       bio: 'New Member',
       homebase: 'Bielefeld',
-      interests: likedCategories
+      interests: selectedCategories
     };
 
-    // Save profile to localStorage
     localStorage.setItem('tribe_user_profile', JSON.stringify(profile));
 
-    // Save to database (fire-and-forget)
     supabase
       .from('user_profiles')
       .upsert({
@@ -111,100 +98,64 @@ export const WelcomeOverlay: React.FC<WelcomeOverlayProps> = ({ onLogin, initial
       }, { onConflict: 'username' })
       .then(() => console.log('Profile saved to database'));
 
-    // Mark welcome as completed
     localStorage.setItem('tribe_welcome_completed', 'true');
     window.dispatchEvent(new CustomEvent('tribe_welcome_completed'));
 
     onLogin(profile);
   };
 
-
   return (
-    <div className="fixed inset-0 z-50 bg-black overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-gradient-to-b from-black via-black/90 to-transparent pb-8 pt-6 px-6">
-        <h1 className="text-2xl font-bold text-white text-center">Was interessiert dich?</h1>
-        <p className="text-white/60 text-sm text-center mt-1">Wähle mindestens eine Kategorie</p>
-      </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-sm mx-4 bg-background/95 backdrop-blur rounded-2xl p-6 shadow-2xl border border-border/50">
+        {/* Minimal greeting */}
+        <p className="text-muted-foreground text-sm text-center mb-4">
+          Was interessiert dich?
+        </p>
 
-      {/* Three sections on one page */}
-      <div className="px-4 pb-32 space-y-4">
-        {SECTIONS.map((section) => (
-          <div 
-            key={section.id}
-            className="relative aspect-[16/9] rounded-2xl overflow-hidden"
-          >
-            {/* Video Background */}
-            <video
-              src={section.video}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            
-            {/* Gradient Overlay */}
-            <div className={`absolute inset-0 transition-all duration-300 ${
-              likedSections.has(section.id) 
-                ? 'bg-gradient-to-t from-red-500/40 via-transparent to-transparent' 
-                : 'bg-gradient-to-t from-black/70 via-black/20 to-transparent'
-            }`} />
-            
-            {/* Content */}
+        {/* Category chips */}
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
+          {CATEGORIES.map((cat) => (
             <button
-              onClick={() => toggleLike(section.id)}
-              className="absolute inset-0 w-full h-full flex flex-col items-center justify-end pb-6 px-4"
-            >
-              {/* Hashtag */}
-              <h2 className="text-3xl font-bold text-white mb-3 drop-shadow-lg">
-                {section.hashtag}
-              </h2>
-              
-              {/* Like indicator */}
-              <div className={`
-                flex items-center gap-2 px-6 py-2 rounded-full text-sm font-semibold
-                transition-all duration-300
-                ${likedSections.has(section.id)
-                  ? 'bg-red-500 text-white'
-                  : 'bg-white/20 backdrop-blur-sm text-white border border-white/30'
+              key={cat.id}
+              onClick={() => toggleSelect(cat.id)}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium
+                transition-all duration-200 active:scale-95
+                ${selected.has(cat.id)
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }
-              `}>
-                <Heart 
-                  className={`w-5 h-5 transition-all ${likedSections.has(section.id) ? 'fill-white' : ''}`} 
-                />
-                {likedSections.has(section.id) ? 'Ausgewählt' : 'Auswählen'}
-              </div>
+              `}
+            >
+              <span>{cat.emoji}</span>
+              <span>{cat.label}</span>
+              {selected.has(cat.id) && (
+                <Heart className="w-3.5 h-3.5 fill-current" />
+              )}
             </button>
+          ))}
+        </div>
 
-            {/* Selected checkmark */}
-            {likedSections.has(section.id) && (
-              <div className="absolute top-3 right-3 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white fill-white" />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Continue Button - Fixed at bottom, only enabled when at least 1 selected */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 z-20 bg-gradient-to-t from-black via-black/95 to-transparent">
+        {/* Continue button */}
         <button
           onClick={handleContinue}
-          disabled={likedSections.size === 0}
-          className={`w-full py-4 rounded-full font-semibold text-lg flex items-center justify-center gap-2 transition-all active:scale-98 ${
-            likedSections.size > 0
-              ? 'bg-white text-black hover:bg-white/90'
-              : 'bg-white/20 text-white/40 cursor-not-allowed'
-          }`}
+          disabled={selected.size === 0}
+          className={`
+            w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2
+            transition-all duration-200 active:scale-98
+            ${selected.size > 0
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
+            }
+          `}
         >
-          {likedSections.size > 0 ? (
+          {selected.size > 0 ? (
             <>
-              Weiter mit {likedSections.size} {likedSections.size === 1 ? 'Interesse' : 'Interessen'}
-              <ChevronRight className="w-5 h-5" />
+              Los geht's
+              <ChevronRight className="w-4 h-4" />
             </>
           ) : (
-            'Bitte wähle mindestens 1 Kategorie'
+            'Wähle mindestens 1'
           )}
         </button>
       </div>
