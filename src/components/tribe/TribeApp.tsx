@@ -115,12 +115,12 @@ export const TribeApp: React.FC = () => {
     setShowWelcome(false);
   };
 
-  // Show Welcome Overlay first
-  if (showWelcome) {
-    return <WelcomeOverlay onLogin={handleWelcomeComplete} />;
-  }
-
-  return <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />;
+  return (
+    <>
+      <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />
+      {showWelcome && <WelcomeOverlay onLogin={handleWelcomeComplete} />}
+    </>
+  );
 };
 
 // Main app component - always has userProfile (never null)
