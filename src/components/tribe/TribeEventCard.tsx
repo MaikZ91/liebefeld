@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TribeEvent } from '@/types/tribe';
 import { generateEventSummary } from '@/services/tribe/aiHelpers';
 import { getVibeBadgeColor } from '@/utils/tribe/eventHelpers';
-import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink, Play, ChevronDown } from 'lucide-react';
+import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink, Play, ChevronDown, Eye, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatTimeOption } from '@/utils/tribe/eventGrouping';
 import { getEventDisplayImage } from '@/utils/tribe/sportImages';
@@ -23,6 +23,7 @@ interface EventCardProps {
   onToggleAttendance?: (eventId: string) => void;
   matchScore?: number; // MIA matching score 0-100%
   isPast?: boolean; // Event has already passed (time-based)
+  isTopOfDay?: boolean; // Most popular event of the day
   // Grouped events props
   allTimes?: TimeSlot[];
   onTimeSelect?: (eventId: string) => void;
@@ -78,6 +79,7 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   onToggleAttendance,
   matchScore,
   isPast = false,
+  isTopOfDay = false,
   allTimes,
   onTimeSelect
 }) => {
@@ -98,6 +100,12 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   const displayImage = getEventDisplayImage(event.image_url, event.title, event.location);
   const isNew = isNewEvent(event.created_at);
   const isTribe = isTribeEvent(event);
+
+  // Calculate engagement/views score
+  const likesCount = event.likes || 0;
+  const attendeesCount = event.attendees || 0;
+  const likedByCount = Array.isArray(event.liked_by_users) ? event.liked_by_users.length : 0;
+  const engagementScore = event.views || (likesCount * 3) + attendeesCount + (likedByCount * 2);
 
   // Mock Attendees Data
   const baseCount = event.attendees || Math.floor(Math.random() * 80) + 12;
@@ -205,12 +213,12 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
   // --- COMPACT VARIANT (List Compact) ---
   if (variant === 'compact') {
     return (
-      <div className={`transition-all duration-500 ${animationClass} ${isPast ? 'opacity-40 grayscale' : ''} ${isTribe ? 'bg-gradient-to-r from-gold/10 via-gold/5 to-transparent border border-gold/30 rounded-lg shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-black border-b border-white/5'}`}>
-        <div className={`flex items-start gap-2.5 py-2 transition-all duration-300 ${isExpanded ? 'flex-col' : ''} ${isTribe ? 'px-2' : ''}`}>
+      <div className={`transition-all duration-500 ${animationClass} ${isPast ? 'opacity-40 grayscale' : ''} ${isTopOfDay ? 'bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent border border-amber-500/40 rounded-lg' : isTribe ? 'bg-gradient-to-r from-gold/10 via-gold/5 to-transparent border border-gold/30 rounded-lg shadow-[0_0_15px_rgba(212,175,55,0.15)]' : 'bg-black border-b border-white/5'}`}>
+        <div className={`flex items-start gap-2.5 py-2 transition-all duration-300 ${isExpanded ? 'flex-col' : ''} ${isTribe || isTopOfDay ? 'px-2' : ''}`}>
           {/* Thumbnail - Expands when Vibe is clicked */}
           <div className={`bg-zinc-900 flex-shrink-0 relative overflow-hidden rounded transition-all duration-300 ${
             isExpanded ? 'w-full aspect-video' : 'w-12 h-14'
-          } ${isTribe ? 'ring-1 ring-gold/30' : ''}`}>
+          } ${isTribe ? 'ring-1 ring-gold/30' : ''} ${isTopOfDay ? 'ring-1 ring-amber-500/50' : ''}`}>
             {displayImage ? (
               <img src={displayImage} className="w-full h-full object-cover" />
             ) : (
@@ -233,17 +241,22 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 Vorbei
               </div>
             )}
-            {isTribe && !isPast && !isExpanded && (
+            {isTopOfDay && !isPast && !isExpanded && (
+              <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-black text-[6px] font-bold px-1 py-0.5 text-center uppercase tracking-wider flex items-center justify-center gap-0.5">
+                <Trophy size={7} /> TOP
+              </div>
+            )}
+            {isTribe && !isPast && !isExpanded && !isTopOfDay && (
               <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-gold to-amber-500 text-black text-[6px] font-bold px-1 py-0.5 text-center uppercase tracking-wider">
                 TRIBE
               </div>
             )}
-            {isLiked && !isPast && !isTribe && !isExpanded && (
+            {isLiked && !isPast && !isTribe && !isExpanded && !isTopOfDay && (
               <div className="absolute top-0 left-0 right-0 bg-gold/90 text-black text-[6px] font-bold px-1 py-0.5 text-center">
                 ★
               </div>
             )}
-            {isNew && !isPast && !isLiked && !isTribe && !isExpanded && (
+            {isNew && !isPast && !isLiked && !isTribe && !isExpanded && !isTopOfDay && (
               <div className="absolute top-0 left-0 right-0 bg-emerald-500/90 text-white text-[6px] font-bold px-1 py-0.5 text-center uppercase tracking-wider">
                 New
               </div>
@@ -313,33 +326,42 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
               )}
             </div>
                             {/* Attendees/Likes avatars under location */}
-                            <div className="flex items-center gap-1 mt-1">
-                              <div className="flex -space-x-1.5">
-                                {isAttending && (
-                                  <div className="w-4 h-4 rounded-full border border-black bg-gold flex items-center justify-center">
-                                    <Check size={8} className="text-black" />
-                                  </div>
-                                )}
-                                {/* Show liked_by_users avatars if available */}
-                                {event.liked_by_users && Array.isArray(event.liked_by_users) && event.liked_by_users.slice(0, 3).map((u: any, i: number) => (
-                                  <div key={i} className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden" title={u.username || 'User'}>
-                                    {u.avatar ? (
-                                      <img src={u.avatar} className="w-full h-full object-cover" />
-                                    ) : (
-                                      <span className="text-[6px] text-zinc-500 flex items-center justify-center h-full">{(u.username || '?')[0]}</span>
-                                    )}
-                                  </div>
-                                ))}
-                                {/* Fallback to mock avatars if no liked_by_users */}
-                                {(!event.liked_by_users || !Array.isArray(event.liked_by_users) || event.liked_by_users.length === 0) && 
-                                  mockAvatars.slice(0, 2).map((url, i) => (
-                                    <img key={i} src={url} className="w-4 h-4 rounded-full border border-black object-cover" />
-                                  ))
-                                }
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center gap-1">
+                                <div className="flex -space-x-1.5">
+                                  {isAttending && (
+                                    <div className="w-4 h-4 rounded-full border border-black bg-gold flex items-center justify-center">
+                                      <Check size={8} className="text-black" />
+                                    </div>
+                                  )}
+                                  {/* Show liked_by_users avatars if available */}
+                                  {event.liked_by_users && Array.isArray(event.liked_by_users) && event.liked_by_users.slice(0, 3).map((u: any, i: number) => (
+                                    <div key={i} className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden" title={u.username || 'User'}>
+                                      {u.avatar ? (
+                                        <img src={u.avatar} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <span className="text-[6px] text-zinc-500 flex items-center justify-center h-full">{(u.username || '?')[0]}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                  {/* Fallback to mock avatars if no liked_by_users */}
+                                  {(!event.liked_by_users || !Array.isArray(event.liked_by_users) || event.liked_by_users.length === 0) && 
+                                    mockAvatars.slice(0, 2).map((url, i) => (
+                                      <img key={i} src={url} className="w-4 h-4 rounded-full border border-black object-cover" />
+                                    ))
+                                  }
+                                </div>
+                                <span className={`text-[9px] ${isAttending ? "text-gold font-bold" : "text-zinc-500"}`}>
+                                  {event.likes && event.likes > 0 ? `+${event.likes}` : `+${currentAttendees}`}
+                                </span>
                               </div>
-                              <span className={`text-[9px] ${isAttending ? "text-gold font-bold" : "text-zinc-500"}`}>
-                                {event.likes && event.likes > 0 ? `+${event.likes}` : `+${currentAttendees}`}
-                              </span>
+                              {/* Views/Engagement indicator */}
+                              {engagementScore > 0 && (
+                                <div className="flex items-center gap-0.5 text-zinc-600">
+                                  <Eye size={9} />
+                                  <span className="text-[8px]">{engagementScore}</span>
+                                </div>
+                              )}
                             </div>
           </div>
 
