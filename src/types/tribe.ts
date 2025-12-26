@@ -21,6 +21,8 @@ export interface TribeEvent {
   attendeeAvatars?: string[]; // User avatars
   likes?: number;
   liked_by_users?: any;
+  views?: number; // Engagement score: clicks, likes, etc.
+  isTopOfDay?: boolean; // Most popular event of the day
 }
 
 export interface ChatMessage {

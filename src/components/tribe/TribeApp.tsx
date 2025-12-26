@@ -1265,6 +1265,25 @@ const TribeAppMain: React.FC<{
                       const hiddenActiveCount = Math.max(0, activeEvents.length - MAX_COLLAPSED_EVENTS);
                       const hiddenCount = (hasLikedFirstEvent ? hiddenActiveCount : 0) + pastEvents.length;
 
+                      // Calculate top event of the day based on engagement
+                      const getEngagementScore = (e: TribeEvent) => {
+                        const likes = e.likes || 0;
+                        const attendees = e.attendees || 0;
+                        const likedBy = Array.isArray(e.liked_by_users) ? e.liked_by_users.length : 0;
+                        return (likes * 3) + attendees + (likedBy * 2);
+                      };
+                      
+                      const topEventOfDay = activeEvents.length > 0 
+                        ? activeEvents.reduce((top, current) => 
+                            getEngagementScore(current) > getEngagementScore(top) ? current : top
+                          , activeEvents[0])
+                        : null;
+                      
+                      // Only mark as top if it has some engagement
+                      const topEventId = topEventOfDay && getEngagementScore(topEventOfDay) > 0 
+                        ? topEventOfDay.id 
+                        : null;
+
                       return (
                         <div key={date} className="mb-6">
                           <h3 className="text-sm font-serif text-white/90 mb-2 capitalize">
@@ -1294,6 +1313,7 @@ const TribeAppMain: React.FC<{
                                     onToggleAttendance={handleToggleAttendance}
                                     matchScore={eventMatchScores.get(event.id)}
                                     isPast={isPastEvent}
+                                    isTopOfDay={event.id === topEventId && !isPastEvent}
                                     allTimes={event.allTimes}
                                   />
                                 </div>
