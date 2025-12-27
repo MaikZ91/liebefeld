@@ -16,7 +16,8 @@ import { AppDownloadPrompt } from "./AppDownloadPrompt";
 import { TribeUserMatcher } from "./TribeUserMatcher";
 import { MiaInlineChat } from "./MiaInlineChat";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
-import { OnboardingChatBot } from "./OnboardingChatBot";
+import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
+import { WelcomeOverlay } from "./WelcomeOverlay";
 
 import { dislikeService } from "@/services/dislikeService";
 import { personalizationService } from "@/services/personalizationService";
@@ -89,12 +90,9 @@ const createGuestProfileSync = (): UserProfile => {
 
 export const TribeApp: React.FC = () => {
   // Check if welcome is completed
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
     return localStorage.getItem("tribe_welcome_completed") !== "true";
   });
-  
-  // Track initial destination after onboarding
-  const [initialView, setInitialView] = useState<ViewState | null>(null);
   
   // Initialize profile from storage or create guest immediately (synchronous!)
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -112,22 +110,16 @@ export const TribeApp: React.FC = () => {
     return guestProfile;
   });
 
-  const handleOnboardingComplete = (profile: UserProfile, destination: 'explore' | 'community') => {
+  const handleWelcomeComplete = (profile: UserProfile) => {
     setUserProfile(profile);
-    setInitialView(destination === 'explore' ? ViewState.FEED : ViewState.COMMUNITY);
-    setShowOnboarding(false);
+    setShowWelcome(false);
   };
 
-  if (showOnboarding) {
-    return <OnboardingChatBot onComplete={handleOnboardingComplete} />;
-  }
-
   return (
-    <TribeAppMain 
-      userProfile={userProfile} 
-      setUserProfile={setUserProfile} 
-      initialView={initialView}
-    />
+    <>
+      <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />
+      {showWelcome && <WelcomeOverlay onLogin={handleWelcomeComplete} />}
+    </>
   );
 };
 
@@ -135,12 +127,14 @@ export const TribeApp: React.FC = () => {
 const TribeAppMain: React.FC<{
   userProfile: UserProfile;
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
-  initialView?: ViewState | null;
-}> = ({ userProfile, setUserProfile, initialView }) => {
-  // Start in the view selected during onboarding, or FEED by default
+}> = ({ userProfile, setUserProfile }) => {
+  // Onboarding flow
+  const { currentStep, isOnboarding, advanceStep, setStep, completeOnboarding, markProfileComplete, markGreetingPosted, generateGreeting, isCommunityOnboarding, shouldAvatarBlink } = useOnboardingFlow();
+  
+  // Start in FEED view for onboarding, COMMUNITY otherwise
   const [view, setView] = useState<ViewState>(() => {
-    if (initialView) return initialView;
-    return ViewState.FEED;
+    const onboardingCompleted = localStorage.getItem('tribe_onboarding_completed') === 'true';
+    return onboardingCompleted ? ViewState.COMMUNITY : ViewState.FEED;
   });
   const [selectedCity, setSelectedCity] = useState<string>(() => {
     return userProfile?.homebase || "Bielefeld";
@@ -765,6 +759,7 @@ const TribeAppMain: React.FC<{
       recalculateMatchScores();
     } else if (type === "like") {
       const isFirstLike = !hasLikedFirstEvent && likedEventIds.size === 0;
+      const isOnboardingWaitingForLike = isOnboarding && currentStep === 'waiting_for_like';
 
       setLikedEventIds((prev) => {
         const newSet = new Set(prev);
@@ -773,8 +768,16 @@ const TribeAppMain: React.FC<{
         } else {
           newSet.add(eventId);
 
-          if (isFirstLike) {
-            // First like ever - collapse the feed
+          // During onboarding waiting_for_like step - switch to community
+          if (isOnboardingWaitingForLike) {
+            setStep('community_intro');
+            // Also mark first like so feed collapses
+            setHasLikedFirstEvent(true);
+            localStorage.setItem("tribe_has_first_like", "true");
+            // Toast removed - MIA greets in community view instead
+            setTimeout(() => setView(ViewState.COMMUNITY), 1000);
+          } else if (isFirstLike) {
+            // First like ever (non-onboarding) - collapse the feed
             setHasLikedFirstEvent(true);
             localStorage.setItem("tribe_has_first_like", "true");
             toast({
@@ -941,20 +944,28 @@ const TribeAppMain: React.FC<{
               )}
             </div>
 
-            {/* USER AVATAR with Profile Hint */}
+            {/* USER AVATAR with Profile Hint and Onboarding Blink */}
             <div className="relative">
               <button
                 onClick={() => {
                   setShowProfileHint(false);
                   localStorage.setItem("tribe_seen_profile_hint", "true");
+                  
+                  // During onboarding waiting_for_avatar_click step, set to editing_profile and go to PROFILE
+                  if (shouldAvatarBlink && currentStep === 'waiting_for_avatar_click') {
+                    setStep('editing_profile');
+                  }
+                  
                   setView(userProfile ? ViewState.PROFILE : ViewState.AUTH);
                 }}
                 className={`flex items-center gap-2 ${
-                  !isProfileComplete(userProfile) ? "animate-pulse" : ""
+                  shouldAvatarBlink ? "" : (!isProfileComplete(userProfile) ? "animate-pulse" : "")
                 }`}
               >
                 <div className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-colors ${
-                  !isProfileComplete(userProfile) ? "border-gold" : "border-white/20 hover:border-gold"
+                  shouldAvatarBlink 
+                    ? "border-gold animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_15px_rgba(212,175,55,0.7)]" 
+                    : (!isProfileComplete(userProfile) ? "border-gold" : "border-white/20 hover:border-gold")
                 }`}>
                   {userProfile?.avatarUrl ? (
                     <img src={userProfile.avatarUrl} alt="Profile" className="w-full h-full object-cover" />
@@ -964,8 +975,11 @@ const TribeAppMain: React.FC<{
                     </div>
                   )}
                 </div>
-                {!isProfileComplete(userProfile) && (
-                  <span className="text-[9px] font-bold uppercase tracking-wider hidden sm:block text-gold">
+                {/* Show "Profil erstellen" text when avatar should blink OR profile is incomplete */}
+                {(shouldAvatarBlink || !isProfileComplete(userProfile)) && (
+                  <span className={`text-[9px] font-bold uppercase tracking-wider hidden sm:block ${
+                    shouldAvatarBlink ? "text-gold animate-pulse" : "text-gold"
+                  }`}>
                     Profil erstellen
                   </span>
                 )}
@@ -1023,6 +1037,8 @@ const TribeAppMain: React.FC<{
                 onQuery={handleQuery}
                 onEventsFiltered={handleMiaEventsFiltered}
                 onClearFilter={handleMiaClearFilter}
+                onboardingStep={isOnboarding ? currentStep : undefined}
+                onAdvanceOnboarding={advanceStep}
                 onInterestsSelected={handleInterestsSelected}
               />
 
@@ -1151,8 +1167,8 @@ const TribeAppMain: React.FC<{
                   </Popover>
                 </div>
               </div>
-              {/* Like Tutorial for first-time Feed visitors */}
-              {showLikeTutorial && view === ViewState.FEED && (
+              {/* Like Tutorial for first-time Feed visitors - hide during onboarding */}
+              {showLikeTutorial && view === ViewState.FEED && !isOnboarding && (
                 <div className="mb-4 bg-zinc-900/80 border border-gold/30 rounded-lg p-3 animate-fadeIn">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-[10px] font-bold text-gold uppercase tracking-widest">💡 Tipp</span>
@@ -1376,6 +1392,11 @@ const TribeAppMain: React.FC<{
             selectedCity={selectedCity}
             userProfile={userProfile}
             onEditProfile={() => setView(ViewState.PROFILE)}
+            onboardingStep={isCommunityOnboarding ? currentStep : undefined}
+            onAdvanceOnboarding={advanceStep}
+            onMarkProfileComplete={markProfileComplete}
+            onMarkGreetingPosted={markGreetingPosted}
+            generateGreeting={generateGreeting}
             onProfileClick={async (username) => {
               setProfileDialog({ open: true, profile: null, loading: true });
               try {
@@ -1415,9 +1436,15 @@ const TribeAppMain: React.FC<{
             attendingEventIds={attendingEventIds}
             likedEventIds={likedEventIds}
             onOpenMatcher={() => setView(ViewState.MATCHER)}
+            onboardingStep={currentStep}
             onSignOut={handleSignOut}
             onProfileUpdate={(updatedProfile) => {
               setUserProfile(updatedProfile);
+              // During community onboarding, mark profile complete and go back to community
+              if (isCommunityOnboarding && currentStep === 'editing_profile') {
+                markProfileComplete();
+                setView(ViewState.COMMUNITY);
+              }
             }}
           />
         )}
