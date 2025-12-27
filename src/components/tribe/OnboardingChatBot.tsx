@@ -194,8 +194,30 @@ export const OnboardingChatBot: React.FC<OnboardingChatBotProps> = ({ onComplete
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Header */}
+    <div className="fixed inset-0 z-50 bg-black text-white flex flex-col">
+      {/* App Header */}
+      <header className="flex-shrink-0 bg-black/90 backdrop-blur-md border-b border-white/5">
+        <div className="px-6 py-4 flex justify-between items-center">
+          {/* THE TRIBE LOGO */}
+          <div className="flex items-center gap-3">
+            <div className="relative w-6 h-6">
+              <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 22H22L12 2Z" className="fill-white" />
+                <circle cx="12" cy="14" r="3" className="fill-black" />
+              </svg>
+            </div>
+            <span className="text-sm font-extrabold tracking-[0.25em] text-white">THE TRIBE</span>
+          </div>
+
+          {/* City indicator */}
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-white/70">BIELEFELD</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Onboarding Header */}
       <div className="flex-shrink-0 px-4 pt-4 pb-2">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
@@ -203,18 +225,18 @@ export const OnboardingChatBot: React.FC<OnboardingChatBotProps> = ({ onComplete
           </div>
           <span className="text-xs font-medium tracking-widest text-primary uppercase">Onboarding</span>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-bold text-white">
           WILLKOMMEN BEI<br />
           <span className="border-b-2 border-primary pb-1">THE TRIBE</span>
         </h1>
         
         {/* Progress bar */}
         <div className="mt-4">
-          <div className="flex justify-between text-xs text-muted-foreground mb-1">
+          <div className="flex justify-between text-xs text-zinc-500 mb-1">
             <span>FORTSCHRITT</span>
             <span>{progress}%</span>
           </div>
-          <div className="h-1 bg-muted rounded-full overflow-hidden">
+          <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
             <div 
               className="h-full bg-primary transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
