@@ -21,7 +21,7 @@ interface Props {
   generateGreeting?: (profile: { username?: string; interests?: string[]; favorite_locations?: string[] }) => string;
 }
 
-type Tab = 'ALL' | 'TRIBE' | 'TIPS';
+type Tab = 'ALL' | 'TRIBE';
 
 const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 
@@ -443,7 +443,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         if (dismissedPosts.has(p.id)) return false;
         if (selectedCity !== 'All' && p.city !== selectedCity) return false;
         if (activeTab === 'TRIBE') return p.tags.includes('TribeCall') || p.tags.includes('Connect');
-        if (activeTab === 'TIPS') return p.tags.includes('Question') || p.tags.includes('Tip');
         return true;
       })
       .map(p => ({ ...p, relevanceScore: calculateRelevanceScore(p) }))
@@ -673,7 +672,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
             {[
                 { id: 'ALL', label: 'All Posts' },
                 { id: 'TRIBE', label: 'Tribe Search' },
-                { id: 'TIPS', label: 'Insider Tips' }
             ].map(tab => (
                 <button
                     key={tab.id}
@@ -770,7 +768,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         <div className="absolute right-0 top-0 flex items-center gap-2 pr-6">
                           {isMIAPost && (
                             <Badge variant="outline" className="text-[7px] bg-gradient-to-r from-gold/20 to-amber-500/20 text-gold border-gold/30 px-1.5 py-0">
-                              TRIBE AI
+                              COMMUNITY EVENT
                             </Badge>
                           )}
                           {isNewest && !isMIAPost && (

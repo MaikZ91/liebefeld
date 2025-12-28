@@ -585,9 +585,19 @@ const TribeAppMain: React.FC<{
       return ausgehenKeywords.some((keyword) => title.includes(keyword) || location.includes(keyword));
     };
 
-    // Sort with priority based on match scores
+    // Sort with priority based on Tribe events first, then match scores
     result.sort((a, b) => {
-      // Priority 0: Match score first (higher score = better match)
+      // PRIORITY 0: Tribe/Community events ALWAYS come first per day
+      const isTribeA = a.source === 'community' || a.source === 'tribe';
+      const isTribeB = b.source === 'community' || b.source === 'tribe';
+      
+      // If same date, Tribe events come first
+      if (a.date === b.date) {
+        if (isTribeA && !isTribeB) return -1;
+        if (!isTribeA && isTribeB) return 1;
+      }
+
+      // Priority 1: Match score (higher score = better match)
       const scoreA = eventMatchScores.get(a.id) || 50;
       const scoreB = eventMatchScores.get(b.id) || 50;
       if (scoreB !== scoreA) {
@@ -597,7 +607,7 @@ const TribeAppMain: React.FC<{
       const isLikedA = likedEventIds.has(a.id);
       const isLikedB = likedEventIds.has(b.id);
 
-      // Priority 1: Liked events come next
+      // Priority 2: Liked events come next
       if (isLikedA && !isLikedB) return -1;
       if (!isLikedA && isLikedB) return 1;
 
@@ -605,11 +615,11 @@ const TribeAppMain: React.FC<{
       const hasImageA = !!a.image_url;
       const hasImageB = !!b.image_url;
 
-      // Priority 2: ALL events with images come before events without images
+      // Priority 3: ALL events with images come before events without images
       if (hasImageA && !hasImageB) return -1;
       if (!hasImageA && hasImageB) return 1;
 
-      // Priority 3: Among events with images, sort by category priority
+      // Priority 4: Among events with images, sort by category priority
       const isAusgehenA = isAusgehenEvent(a);
       const isAusgehenB = isAusgehenEvent(b);
 
@@ -631,7 +641,7 @@ const TribeAppMain: React.FC<{
         return categoryA - categoryB;
       }
 
-      // Priority 4: Within same category, sort by date and time
+      // Priority 5: Within same category, sort by date and time
       const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
       if (dateCompare !== 0) return dateCompare;
 
