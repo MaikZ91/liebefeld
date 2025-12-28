@@ -17,7 +17,7 @@ import { TribeUserMatcher } from "./TribeUserMatcher";
 import { InterestsDialog } from "./InterestsDialog";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
-import { WelcomeOverlay } from "./WelcomeOverlay";
+
 
 import { dislikeService } from "@/services/dislikeService";
 import { personalizationService } from "@/services/personalizationService";
@@ -90,11 +90,6 @@ const createGuestProfileSync = (): UserProfile => {
 };
 
 export const TribeApp: React.FC = () => {
-  // Check if welcome is completed
-  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
-    return localStorage.getItem("tribe_welcome_completed") !== "true";
-  });
-  
   // Initialize profile from storage or create guest immediately (synchronous!)
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const savedProfile = localStorage.getItem("tribe_user_profile");
@@ -111,16 +106,8 @@ export const TribeApp: React.FC = () => {
     return guestProfile;
   });
 
-  const handleWelcomeComplete = (profile: UserProfile) => {
-    setUserProfile(profile);
-    setShowWelcome(false);
-  };
-
   return (
-    <>
-      <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />
-      {showWelcome && <WelcomeOverlay onLogin={handleWelcomeComplete} />}
-    </>
+    <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />
   );
 };
 
