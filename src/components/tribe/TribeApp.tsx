@@ -14,7 +14,7 @@ import { TribeLiveTicker } from "@/components/TribeLiveTicker";
 import { LocationBlockDialog } from "./LocationBlockDialog";
 import { AppDownloadPrompt } from "./AppDownloadPrompt";
 import { TribeUserMatcher } from "./TribeUserMatcher";
-import { MiaInlineChat } from "./MiaInlineChat";
+import { InterestsDialog } from "./InterestsDialog";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 import { WelcomeOverlay } from "./WelcomeOverlay";
@@ -28,6 +28,7 @@ import {
   X,
   Filter,
   Calendar as CalendarIcon,
+  Map as MapIcon,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -131,11 +132,11 @@ const TribeAppMain: React.FC<{
   // Onboarding flow
   const { currentStep, isOnboarding, advanceStep, setStep, completeOnboarding, markProfileComplete, markGreetingPosted, generateGreeting, isCommunityOnboarding, shouldAvatarBlink } = useOnboardingFlow();
   
-  // Start in FEED view for onboarding, COMMUNITY otherwise
-  const [view, setView] = useState<ViewState>(() => {
-    const onboardingCompleted = localStorage.getItem('tribe_onboarding_completed') === 'true';
-    return onboardingCompleted ? ViewState.COMMUNITY : ViewState.FEED;
-  });
+  // Always start in COMMUNITY view (main page)
+  const [view, setView] = useState<ViewState>(ViewState.COMMUNITY);
+  
+  // Track if user has seen interests dialog on Explore page
+  const [showInterestsDialog, setShowInterestsDialog] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>(() => {
     return userProfile?.homebase || "Bielefeld";
   });
@@ -342,6 +343,14 @@ const TribeAppMain: React.FC<{
     setView(newView);
     if (newView === ViewState.COMMUNITY) {
       markCommunityAsSeen();
+    }
+    // Show interests dialog on first visit to Explore page
+    if (newView === ViewState.FEED) {
+      const hasSeenInterests = localStorage.getItem('tribe_seen_interests_dialog') === 'true';
+      const hasPreferredCategories = localStorage.getItem('tribe_preferred_categories');
+      if (!hasSeenInterests && !hasPreferredCategories) {
+        setShowInterestsDialog(true);
+      }
     }
   };
 
@@ -1023,27 +1032,9 @@ const TribeAppMain: React.FC<{
       >
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
-            {/* MIA Inline Chat - Full AI Integration with Onboarding */}
+            {/* Category Tabs */}
             <div className="px-6 pt-2 pb-4 bg-gradient-to-b from-black via-black to-transparent">
-              <MiaInlineChat
-                events={allEvents}
-                userProfile={userProfile ? {
-                  username: userProfile.username,
-                  interests: userProfile.interests,
-                  favorite_locations: userProfile.favorite_locations,
-                  hobbies: userProfile.hobbies,
-                } : undefined}
-                city={selectedCity}
-                onQuery={handleQuery}
-                onEventsFiltered={handleMiaEventsFiltered}
-                onClearFilter={handleMiaClearFilter}
-                onboardingStep={isOnboarding ? currentStep : undefined}
-                onAdvanceOnboarding={advanceStep}
-                onInterestsSelected={handleInterestsSelected}
-              />
-
-              {/* Category Tabs */}
-              <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3 mt-4">
+              <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
@@ -1119,6 +1110,14 @@ const TribeAppMain: React.FC<{
               <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-4">
                 <h2 className="text-xs font-extrabold text-white uppercase tracking-[0.25em]">Your Feed</h2>
                 <div className="flex items-center gap-3">
+                  {/* Map Button */}
+                  <button 
+                    onClick={() => setView(ViewState.MAP)}
+                    className="text-zinc-500 hover:text-gold transition-colors"
+                    title="Social Map"
+                  >
+                    <MapIcon size={16} />
+                  </button>
 
                   {/* Calendar Picker */}
                   <Popover>
@@ -1501,6 +1500,13 @@ const TribeAppMain: React.FC<{
 
       {/* --- APP DOWNLOAD PROMPT --- */}
       <AppDownloadPrompt />
+
+      {/* --- INTERESTS DIALOG (first visit to Explore) --- */}
+      <InterestsDialog
+        open={showInterestsDialog}
+        onClose={() => setShowInterestsDialog(false)}
+        onInterestsSelected={handleInterestsSelected}
+      />
     </div>
   );
 };

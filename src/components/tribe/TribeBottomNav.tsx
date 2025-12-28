@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewState } from '@/types/tribe';
-import { Home, Users, Map } from 'lucide-react';
+import { Home, Users } from 'lucide-react';
 
 interface TribeBottomNavProps {
   currentView: ViewState;
@@ -9,11 +9,10 @@ interface TribeBottomNavProps {
 }
 
 export const TribeBottomNav: React.FC<TribeBottomNavProps> = ({ currentView, onViewChange, hasNewCommunityMessages }) => {
-  // MIA removed from bottom nav - now integrated into Explore page
+  // Community is now the main page (left), Explore on right
   const navItems = [
-    { view: ViewState.FEED, icon: Home, label: 'Explore' },
-    { view: ViewState.MAP, icon: Map, label: 'Social Map' },
     { view: ViewState.COMMUNITY, icon: Users, label: 'Community', hasNotification: hasNewCommunityMessages, isCenterButton: true },
+    { view: ViewState.FEED, icon: Home, label: 'Explore' },
   ];
 
   return (
