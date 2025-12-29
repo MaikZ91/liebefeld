@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Sparkles, Users, Calendar, MessageCircle, ChevronRight, Zap } from 'lucide-react';
+import { Heart, Sparkles, Users, Calendar, MessageCircle, ChevronRight, Zap, X, MapPin, Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { TribeEvent } from '@/types/tribe';
+import { convertToTribeEvent } from '@/utils/tribe/eventHelpers';
 
 // Import tribe reel images
 import reel1 from '@/assets/tribe/reel-1.jpg';
@@ -32,6 +35,14 @@ const CATEGORIES: CategoryOption[] = [
   { id: 'kultur', label: 'Kultur', emoji: '🎭' },
 ];
 
+interface CommunityMessage {
+  id: string;
+  sender: string;
+  text: string;
+  avatar: string | null;
+  created_at: string;
+}
+
 type OnboardingStep = 
   | 'welcome'
   | 'explore-tour'
@@ -53,6 +64,51 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
   const [userName, setUserName] = useState('');
   const [typedText, setTypedText] = useState('');
   const [showCursor, setShowCursor] = useState(true);
+  
+  // Real data from database
+  const [realEvents, setRealEvents] = useState<TribeEvent[]>([]);
+  const [communityMessages, setCommunityMessages] = useState<CommunityMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch real data on mount
+  useEffect(() => {
+    const fetchRealData = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Fetch real events with images
+        const { data: events } = await supabase
+          .from('community_events')
+          .select('*')
+          .gte('date', today)
+          .not('image_url', 'is', null)
+          .order('date', { ascending: true })
+          .limit(10);
+        
+        if (events) {
+          setRealEvents(events.map(convertToTribeEvent));
+        }
+        
+        // Fetch real community messages
+        const { data: messages } = await supabase
+          .from('chat_messages')
+          .select('id, sender, text, avatar, created_at')
+          .eq('group_id', 'tribe_community_board')
+          .order('created_at', { ascending: false })
+          .limit(8);
+        
+        if (messages) {
+          setCommunityMessages(messages.reverse());
+        }
+      } catch (error) {
+        console.error('Error fetching onboarding data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchRealData();
+  }, []);
 
   // Cursor blink effect
   useEffect(() => {
@@ -68,26 +124,26 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
     }
   }, [step]);
 
-  // Auto-advance explore tour after 4s
+  // Auto-advance explore tour after 5s
   useEffect(() => {
     if (step === 'explore-tour') {
-      const timer = setTimeout(() => setStep('mia-intro'), 4000);
+      const timer = setTimeout(() => setStep('mia-intro'), 5000);
       return () => clearTimeout(timer);
     }
   }, [step]);
 
-  // Auto-advance MIA intro after 3.5s
+  // Auto-advance MIA intro after 4s
   useEffect(() => {
     if (step === 'mia-intro') {
-      const timer = setTimeout(() => setStep('vybe-preview'), 3500);
+      const timer = setTimeout(() => setStep('vybe-preview'), 4000);
       return () => clearTimeout(timer);
     }
   }, [step]);
 
-  // Auto-advance Vybe preview after 3s
+  // Auto-advance Vybe preview after 4s
   useEffect(() => {
     if (step === 'vybe-preview') {
-      const timer = setTimeout(() => setStep('interests'), 3000);
+      const timer = setTimeout(() => setStep('interests'), 4000);
       return () => clearTimeout(timer);
     }
   }, [step]);
@@ -142,6 +198,13 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
       firstAction: choice
     });
   };
+
+  // Get hero events (first 3 with images)
+  const heroEvents = realEvents.filter(e => e.image_url).slice(0, 3);
+  // Get list events
+  const listEvents = realEvents.slice(0, 6);
+  // Get vybe event (best image)
+  const vybeEvent = realEvents.find(e => e.image_url) || realEvents[0];
 
   return (
     <div className="fixed inset-0 z-[100] bg-black">
@@ -221,69 +284,135 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
           </motion.div>
         )}
 
-        {/* STEP 2: Explore Tour - Simulated App Preview */}
+        {/* STEP 2: Explore Tour - REAL APP DATA */}
         {step === 'explore-tour' && (
           <motion.div
             key="explore-tour"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background"
+            className="absolute inset-0 bg-background overflow-hidden"
           >
-            {/* Simulated Header */}
-            <div className="h-14 border-b border-border flex items-center justify-center">
+            {/* Real App Header */}
+            <div className="h-14 border-b border-border flex items-center justify-between px-4">
               <span className="text-lg font-bold text-foreground">EXPLORE</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Bielefeld</span>
+              </div>
             </div>
 
-            {/* Scrolling Content Animation */}
+            {/* Scrolling Content with Real Events */}
             <motion.div
               initial={{ y: 0 }}
-              animate={{ y: -300 }}
-              transition={{ duration: 3, ease: "easeInOut" }}
+              animate={{ y: -400 }}
+              transition={{ duration: 4, ease: "easeInOut" }}
               className="px-4 pt-4"
             >
-              {/* Hero Cards */}
-              <div className="flex gap-3 overflow-hidden mb-6">
-                {[reel1, reel2, reel3].map((img, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.2 }}
-                    className="w-64 h-40 rounded-xl overflow-hidden flex-shrink-0"
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  </motion.div>
-                ))}
+              {/* Hero Section with Real Events */}
+              <div className="mb-6">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Featured Events</h3>
+                <div className="flex gap-3 overflow-hidden">
+                  {heroEvents.length > 0 ? heroEvents.map((event, i) => (
+                    <motion.div
+                      key={event.id}
+                      initial={{ opacity: 0, x: 50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + i * 0.2 }}
+                      className="w-64 h-44 rounded-xl overflow-hidden flex-shrink-0 relative"
+                    >
+                      <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      <div className="absolute bottom-3 left-3 right-3">
+                        <p className="text-white font-semibold text-sm line-clamp-2">{event.title}</p>
+                        <p className="text-white/70 text-xs mt-1">{event.date} • {event.time}</p>
+                      </div>
+                      <div className="absolute top-3 right-3 bg-gold/90 text-black text-xs font-bold px-2 py-1 rounded-full">
+                        {Math.floor(65 + Math.random() * 30)}% Match
+                      </div>
+                    </motion.div>
+                  )) : (
+                    // Fallback with reel images
+                    [reel1, reel2, reel3].map((img, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + i * 0.2 }}
+                        className="w-64 h-44 rounded-xl overflow-hidden flex-shrink-0 relative"
+                      >
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                      </motion.div>
+                    ))
+                  )}
+                </div>
               </div>
 
-              {/* Event List Items */}
-              {[1, 2, 3, 4, 5].map(i => (
+              {/* Compact Event List with Real Data */}
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Kommende Events</h3>
+              {listEvents.length > 0 ? listEvents.map((event, i) => (
                 <motion.div
-                  key={i}
+                  key={event.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1 + i * 0.15 }}
-                  className="flex gap-3 mb-3 p-3 bg-card rounded-lg border border-border"
+                  transition={{ delay: 0.8 + i * 0.15 }}
+                  className="flex gap-3 mb-3 p-3 bg-card rounded-xl border border-border"
                 >
-                  <div className="w-16 h-16 rounded-lg bg-muted" />
-                  <div className="flex-1">
-                    <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-muted/50 rounded w-1/2" />
+                  <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                    {event.image_url ? (
+                      <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground text-sm line-clamp-1">{event.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{event.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <MapPin className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground line-clamp-1">{event.location || 'Bielefeld'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <Heart className="w-5 h-5 text-muted-foreground" />
                   </div>
                 </motion.div>
-              ))}
+              )) : (
+                // Fallback placeholders
+                [1, 2, 3, 4, 5].map(i => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 + i * 0.15 }}
+                    className="flex gap-3 mb-3 p-3 bg-card rounded-lg border border-border"
+                  >
+                    <div className="w-16 h-16 rounded-lg bg-muted" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                      <div className="h-3 bg-muted/50 rounded w-1/2" />
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </motion.div>
 
-            {/* Overlay Hint */}
+            {/* Highlight Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 2 }}
-              className="absolute bottom-20 left-0 right-0 text-center"
+              transition={{ delay: 3 }}
+              className="absolute bottom-24 left-0 right-0 text-center"
             >
-              <p className="text-muted-foreground text-sm">Entdecke Events in deiner Nähe</p>
+              <div className="inline-flex items-center gap-2 bg-gold/20 backdrop-blur-sm px-4 py-2 rounded-full border border-gold/30">
+                <Sparkles className="w-4 h-4 text-gold" />
+                <p className="text-gold text-sm font-medium">Personalisierte Event-Empfehlungen</p>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -301,7 +430,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", duration: 0.8 }}
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-gold to-amber-600 flex items-center justify-center mb-6"
+              className="w-24 h-24 rounded-full bg-gradient-to-br from-gold to-amber-600 flex items-center justify-center mb-6 shadow-lg shadow-gold/30"
             >
               <Sparkles className="w-12 h-12 text-black" />
             </motion.div>
@@ -321,38 +450,66 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               transition={{ delay: 0.6 }}
               className="text-muted-foreground text-center text-lg max-w-sm"
             >
-              Ich helfe dir, dich mit anderen zu verbinden und spannende Events zu finden.
+              Dein persönlicher KI-Assistent für Events und Connections.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.5 }}
-              className="mt-8 flex gap-6"
+              transition={{ delay: 1.2 }}
+              className="mt-10 grid grid-cols-3 gap-6"
             >
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center mb-2">
-                  <Zap className="w-6 h-6 text-gold" />
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 1.4 }}
+                className="flex flex-col items-center"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-gold/20 flex items-center justify-center mb-3 border border-gold/30">
+                  <Zap className="w-7 h-7 text-gold" />
                 </div>
-                <span className="text-xs text-muted-foreground">KI-Matching</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center mb-2">
-                  <Calendar className="w-6 h-6 text-gold" />
+                <span className="text-xs text-muted-foreground text-center">KI-Matching</span>
+              </motion.div>
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 1.6 }}
+                className="flex flex-col items-center"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-gold/20 flex items-center justify-center mb-3 border border-gold/30">
+                  <Calendar className="w-7 h-7 text-gold" />
                 </div>
-                <span className="text-xs text-muted-foreground">Smart Events</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center mb-2">
-                  <Users className="w-6 h-6 text-gold" />
+                <span className="text-xs text-muted-foreground text-center">Smart Events</span>
+              </motion.div>
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 1.8 }}
+                className="flex flex-col items-center"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-gold/20 flex items-center justify-center mb-3 border border-gold/30">
+                  <Users className="w-7 h-7 text-gold" />
                 </div>
-                <span className="text-xs text-muted-foreground">Community</span>
+                <span className="text-xs text-muted-foreground text-center">Community</span>
+              </motion.div>
+            </motion.div>
+
+            {/* Simulated MIA Search Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.2 }}
+              className="mt-10 w-full max-w-sm"
+            >
+              <div className="flex items-center gap-3 bg-card rounded-full px-4 py-3 border border-gold/30 shadow-lg shadow-gold/10">
+                <Sparkles className="w-5 h-5 text-gold" />
+                <span className="text-muted-foreground text-sm">Frag mich was du heute unternehmen willst...</span>
               </div>
             </motion.div>
           </motion.div>
         )}
 
-        {/* STEP 4: Vybe Preview */}
+        {/* STEP 4: Vybe Preview with Real Event */}
         {step === 'vybe-preview' && (
           <motion.div
             key="vybe-preview"
@@ -364,38 +521,66 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             <motion.div
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
-              className="relative w-72 h-[500px] rounded-3xl overflow-hidden"
+              className="relative w-80 h-[520px] rounded-3xl overflow-hidden shadow-2xl"
             >
-              <img src={reel5} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+              {/* Real Event Image or Fallback */}
+              <img 
+                src={vybeEvent?.image_url || reel5} 
+                alt={vybeEvent?.title || "Vybe Mode"} 
+                className="w-full h-full object-cover" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30" />
               
-              {/* Vybe UI Elements */}
+              {/* Match Score Badge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, type: "spring" }}
+                className="absolute top-4 right-4 bg-gold text-black text-sm font-bold px-3 py-1.5 rounded-full shadow-lg"
+              >
+                {Math.floor(75 + Math.random() * 20)}% Match
+              </motion.div>
+              
+              {/* Event Info */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="absolute bottom-8 left-4 right-4"
+                className="absolute bottom-24 left-4 right-4"
               >
-                <h3 className="text-white text-xl font-bold mb-2">Vybe Modus</h3>
-                <p className="text-white/70 text-sm mb-4">Swipe durch Events wie auf TikTok</p>
-                
-                {/* Action Buttons */}
-                <div className="flex justify-center gap-8">
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                    className="w-14 h-14 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center"
-                  >
-                    <span className="text-2xl">✕</span>
-                  </motion.div>
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 1, delay: 0.5, repeat: Infinity }}
-                    className="w-14 h-14 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center"
-                  >
-                    <Heart className="w-6 h-6 text-green-500" />
-                  </motion.div>
-                </div>
+                <span className="text-gold text-xs font-semibold uppercase tracking-wider">VYBE MODUS</span>
+                <h3 className="text-white text-2xl font-bold mt-1 line-clamp-2">
+                  {vybeEvent?.title || "Entdecke Events wie auf TikTok"}
+                </h3>
+                {vybeEvent && (
+                  <p className="text-white/70 text-sm mt-2">
+                    {vybeEvent.date} • {vybeEvent.time}
+                  </p>
+                )}
+                <p className="text-white/60 text-sm mt-2">Swipe durch personalisierte Events</p>
+              </motion.div>
+              
+              {/* Action Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1 }}
+                className="absolute bottom-6 left-0 right-0 flex justify-center gap-10"
+              >
+                <motion.div
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border-2 border-red-500/50 flex items-center justify-center"
+                >
+                  <X className="w-8 h-8 text-red-400" />
+                </motion.div>
+                <motion.div
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ duration: 1.5, delay: 0.5, repeat: Infinity }}
+                  className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border-2 border-green-500/50 flex items-center justify-center"
+                >
+                  <Heart className="w-8 h-8 text-green-400" />
+                </motion.div>
               </motion.div>
             </motion.div>
           </motion.div>
@@ -410,7 +595,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             exit={{ opacity: 0 }}
             className="absolute inset-0 bg-background flex flex-col"
           >
-            <div className="flex-1 flex flex-col items-center justify-center px-6">
+            <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -518,51 +703,76 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
           </motion.div>
         )}
 
-        {/* STEP 6: Community Tour */}
+        {/* STEP 6: Community Tour with REAL Messages */}
         {step === 'community-tour' && (
           <motion.div
             key="community-tour"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background"
+            className="absolute inset-0 bg-background overflow-hidden"
           >
-            {/* Simulated Header */}
+            {/* Real App Header */}
             <div className="h-14 border-b border-border flex items-center justify-center">
               <span className="text-lg font-bold text-foreground">COMMUNITY</span>
             </div>
 
-            {/* Scrolling Messages */}
+            {/* Scrolling Real Messages */}
             <motion.div
               initial={{ y: 0 }}
-              animate={{ y: -200 }}
-              transition={{ duration: 2.5, ease: "easeInOut", delay: 1 }}
-              className="px-4 pt-4"
+              animate={{ y: -250 }}
+              transition={{ duration: 3, ease: "easeInOut", delay: 0.5 }}
+              className="px-4 pt-4 pb-32"
             >
-              {[1, 2, 3, 4, 5, 6].map(i => (
+              {communityMessages.length > 0 ? communityMessages.map((msg, i) => (
                 <motion.div
-                  key={i}
+                  key={msg.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
+                  transition={{ delay: 0.3 + i * 0.1 }}
                   className="flex gap-3 mb-4"
                 >
-                  <div className="w-10 h-10 rounded-full bg-muted" />
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+                    {msg.avatar ? (
+                      <img src={msg.avatar} alt={msg.sender} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm font-medium">
+                        {msg.sender.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1 bg-card rounded-2xl p-3 border border-border">
-                    <div className="h-3 bg-muted rounded w-1/4 mb-2" />
-                    <div className="h-4 bg-muted/50 rounded w-3/4" />
+                    <p className="text-xs font-medium text-gold mb-1">{msg.sender}</p>
+                    <p className="text-sm text-foreground line-clamp-2">{msg.text}</p>
                   </div>
                 </motion.div>
-              ))}
+              )) : (
+                // Fallback placeholders
+                [1, 2, 3, 4, 5, 6].map(i => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.1 }}
+                    className="flex gap-3 mb-4"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-muted" />
+                    <div className="flex-1 bg-card rounded-2xl p-3 border border-border">
+                      <div className="h-3 bg-muted rounded w-1/4 mb-2" />
+                      <div className="h-4 bg-muted/50 rounded w-3/4" />
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </motion.div>
 
             {/* Input Area with Typewriter */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t border-border">
-              <div className="flex items-center gap-3 bg-card rounded-full px-4 py-3 border border-border">
-                <MessageCircle className="w-5 h-5 text-muted-foreground" />
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border">
+              <div className="flex items-center gap-3 bg-card rounded-full px-4 py-3 border border-gold/30">
+                <MessageCircle className="w-5 h-5 text-gold" />
                 <span className="text-foreground">
                   {typedText}
-                  <span className={`${showCursor ? 'opacity-100' : 'opacity-0'}`}>|</span>
+                  <span className={`${showCursor ? 'opacity-100' : 'opacity-0'} text-gold`}>|</span>
                 </span>
               </div>
             </div>
@@ -582,7 +792,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring" }}
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-gold to-amber-600 flex items-center justify-center mb-6"
+              className="w-20 h-20 rounded-full bg-gradient-to-br from-gold to-amber-600 flex items-center justify-center mb-6 shadow-lg shadow-gold/30"
             >
               <Users className="w-10 h-10 text-black" />
             </motion.div>
