@@ -17,6 +17,7 @@ import { TribeUserMatcher } from "./TribeUserMatcher";
 import { InterestsDialog } from "./InterestsDialog";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
+import { OnboardingWorkflow } from "./onboarding/OnboardingWorkflow";
 
 
 import { dislikeService } from "@/services/dislikeService";
@@ -90,6 +91,11 @@ const createGuestProfileSync = (): UserProfile => {
 };
 
 export const TribeApp: React.FC = () => {
+  // Check if onboarding was completed
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    return localStorage.getItem('tribe_onboarding_completed') !== 'true';
+  });
+
   // Initialize profile from storage or create guest immediately (synchronous!)
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const savedProfile = localStorage.getItem("tribe_user_profile");
@@ -105,6 +111,36 @@ export const TribeApp: React.FC = () => {
     localStorage.setItem("tribe_user_profile", JSON.stringify(guestProfile));
     return guestProfile;
   });
+
+  const handleOnboardingComplete = (data: { name: string; interests: string[]; firstAction: 'connect' | 'explore' }) => {
+    // Update user profile with name
+    const updatedProfile: UserProfile = {
+      ...userProfile,
+      username: data.name,
+      interests: data.interests
+    };
+    
+    setUserProfile(updatedProfile);
+    localStorage.setItem("tribe_user_profile", JSON.stringify(updatedProfile));
+    localStorage.setItem("chat_username", data.name);
+    
+    // Save to database
+    supabase
+      .from('user_profiles')
+      .upsert({
+        username: data.name,
+        avatar: updatedProfile.avatarUrl,
+        interests: data.interests,
+        favorite_locations: ['Bielefeld']
+      }, { onConflict: 'username' })
+      .then(() => console.log('Profile saved after onboarding'));
+    
+    setShowOnboarding(false);
+  };
+
+  if (showOnboarding) {
+    return <OnboardingWorkflow onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <TribeAppMain userProfile={userProfile} setUserProfile={setUserProfile} />
