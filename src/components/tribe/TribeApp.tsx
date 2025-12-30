@@ -15,6 +15,7 @@ import { LocationBlockDialog } from "./LocationBlockDialog";
 import { AppDownloadPrompt } from "./AppDownloadPrompt";
 import { TribeUserMatcher } from "./TribeUserMatcher";
 import { InterestsDialog } from "./InterestsDialog";
+import { MiaInlineChat } from "./MiaInlineChat";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 import { OnboardingWorkflow } from "./onboarding/OnboardingWorkflow";
@@ -1098,6 +1099,27 @@ const TribeAppMain: React.FC<{
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* MIA Inline Search */}
+            <div className="px-6 mb-4">
+              <MiaInlineChat
+                events={allEvents}
+                userProfile={userProfile ? {
+                  username: userProfile.username,
+                  interests: userProfile.interests,
+                  favorite_locations: userProfile.homebase ? [userProfile.homebase] : [],
+                  hobbies: [],
+                } : undefined}
+                city={selectedCity}
+                onQuery={handleQuery}
+                onEventsFiltered={handleMiaEventsFiltered}
+                onClearFilter={handleMiaClearFilter}
+                onEventClick={(event) => setSelectedEventId(event.id)}
+                onboardingStep={currentStep}
+                onAdvanceOnboarding={advanceStep}
+                onInterestsSelected={handleInterestsSelected}
+              />
             </div>
 
             {/* MIA Recommendations */}
