@@ -409,37 +409,37 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black flex flex-col"
+            className="absolute inset-0 bg-black flex flex-col overflow-y-auto"
           >
             {/* Main Card Container */}
-            <div className="flex-1 flex items-center justify-center px-4 py-8">
+            <div className="flex-1 flex items-center justify-center px-4 py-6">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="w-full max-w-md bg-zinc-900/80 border border-zinc-800 rounded-3xl p-6 pb-8"
+                className="w-full max-w-md bg-zinc-900/80 border border-zinc-800 rounded-3xl p-5"
               >
                 {/* Header */}
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-center mb-6"
+                  className="text-center mb-5"
                 >
-                  <h2 className="text-2xl md:text-3xl font-bold text-white tracking-[0.3em] uppercase mb-3">
+                  <h2 className="text-2xl font-bold text-white tracking-[0.3em] uppercase mb-2">
                     Deine Vibes
                   </h2>
-                  <p className="text-zinc-500 text-sm tracking-widest uppercase">
+                  <p className="text-zinc-500 text-xs tracking-widest uppercase">
                     Was macht deinen Tag perfekt?
                   </p>
                 </motion.div>
 
-                {/* 2-Column Grid of Categories */}
+                {/* 2-Column Grid of Categories - Narrower */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="grid grid-cols-2 gap-3 mb-8"
+                  className="grid grid-cols-2 gap-2 mb-5"
                 >
                   {CATEGORIES.map((cat, i) => (
                     <motion.button
@@ -449,7 +449,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                       transition={{ delay: 0.4 + i * 0.08 }}
                       onClick={() => toggleInterest(cat.id)}
                       className={`
-                        py-4 px-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em]
+                        py-3 px-3 rounded-lg text-[10px] font-bold uppercase tracking-[0.15em]
                         transition-all duration-300 active:scale-95
                         ${selectedInterests.has(cat.id)
                           ? 'bg-white text-black'
@@ -462,31 +462,38 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                   ))}
                 </motion.div>
 
-                {/* Feature Explanation - Compact */}
+                {/* Feature Explanation - Detailed */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 }}
-                  className="border-t border-zinc-800 pt-5 mb-6"
+                  className="border-t border-zinc-800 pt-4 mb-5 space-y-3"
                 >
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
-                        <Sparkles className="w-5 h-5 text-gold" />
-                      </div>
-                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">KI-Assistent</span>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-4 h-4 text-gold" />
                     </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
-                        <Heart className="w-5 h-5 text-gold" />
-                      </div>
-                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Matching</span>
+                    <div>
+                      <h4 className="font-semibold text-white text-sm">KI Event-Assistent</h4>
+                      <p className="text-xs text-zinc-500">MIA lernt deine Vorlieben und schlägt passende Events vor</p>
                     </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
-                        <Users className="w-5 h-5 text-gold" />
-                      </div>
-                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Tribe Events</span>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                      <Heart className="w-4 h-4 text-gold" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white text-sm">MIA Matching</h4>
+                      <p className="text-xs text-zinc-500">Finde Gleichgesinnte mit ähnlichen Interessen</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-4 h-4 text-gold" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white text-sm">Tribe Events</h4>
+                      <p className="text-xs text-zinc-500">Exklusive Community-Events und Meetups</p>
                     </div>
                   </div>
                 </motion.div>
@@ -499,7 +506,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                   onClick={handleInterestsContinue}
                   disabled={selectedInterests.size === 0}
                   className={`
-                    w-full py-5 rounded-xl font-bold uppercase tracking-[0.25em] text-sm
+                    w-full py-4 rounded-xl font-bold uppercase tracking-[0.25em] text-sm
                     transition-all duration-300
                     ${selectedInterests.size > 0
                       ? 'bg-white text-black hover:bg-zinc-100'
