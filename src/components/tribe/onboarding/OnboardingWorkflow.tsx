@@ -26,6 +26,7 @@ interface CategoryOption {
 
 const CATEGORIES: CategoryOption[] = [
   { id: 'ausgehen', label: 'Ausgehen', emoji: '🎉' },
+  { id: 'party', label: 'Party', emoji: '🪩' },
   { id: 'kreativitaet', label: 'Kreativität', emoji: '🎨' },
   { id: 'sport', label: 'Sport', emoji: '⚽' },
   { id: 'konzerte', label: 'Konzerte', emoji: '🎵' },
@@ -401,119 +402,114 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
           </motion.div>
         )}
 
-        {/* STEP 5: Interests Selection */}
+        {/* STEP 5: Interests Selection - "DEINE VIBES" Design */}
         {step === 'interests' && (
           <motion.div
             key="interests"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background flex flex-col"
+            className="absolute inset-0 bg-black flex flex-col"
           >
-            <div className="flex-1 flex flex-col items-center justify-center px-6">
+            {/* Main Card Container */}
+            <div className="flex-1 flex items-center justify-center px-4 py-8">
               <motion.div
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center mb-8"
+                transition={{ duration: 0.6 }}
+                className="w-full max-w-md bg-zinc-900/80 border border-zinc-800 rounded-3xl p-6 pb-8"
               >
-                <h2 className="text-2xl font-bold text-foreground mb-2">Was interessiert dich?</h2>
-                <p className="text-muted-foreground text-sm">
-                  Wähle deine Interessen für personalisierte Empfehlungen
-                </p>
-              </motion.div>
+                {/* Header */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-center mb-6"
+                >
+                  <h2 className="text-2xl md:text-3xl font-bold text-white tracking-[0.3em] uppercase mb-3">
+                    Deine Vibes
+                  </h2>
+                  <p className="text-zinc-500 text-sm tracking-widest uppercase">
+                    Was macht deinen Tag perfekt?
+                  </p>
+                </motion.div>
 
-              {/* Category Pills */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="flex flex-wrap justify-center gap-3 mb-8"
-              >
-                {CATEGORIES.map((cat, i) => (
-                  <motion.button
-                    key={cat.id}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4 + i * 0.1 }}
-                    onClick={() => toggleInterest(cat.id)}
-                    className={`
-                      px-5 py-3 rounded-full text-sm font-medium flex items-center gap-2
-                      transition-all duration-300 active:scale-95
-                      ${selectedInterests.has(cat.id)
-                        ? 'bg-gold text-black shadow-lg shadow-gold/30'
-                        : 'bg-card border border-border text-foreground hover:border-gold/50'
-                      }
-                    `}
-                  >
-                    <span className="text-lg">{cat.emoji}</span>
-                    <span>{cat.label}</span>
-                    {selectedInterests.has(cat.id) && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                      >
-                        ✓
-                      </motion.span>
-                    )}
-                  </motion.button>
-                ))}
-              </motion.div>
+                {/* 2-Column Grid of Categories */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="grid grid-cols-2 gap-3 mb-8"
+                >
+                  {CATEGORIES.map((cat, i) => (
+                    <motion.button
+                      key={cat.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 + i * 0.08 }}
+                      onClick={() => toggleInterest(cat.id)}
+                      className={`
+                        py-4 px-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em]
+                        transition-all duration-300 active:scale-95
+                        ${selectedInterests.has(cat.id)
+                          ? 'bg-white text-black'
+                          : 'bg-transparent border border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
+                        }
+                      `}
+                    >
+                      {cat.label}
+                    </motion.button>
+                  ))}
+                </motion.div>
 
-              {/* Feature Explanation */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                className="bg-card/50 rounded-2xl p-4 max-w-sm border border-border"
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-4 h-4 text-gold" />
+                {/* Feature Explanation - Compact */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                  className="border-t border-zinc-800 pt-5 mb-6"
+                >
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
+                        <Sparkles className="w-5 h-5 text-gold" />
+                      </div>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">KI-Assistent</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
+                        <Heart className="w-5 h-5 text-gold" />
+                      </div>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Matching</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center mb-2">
+                        <Users className="w-5 h-5 text-gold" />
+                      </div>
+                      <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Tribe Events</span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground text-sm">KI Event-Assistent</h4>
-                    <p className="text-xs text-muted-foreground">MIA lernt deine Vorlieben und schlägt passende Events vor</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-4 h-4 text-gold" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground text-sm">MIA Matching</h4>
-                    <p className="text-xs text-muted-foreground">Finde Gleichgesinnte mit ähnlichen Interessen</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-4 h-4 text-gold" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-foreground text-sm">Tribe Events</h4>
-                    <p className="text-xs text-muted-foreground">Exklusive Community-Events und Meetups</p>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
 
-              {/* Continue Button */}
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2 }}
-                onClick={handleInterestsContinue}
-                disabled={selectedInterests.size === 0}
-                className={`
-                  mt-8 px-8 py-4 rounded-full font-semibold flex items-center gap-2
-                  transition-all duration-300
-                  ${selectedInterests.size > 0
-                    ? 'bg-gold text-black hover:bg-gold/90'
-                    : 'bg-muted text-muted-foreground cursor-not-allowed'
-                  }
-                `}
-              >
-                Weiter
-                <ChevronRight className="w-5 h-5" />
-              </motion.button>
+                {/* Continue Button - Full Width */}
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  onClick={handleInterestsContinue}
+                  disabled={selectedInterests.size === 0}
+                  className={`
+                    w-full py-5 rounded-xl font-bold uppercase tracking-[0.25em] text-sm
+                    transition-all duration-300
+                    ${selectedInterests.size > 0
+                      ? 'bg-white text-black hover:bg-zinc-100'
+                      : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  Beitreten
+                </motion.button>
+              </motion.div>
             </div>
           </motion.div>
         )}
