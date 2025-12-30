@@ -370,6 +370,18 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               <img src={reel5} alt="" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
               
+              {/* Tribe Event Label */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="absolute top-4 left-4"
+              >
+                <span className="bg-gradient-to-r from-gold to-amber-500 text-black text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
+                  Tribe Kennenlernabend
+                </span>
+              </motion.div>
+              
               {/* Vybe UI Elements */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -378,7 +390,22 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                 className="absolute bottom-8 left-4 right-4"
               >
                 <h3 className="text-white text-xl font-bold mb-2">Vybe Modus</h3>
-                <p className="text-white/70 text-sm mb-4">Swipe durch Events wie auf TikTok</p>
+                <p className="text-white/70 text-sm mb-3">Exklusive Community Events</p>
+                
+                {/* Event Tags */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {['Kennenlernabend', 'Creative Circle', 'Lauftreff', 'Bouldern', 'Wandern'].map((tag, i) => (
+                    <motion.span
+                      key={tag}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.7 + i * 0.1 }}
+                      className="text-[9px] px-2 py-1 rounded-full bg-white/10 text-white/80 border border-white/20"
+                    >
+                      {tag}
+                    </motion.span>
+                  ))}
+                </div>
                 
                 {/* Action Buttons */}
                 <div className="flex justify-center gap-8">
