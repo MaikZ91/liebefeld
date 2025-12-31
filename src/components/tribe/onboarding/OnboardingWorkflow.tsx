@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Sparkles, Users, Calendar, MessageCircle, ChevronRight, Zap } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 // Import tribe reel images
 import reel1 from '@/assets/tribe/reel-1.jpg';
@@ -9,37 +9,26 @@ import reel3 from '@/assets/tribe/reel-3.jpg';
 import reel4 from '@/assets/tribe/reel-4.jpg';
 import reel5 from '@/assets/tribe/reel-5.jpg';
 import reel6 from '@/assets/tribe/reel-6.jpg';
-import reel7 from '@/assets/tribe/reel-7.jpg';
-import reel8 from '@/assets/tribe/reel-8.jpg';
-import reel9 from '@/assets/tribe/reel-9.jpg';
-import reel10 from '@/assets/tribe/reel-10.jpg';
-import reel11 from '@/assets/tribe/reel-11.jpg';
-import reel12 from '@/assets/tribe/reel-12.jpg';
 
-const COLLAGE_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6, reel7, reel8, reel9, reel10, reel11, reel12];
+const COLLAGE_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6];
 
 interface CategoryOption {
   id: string;
   label: string;
-  emoji: string;
 }
 
 const CATEGORIES: CategoryOption[] = [
-  { id: 'ausgehen', label: 'Ausgehen', emoji: '🎉' },
-  { id: 'party', label: 'Party', emoji: '🪩' },
-  { id: 'kreativitaet', label: 'Kreativität', emoji: '🎨' },
-  { id: 'sport', label: 'Sport', emoji: '⚽' },
-  { id: 'konzerte', label: 'Konzerte', emoji: '🎵' },
-  { id: 'kultur', label: 'Kultur', emoji: '🎭' },
+  { id: 'ausgehen', label: 'Ausgehen' },
+  { id: 'party', label: 'Party' },
+  { id: 'kreativitaet', label: 'Kreativität' },
+  { id: 'sport', label: 'Sport' },
+  { id: 'konzerte', label: 'Konzerte' },
+  { id: 'kultur', label: 'Kultur' },
 ];
 
 type OnboardingStep = 
-  | 'welcome'
-  | 'explore-tour'
-  | 'mia-intro'
-  | 'vybe-preview'
   | 'interests'
-  | 'community-tour'
+  | 'welcome'
   | 'name-input'
   | 'final-choice'
   | 'complete';
@@ -52,63 +41,21 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
   const [step, setStep] = useState<OnboardingStep>('interests');
   const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set());
   const [userName, setUserName] = useState('');
-  const [typedText, setTypedText] = useState('');
-  const [showCursor, setShowCursor] = useState(true);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Cursor blink effect
+  // Auto-rotate background images
   useEffect(() => {
-    const interval = setInterval(() => setShowCursor(prev => !prev), 500);
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % COLLAGE_IMAGES.length);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-advance welcome after 3.5s
+  // Auto-advance welcome after 3s
   useEffect(() => {
     if (step === 'welcome') {
-      const timer = setTimeout(() => setStep('explore-tour'), 3500);
+      const timer = setTimeout(() => setStep('name-input'), 3000);
       return () => clearTimeout(timer);
-    }
-  }, [step]);
-
-  // Auto-advance explore tour after 4s
-  useEffect(() => {
-    if (step === 'explore-tour') {
-      const timer = setTimeout(() => setStep('mia-intro'), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [step]);
-
-  // Auto-advance MIA intro after 3.5s
-  useEffect(() => {
-    if (step === 'mia-intro') {
-      const timer = setTimeout(() => setStep('vybe-preview'), 3500);
-      return () => clearTimeout(timer);
-    }
-  }, [step]);
-
-  // Auto-advance Vybe preview after 3s
-  useEffect(() => {
-    if (step === 'vybe-preview') {
-      const timer = setTimeout(() => setStep('community-tour'), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [step]);
-
-  // Typewriter effect for community tour
-  useEffect(() => {
-    if (step === 'community-tour') {
-      const text = "Tausche dich mit der Community aus...";
-      let index = 0;
-      setTypedText('');
-      const interval = setInterval(() => {
-        if (index < text.length) {
-          setTypedText(text.slice(0, index + 1));
-          index++;
-        } else {
-          clearInterval(interval);
-          setTimeout(() => setStep('name-input'), 2000);
-        }
-      }, 50);
-      return () => clearInterval(interval);
     }
   }, [step]);
 
@@ -145,638 +92,320 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black">
+    <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
+      {/* Subtle background image with slow crossfade */}
       <AnimatePresence mode="wait">
-        {/* STEP 1: Welcome Screen */}
-        {step === 'welcome' && (
-          <motion.div
-            key="welcome"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            transition={{ duration: 0.8 }}
-            className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden"
-          >
-            {/* Animated Collage Background */}
-            <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 gap-1 opacity-30">
-              {COLLAGE_IMAGES.map((img, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, scale: 1.2 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.1, duration: 0.8 }}
-                  className="relative overflow-hidden"
-                >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                </motion.div>
-              ))}
-            </div>
+        <motion.div
+          key={currentImageIndex}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.15 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 2 }}
+          className="absolute inset-0"
+        >
+          <img 
+            src={COLLAGE_IMAGES[currentImageIndex]} 
+            alt="" 
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
+      </AnimatePresence>
 
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black" />
 
-            {/* Content */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 1 }}
-              className="relative z-10 text-center px-8"
-            >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.8, duration: 0.8, ease: "easeOut" }}
-              >
-                <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-4">
-                  THE TRIBE
-                </h1>
-              </motion.div>
-              
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.5, duration: 0.8 }}
-                className="text-xl md:text-2xl text-white/80 font-light"
-              >
-                Die Community für echte Begegnungen
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 2.5, duration: 0.5 }}
-                className="mt-12 flex justify-center"
-              >
-                <div className="flex gap-1">
-                  {[0, 1, 2].map(i => (
-                    <motion.div
-                      key={i}
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 1, delay: i * 0.2, repeat: Infinity }}
-                      className="w-2 h-2 rounded-full bg-gold"
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* STEP 2: Explore Tour - Simulated App Preview */}
-        {step === 'explore-tour' && (
-          <motion.div
-            key="explore-tour"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background"
-          >
-            {/* Simulated Header */}
-            <div className="h-14 border-b border-border flex items-center justify-center">
-              <span className="text-lg font-bold text-foreground">EXPLORE</span>
-            </div>
-
-            {/* Scrolling Content Animation */}
-            <motion.div
-              initial={{ y: 0 }}
-              animate={{ y: -300 }}
-              transition={{ duration: 3, ease: "easeInOut" }}
-              className="px-4 pt-4"
-            >
-              {/* Hero Cards */}
-              <div className="flex gap-3 overflow-hidden mb-6">
-                {[reel1, reel2, reel3].map((img, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.2 }}
-                    className="w-64 h-40 rounded-xl overflow-hidden flex-shrink-0"
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Event List Items */}
-              {[1, 2, 3, 4, 5].map(i => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1 + i * 0.15 }}
-                  className="flex gap-3 mb-3 p-3 bg-card rounded-lg border border-border"
-                >
-                  <div className="w-16 h-16 rounded-lg bg-muted" />
-                  <div className="flex-1">
-                    <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-muted/50 rounded w-1/2" />
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Overlay Hint */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2 }}
-              className="absolute bottom-20 left-0 right-0 text-center"
-            >
-              <p className="text-muted-foreground text-sm">Entdecke Events in deiner Nähe</p>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* STEP 3: MIA Introduction */}
-        {step === 'mia-intro' && (
-          <motion.div
-            key="mia-intro"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background flex flex-col items-center justify-center px-8"
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", duration: 0.8 }}
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-gold to-amber-600 flex items-center justify-center mb-6"
-            >
-              <Sparkles className="w-12 h-12 text-black" />
-            </motion.div>
-
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-2xl font-bold text-foreground mb-4 text-center"
-            >
-              Hallo, ich bin MIA
-            </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="text-muted-foreground text-center text-lg max-w-sm"
-            >
-              Ich helfe dir, dich mit anderen zu verbinden und spannende Events zu finden.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.5 }}
-              className="mt-8 flex gap-6"
-            >
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center mb-2">
-                  <Zap className="w-6 h-6 text-gold" />
-                </div>
-                <span className="text-xs text-muted-foreground">KI-Matching</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center mb-2">
-                  <Calendar className="w-6 h-6 text-gold" />
-                </div>
-                <span className="text-xs text-muted-foreground">Smart Events</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center mb-2">
-                  <Users className="w-6 h-6 text-gold" />
-                </div>
-                <span className="text-xs text-muted-foreground">Community</span>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* STEP 4: Vybe Preview */}
-        {step === 'vybe-preview' && (
-          <motion.div
-            key="vybe-preview"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black flex items-center justify-center"
-          >
-            <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              className="relative w-72 h-[500px] rounded-3xl overflow-hidden"
-            >
-              <img src={reel5} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-              
-              {/* Tribe Event Label */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="absolute top-4 left-4"
-              >
-                <span className="bg-gradient-to-r from-gold to-amber-500 text-black text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
-                  Tribe Kennenlernabend
-                </span>
-              </motion.div>
-              
-              {/* Vybe UI Elements */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="absolute bottom-8 left-4 right-4"
-              >
-                <h3 className="text-white text-xl font-bold mb-2">Vybe Modus</h3>
-                <p className="text-white/70 text-sm mb-3">Exklusive Community Events</p>
-                
-                {/* Event Tags */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {['Kennenlernabend', 'Creative Circle', 'Lauftreff', 'Bouldern', 'Wandern'].map((tag, i) => (
-                    <motion.span
-                      key={tag}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.7 + i * 0.1 }}
-                      className="text-[9px] px-2 py-1 rounded-full bg-white/10 text-white/80 border border-white/20"
-                    >
-                      {tag}
-                    </motion.span>
-                  ))}
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex justify-center gap-8">
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                    className="w-14 h-14 rounded-full bg-red-500/20 border-2 border-red-500 flex items-center justify-center"
-                  >
-                    <span className="text-2xl">✕</span>
-                  </motion.div>
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 1, delay: 0.5, repeat: Infinity }}
-                    className="w-14 h-14 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center"
-                  >
-                    <Heart className="w-6 h-6 text-green-500" />
-                  </motion.div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* STEP 5: Interests Selection - "DEINE VIBES" Design */}
+      <AnimatePresence mode="wait">
+        {/* STEP 1: Interests Selection - IONNYK Style */}
         {step === 'interests' && (
           <motion.div
             key="interests"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black flex flex-col overflow-y-auto"
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0 flex flex-col items-center justify-center px-8"
           >
-            {/* Main Card Container */}
-            <div className="flex-1 flex items-center justify-center px-4 py-6">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="w-full max-w-md bg-zinc-900/80 border border-zinc-800 rounded-3xl p-5"
-              >
-                {/* Header */}
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-center mb-5"
-                >
-                  <h2 className="text-2xl font-bold text-white tracking-[0.3em] uppercase mb-2">
-                    Deine Vibes
-                  </h2>
-                  <p className="text-zinc-500 text-xs tracking-widest uppercase">
-                    Was macht deinen Tag perfekt?
-                  </p>
-                </motion.div>
+            {/* Main Title */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.3 }}
+              className="text-center mb-16"
+            >
+              <h1 className="text-4xl md:text-6xl font-light text-white tracking-wide mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+                Deine
+              </h1>
+              <h1 className="text-4xl md:text-6xl font-light text-white tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
+                Interessen
+              </h1>
+            </motion.div>
 
-                {/* 2-Column Grid of Categories - Narrower */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="grid grid-cols-2 gap-2 mb-5"
-                >
-                  {CATEGORIES.map((cat, i) => (
-                    <motion.button
-                      key={cat.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + i * 0.08 }}
-                      onClick={() => toggleInterest(cat.id)}
-                      className={`
-                        py-3 px-3 rounded-lg text-[10px] font-bold uppercase tracking-[0.15em]
-                        transition-all duration-300 active:scale-95
-                        ${selectedInterests.has(cat.id)
-                          ? 'bg-white text-black'
-                          : 'bg-transparent border border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
-                        }
-                      `}
-                    >
-                      {cat.label}
-                    </motion.button>
-                  ))}
-                </motion.div>
-
-                {/* Feature Explanation - Detailed */}
-                <motion.div
+            {/* Category Grid - Minimal */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="grid grid-cols-2 gap-4 mb-16 w-full max-w-sm"
+            >
+              {CATEGORIES.map((cat, i) => (
+                <motion.button
+                  key={cat.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
-                  className="border-t border-zinc-800 pt-4 mb-5 space-y-3"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="w-4 h-4 text-gold" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-white text-sm">KI Event-Assistent</h4>
-                      <p className="text-xs text-zinc-500">MIA lernt deine Vorlieben und schlägt passende Events vor</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                      <Heart className="w-4 h-4 text-gold" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-white text-sm">MIA Matching</h4>
-                      <p className="text-xs text-zinc-500">Finde Gleichgesinnte mit ähnlichen Interessen</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                      <Users className="w-4 h-4 text-gold" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-white text-sm">Tribe Events</h4>
-                      <p className="text-xs text-zinc-500">Exklusive Community-Events und Meetups</p>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Continue Button - Full Width */}
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                  onClick={handleInterestsContinue}
-                  disabled={selectedInterests.size === 0}
+                  transition={{ duration: 0.5, delay: 1 + i * 0.1 }}
+                  onClick={() => toggleInterest(cat.id)}
                   className={`
-                    w-full py-4 rounded-xl font-bold uppercase tracking-[0.25em] text-sm
-                    transition-all duration-300
-                    ${selectedInterests.size > 0
-                      ? 'bg-white text-black hover:bg-zinc-100'
-                      : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    py-4 px-6 text-sm tracking-[0.2em] uppercase
+                    transition-all duration-500 ease-out
+                    ${selectedInterests.has(cat.id)
+                      ? 'bg-white text-black'
+                      : 'bg-transparent border border-white/20 text-white/70 hover:border-white/50 hover:text-white'
                     }
                   `}
+                  style={{ fontFamily: 'Georgia, serif' }}
                 >
-                  Beitreten
+                  {cat.label}
                 </motion.button>
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* STEP 6: Community Tour */}
-        {step === 'community-tour' && (
-          <motion.div
-            key="community-tour"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background"
-          >
-            {/* Simulated Header */}
-            <div className="h-14 border-b border-border flex items-center justify-center">
-              <span className="text-lg font-bold text-foreground">COMMUNITY</span>
-            </div>
-
-            {/* Scrolling Messages */}
-            <motion.div
-              initial={{ y: 0 }}
-              animate={{ y: -200 }}
-              transition={{ duration: 2.5, ease: "easeInOut", delay: 1 }}
-              className="px-4 pt-4"
-            >
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  className="flex gap-3 mb-4"
-                >
-                  <div className="w-10 h-10 rounded-full bg-muted" />
-                  <div className="flex-1 bg-card rounded-2xl p-3 border border-border">
-                    <div className="h-3 bg-muted rounded w-1/4 mb-2" />
-                    <div className="h-4 bg-muted/50 rounded w-3/4" />
-                  </div>
-                </motion.div>
               ))}
             </motion.div>
 
-            {/* Input Area with Typewriter */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t border-border">
-              <div className="flex items-center gap-3 bg-card rounded-full px-4 py-3 border border-border">
-                <MessageCircle className="w-5 h-5 text-muted-foreground" />
-                <span className="text-foreground">
-                  {typedText}
-                  <span className={`${showCursor ? 'opacity-100' : 'opacity-0'}`}>|</span>
-                </span>
-              </div>
-            </div>
+            {/* Continue Button */}
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.8 }}
+              onClick={handleInterestsContinue}
+              disabled={selectedInterests.size === 0}
+              className={`
+                flex items-center gap-3 px-8 py-4 text-sm tracking-[0.3em] uppercase
+                transition-all duration-500
+                ${selectedInterests.size > 0
+                  ? 'bg-white text-black hover:bg-white/90'
+                  : 'bg-white/10 text-white/30 cursor-not-allowed'
+                }
+              `}
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              Weiter
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
           </motion.div>
         )}
 
-        {/* STEP 7: Name Input */}
+        {/* STEP 2: Welcome Screen */}
+        {step === 'welcome' && (
+          <motion.div
+            key="welcome"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="absolute inset-0 flex flex-col items-center justify-center px-8"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.3 }}
+              className="text-center"
+            >
+              <h1 
+                className="text-5xl md:text-7xl font-light text-white tracking-wider mb-8"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                THE TRIBE
+              </h1>
+              
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1, delay: 1 }}
+                className="text-lg md:text-xl text-white/60 font-light tracking-wide max-w-md"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                Die Community für echte Begegnungen
+              </motion.p>
+            </motion.div>
+
+            {/* Subtle loading indicator */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2 }}
+              className="absolute bottom-16"
+            >
+              <motion.div
+                animate={{ width: ['0%', '100%'] }}
+                transition={{ duration: 1, delay: 2 }}
+                className="h-[1px] bg-white/40 w-32"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* STEP 3: Name Input */}
         {step === 'name-input' && (
           <motion.div
             key="name-input"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black flex items-center justify-center p-6"
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0 flex flex-col items-center justify-center px-8"
           >
-            <div className="w-full max-w-md">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="text-center"
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1 }}
+              className="text-center w-full max-w-md"
+            >
+              {/* Title */}
+              <h1 
+                className="text-3xl md:text-5xl font-light text-white tracking-wide mb-4"
+                style={{ fontFamily: 'Georgia, serif' }}
               >
-                {/* Title */}
-                <motion.h1
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-2xl md:text-3xl font-bold text-white tracking-[0.3em] uppercase mb-3"
-                >
-                  DEIN NAME
-                </motion.h1>
-                
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-zinc-500 text-sm tracking-widest uppercase mb-8"
-                >
-                  WIE SOLLEN WIR DICH NENNEN?
-                </motion.p>
+                Wie heißt du?
+              </h1>
+              
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-white/40 text-sm tracking-wider mb-12"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                Dein Name erscheint in der Community
+              </motion.p>
 
-                {/* Input Field */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="mb-6"
-                >
-                  <input
-                    type="text"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    placeholder="Dein Name"
-                    className="w-full px-6 py-4 bg-transparent border border-zinc-700 rounded-xl text-center text-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors tracking-wide"
-                    autoFocus
-                  />
-                </motion.div>
-
-                {/* Info Text */}
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="text-zinc-600 text-xs mb-8"
-                >
-                  Dein Name erscheint in der Community
-                </motion.p>
-
-                {/* Continue Button */}
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7 }}
-                  onClick={handleNameSubmit}
-                  disabled={!userName.trim()}
-                  className={`
-                    w-full py-4 rounded-xl font-bold uppercase tracking-[0.25em] text-sm
-                    transition-all duration-300
-                    ${userName.trim()
-                      ? 'bg-white text-black hover:bg-zinc-100'
-                      : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  Weiter
-                </motion.button>
-
-                {/* Skip as Guest */}
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.9 }}
-                  onClick={() => setStep('final-choice')}
-                  className="mt-4 text-zinc-600 text-xs uppercase tracking-wider hover:text-zinc-400 transition-colors"
-                >
-                  Als Gast fortfahren
-                </motion.button>
+              {/* Input Field - Minimal */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="mb-12"
+              >
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Dein Name"
+                  className="w-full bg-transparent border-b border-white/20 py-4 text-center text-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/60 transition-colors tracking-wide"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                  autoFocus
+                />
               </motion.div>
-            </div>
+
+              {/* Continue Button */}
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                onClick={handleNameSubmit}
+                disabled={!userName.trim()}
+                className={`
+                  flex items-center justify-center gap-3 w-full py-4 text-sm tracking-[0.3em] uppercase
+                  transition-all duration-500
+                  ${userName.trim()
+                    ? 'bg-white text-black hover:bg-white/90'
+                    : 'bg-white/10 text-white/30 cursor-not-allowed'
+                  }
+                `}
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                Weiter
+                <ArrowRight className="w-4 h-4" />
+              </motion.button>
+
+              {/* Skip option */}
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.3 }}
+                onClick={() => setStep('final-choice')}
+                className="mt-8 text-white/30 text-xs tracking-[0.2em] uppercase hover:text-white/60 transition-colors"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                Als Gast fortfahren
+              </motion.button>
+            </motion.div>
           </motion.div>
         )}
 
-        {/* STEP 8: Final Choice */}
+        {/* STEP 4: Final Choice */}
         {step === 'final-choice' && (
           <motion.div
             key="final-choice"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background flex flex-col items-center justify-center px-8"
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0 flex flex-col items-center justify-center px-8"
           >
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring" }}
-              className="mb-8"
-            >
-              <span className="text-6xl">🎉</span>
-            </motion.div>
-
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-3xl font-bold text-foreground mb-2 text-center"
+              transition={{ duration: 1 }}
+              className="text-center w-full max-w-md"
             >
-              {userName ? `Hey ${userName}!` : 'Willkommen!'}
-            </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-muted-foreground text-center text-lg mb-12"
-            >
-              Viel Spaß beim Verbinden
-            </motion.p>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="text-foreground text-center mb-6"
-            >
-              Was willst du als erstes tun?
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
-              className="flex flex-col gap-4 w-full max-w-xs"
-            >
-              <button
-                onClick={() => handleFinalChoice('connect')}
-                className="w-full py-4 px-6 bg-card border border-border rounded-2xl flex items-center gap-4 hover:border-gold/50 transition-all group"
+              {/* Greeting */}
+              <h1 
+                className="text-4xl md:text-5xl font-light text-white tracking-wide mb-4"
+                style={{ fontFamily: 'Georgia, serif' }}
               >
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center group-hover:bg-gold/30 transition-colors">
-                  <Users className="w-6 h-6 text-gold" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-semibold text-foreground">Mit anderen verbinden</h4>
-                  <p className="text-xs text-muted-foreground">Community entdecken</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground ml-auto" />
-              </button>
-
-              <button
-                onClick={() => handleFinalChoice('explore')}
-                className="w-full py-4 px-6 bg-card border border-border rounded-2xl flex items-center gap-4 hover:border-gold/50 transition-all group"
+                {userName ? `Hallo, ${userName}` : 'Willkommen'}
+              </h1>
+              
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-white/40 text-lg tracking-wider mb-16"
+                style={{ fontFamily: 'Georgia, serif' }}
               >
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center group-hover:bg-gold/30 transition-colors">
-                  <Calendar className="w-6 h-6 text-gold" />
-                </div>
-                <div className="text-left">
-                  <h4 className="font-semibold text-foreground">Events entdecken</h4>
-                  <p className="text-xs text-muted-foreground">Finde spannende Events</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground ml-auto" />
-              </button>
+                Was möchtest du tun?
+              </motion.p>
+
+              {/* Choice Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                className="flex flex-col gap-4"
+              >
+                <button
+                  onClick={() => handleFinalChoice('connect')}
+                  className="w-full py-5 border border-white/20 text-white text-sm tracking-[0.2em] uppercase hover:bg-white hover:text-black transition-all duration-500"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  Community entdecken
+                </button>
+
+                <button
+                  onClick={() => handleFinalChoice('explore')}
+                  className="w-full py-5 bg-white text-black text-sm tracking-[0.2em] uppercase hover:bg-white/90 transition-all duration-500"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  Events finden
+                </button>
+              </motion.div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Progress indicator - subtle dots at bottom */}
+      <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3">
+        {['interests', 'welcome', 'name-input', 'final-choice'].map((s, i) => (
+          <motion.div
+            key={s}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 + i * 0.1 }}
+            className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${
+              step === s ? 'bg-white' : 'bg-white/20'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 };
