@@ -132,10 +132,10 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               transition={{ duration: 1, delay: 0.3 }}
               className="text-center mb-16"
             >
-              <h1 className="text-4xl md:text-6xl font-light text-white tracking-wide mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+              <h1 className="font-serif text-4xl md:text-6xl font-light text-white tracking-wide mb-4">
                 Deine
               </h1>
-              <h1 className="text-4xl md:text-6xl font-light text-white tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
+              <h1 className="font-serif text-4xl md:text-6xl font-light text-white tracking-wide">
                 Interessen
               </h1>
             </motion.div>
@@ -155,14 +155,13 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                   transition={{ duration: 0.5, delay: 1 + i * 0.1 }}
                   onClick={() => toggleInterest(cat.id)}
                   className={`
-                    py-4 px-6 text-sm tracking-[0.2em] uppercase
+                    font-serif py-4 px-6 text-sm tracking-[0.2em] uppercase
                     transition-all duration-500 ease-out
                     ${selectedInterests.has(cat.id)
                       ? 'bg-white text-black'
                       : 'bg-transparent border border-white/20 text-white/70 hover:border-white/50 hover:text-white'
                     }
                   `}
-                  style={{ fontFamily: 'Georgia, serif' }}
                 >
                   {cat.label}
                 </motion.button>
@@ -177,14 +176,13 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               onClick={handleInterestsContinue}
               disabled={selectedInterests.size === 0}
               className={`
-                flex items-center gap-3 px-8 py-4 text-sm tracking-[0.3em] uppercase
+                font-serif flex items-center gap-3 px-8 py-4 text-sm tracking-[0.3em] uppercase
                 transition-all duration-500
                 ${selectedInterests.size > 0
                   ? 'bg-white text-black hover:bg-white/90'
                   : 'bg-white/10 text-white/30 cursor-not-allowed'
                 }
               `}
-              style={{ fontFamily: 'Georgia, serif' }}
             >
               Weiter
               <ArrowRight className="w-4 h-4" />
@@ -208,10 +206,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               transition={{ duration: 1.2, delay: 0.3 }}
               className="text-center"
             >
-              <h1 
-                className="text-5xl md:text-7xl font-light text-white tracking-wider mb-8"
-                style={{ fontFamily: 'Georgia, serif' }}
-              >
+              <h1 className="font-serif text-5xl md:text-7xl font-light text-white tracking-wider mb-8">
                 THE TRIBE
               </h1>
               
@@ -219,8 +214,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 1, delay: 1 }}
-                className="text-lg md:text-xl text-white/60 font-light tracking-wide max-w-md"
-                style={{ fontFamily: 'Georgia, serif' }}
+                className="font-serif text-lg md:text-xl text-white/60 font-light tracking-wide max-w-md"
               >
                 Die Community für echte Begegnungen
               </motion.p>
@@ -259,10 +253,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               className="text-center w-full max-w-md"
             >
               {/* Title */}
-              <h1 
-                className="text-3xl md:text-5xl font-light text-white tracking-wide mb-4"
-                style={{ fontFamily: 'Georgia, serif' }}
-              >
+              <h1 className="font-serif text-3xl md:text-5xl font-light text-white tracking-wide mb-4">
                 Wie heißt du?
               </h1>
               
@@ -270,8 +261,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-white/40 text-sm tracking-wider mb-12"
-                style={{ fontFamily: 'Georgia, serif' }}
+                className="font-serif text-white/40 text-sm tracking-wider mb-12"
               >
                 Dein Name erscheint in der Community
               </motion.p>
@@ -288,8 +278,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder="Dein Name"
-                  className="w-full bg-transparent border-b border-white/20 py-4 text-center text-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/60 transition-colors tracking-wide"
-                  style={{ fontFamily: 'Georgia, serif' }}
+                  className="font-serif w-full bg-transparent border-b border-white/20 py-4 text-center text-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/60 transition-colors tracking-wide"
                   autoFocus
                 />
               </motion.div>
@@ -302,14 +291,13 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                 onClick={handleNameSubmit}
                 disabled={!userName.trim()}
                 className={`
-                  flex items-center justify-center gap-3 w-full py-4 text-sm tracking-[0.3em] uppercase
+                  font-serif flex items-center justify-center gap-3 w-full py-4 text-sm tracking-[0.3em] uppercase
                   transition-all duration-500
                   ${userName.trim()
                     ? 'bg-white text-black hover:bg-white/90'
                     : 'bg-white/10 text-white/30 cursor-not-allowed'
                   }
                 `}
-                style={{ fontFamily: 'Georgia, serif' }}
               >
                 Weiter
                 <ArrowRight className="w-4 h-4" />
@@ -321,8 +309,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.3 }}
                 onClick={() => setStep('final-choice')}
-                className="mt-8 text-white/30 text-xs tracking-[0.2em] uppercase hover:text-white/60 transition-colors"
-                style={{ fontFamily: 'Georgia, serif' }}
+                className="font-serif mt-8 text-white/30 text-xs tracking-[0.2em] uppercase hover:text-white/60 transition-colors"
               >
                 Als Gast fortfahren
               </motion.button>
@@ -347,10 +334,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               className="text-center w-full max-w-md"
             >
               {/* Greeting */}
-              <h1 
-                className="text-4xl md:text-5xl font-light text-white tracking-wide mb-4"
-                style={{ fontFamily: 'Georgia, serif' }}
-              >
+              <h1 className="font-serif text-4xl md:text-5xl font-light text-white tracking-wide mb-4">
                 {userName ? `Hallo, ${userName}` : 'Willkommen'}
               </h1>
               
@@ -358,8 +342,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-white/40 text-lg tracking-wider mb-16"
-                style={{ fontFamily: 'Georgia, serif' }}
+                className="font-serif text-white/40 text-lg tracking-wider mb-16"
               >
                 Was möchtest du tun?
               </motion.p>
@@ -373,16 +356,14 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               >
                 <button
                   onClick={() => handleFinalChoice('connect')}
-                  className="w-full py-5 border border-white/20 text-white text-sm tracking-[0.2em] uppercase hover:bg-white hover:text-black transition-all duration-500"
-                  style={{ fontFamily: 'Georgia, serif' }}
+                  className="font-serif w-full py-5 border border-white/20 text-white text-sm tracking-[0.2em] uppercase hover:bg-white hover:text-black transition-all duration-500"
                 >
                   Community entdecken
                 </button>
 
                 <button
                   onClick={() => handleFinalChoice('explore')}
-                  className="w-full py-5 bg-white text-black text-sm tracking-[0.2em] uppercase hover:bg-white/90 transition-all duration-500"
-                  style={{ fontFamily: 'Georgia, serif' }}
+                  className="font-serif w-full py-5 bg-white text-black text-sm tracking-[0.2em] uppercase hover:bg-white/90 transition-all duration-500"
                 >
                   Events finden
                 </button>
