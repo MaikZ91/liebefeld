@@ -606,79 +606,92 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background flex flex-col items-center justify-center px-8"
+            className="absolute inset-0 bg-black flex items-center justify-center p-6"
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring" }}
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-gold to-amber-600 flex items-center justify-center mb-6"
-            >
-              <Users className="w-10 h-10 text-black" />
-            </motion.div>
+            <div className="w-full max-w-md">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-center"
+              >
+                {/* Title */}
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-2xl md:text-3xl font-bold text-white tracking-[0.3em] uppercase mb-3"
+                >
+                  DEIN NAME
+                </motion.h1>
+                
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-zinc-500 text-sm tracking-widest uppercase mb-8"
+                >
+                  WIE SOLLEN WIR DICH NENNEN?
+                </motion.p>
 
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-2xl font-bold text-foreground mb-2 text-center"
-            >
-              Wie sollen wir dich nennen?
-            </motion.h2>
+                {/* Input Field */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mb-6"
+                >
+                  <input
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder="Dein Name"
+                    className="w-full px-6 py-4 bg-transparent border border-zinc-700 rounded-xl text-center text-lg text-white placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors tracking-wide"
+                    autoFocus
+                  />
+                </motion.div>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-muted-foreground text-center mb-8"
-            >
-              Dein Name erscheint in der Community
-            </motion.p>
+                {/* Info Text */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-zinc-600 text-xs mb-8"
+                >
+                  Dein Name erscheint in der Community
+                </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="w-full max-w-xs"
-            >
-              <input
-                type="text"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                placeholder="Dein Name"
-                className="w-full px-6 py-4 bg-card border border-border rounded-full text-center text-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold transition-colors"
-                autoFocus
-              />
-            </motion.div>
+                {/* Continue Button */}
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                  onClick={handleNameSubmit}
+                  disabled={!userName.trim()}
+                  className={`
+                    w-full py-4 rounded-xl font-bold uppercase tracking-[0.25em] text-sm
+                    transition-all duration-300
+                    ${userName.trim()
+                      ? 'bg-white text-black hover:bg-zinc-100'
+                      : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  Weiter
+                </motion.button>
 
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              onClick={handleNameSubmit}
-              disabled={!userName.trim()}
-              className={`
-                mt-6 px-8 py-4 rounded-full font-semibold flex items-center gap-2
-                transition-all duration-300
-                ${userName.trim()
-                  ? 'bg-gold text-black hover:bg-gold/90'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed'
-                }
-              `}
-            >
-              Weiter
-              <ChevronRight className="w-5 h-5" />
-            </motion.button>
-
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              onClick={() => setStep('final-choice')}
-              className="mt-4 text-muted-foreground text-sm hover:text-foreground transition-colors"
-            >
-              Als Gast fortfahren
-            </motion.button>
+                {/* Skip as Guest */}
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                  onClick={() => setStep('final-choice')}
+                  className="mt-4 text-zinc-600 text-xs uppercase tracking-wider hover:text-zinc-400 transition-colors"
+                >
+                  Als Gast fortfahren
+                </motion.button>
+              </motion.div>
+            </div>
           </motion.div>
         )}
 
