@@ -49,7 +49,7 @@ interface OnboardingWorkflowProps {
 }
 
 export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComplete }) => {
-  const [step, setStep] = useState<OnboardingStep>('welcome');
+  const [step, setStep] = useState<OnboardingStep>('interests');
   const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set());
   const [userName, setUserName] = useState('');
   const [typedText, setTypedText] = useState('');
@@ -88,7 +88,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
   // Auto-advance Vybe preview after 3s
   useEffect(() => {
     if (step === 'vybe-preview') {
-      const timer = setTimeout(() => setStep('interests'), 3000);
+      const timer = setTimeout(() => setStep('community-tour'), 3000);
       return () => clearTimeout(timer);
     }
   }, [step]);
@@ -124,7 +124,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
   const handleInterestsContinue = () => {
     if (selectedInterests.size > 0) {
       localStorage.setItem('tribe_preferred_categories', JSON.stringify(Array.from(selectedInterests)));
-      setStep('community-tour');
+      setStep('welcome');
     }
   };
 
