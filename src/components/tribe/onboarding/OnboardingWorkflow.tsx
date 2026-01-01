@@ -302,17 +302,6 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                 Weiter
                 <ArrowRight className="w-4 h-4" />
               </motion.button>
-
-              {/* Skip option */}
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.3 }}
-                onClick={() => setStep('final-choice')}
-                className="font-serif mt-8 text-white/30 text-xs tracking-[0.2em] uppercase hover:text-white/60 transition-colors"
-              >
-                Als Gast fortfahren
-              </motion.button>
             </motion.div>
           </motion.div>
         )}
