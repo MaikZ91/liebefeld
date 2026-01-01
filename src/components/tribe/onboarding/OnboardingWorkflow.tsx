@@ -9,6 +9,7 @@ import reel3 from '@/assets/tribe/reel-3.jpg';
 import reel4 from '@/assets/tribe/reel-4.jpg';
 import reel5 from '@/assets/tribe/reel-5.jpg';
 import reel6 from '@/assets/tribe/reel-6.jpg';
+import nameBg from '@/assets/onboarding/name-bg.png';
 
 const COLLAGE_IMAGES = [reel1, reel2, reel3, reel4, reel5, reel6];
 
@@ -246,11 +247,17 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             transition={{ duration: 0.8 }}
             className="absolute inset-0 flex flex-col items-center justify-center px-8"
           >
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${nameBg})` }}
+            />
+            <div className="absolute inset-0 bg-black/40" />
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1 }}
-              className="text-center w-full max-w-md"
+              className="relative z-10 text-center w-full max-w-md"
             >
               {/* Title */}
               <h1 className="font-serif text-3xl md:text-5xl font-light text-white tracking-wide mb-4">
