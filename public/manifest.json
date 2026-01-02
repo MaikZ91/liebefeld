@@ -1,7 +1,7 @@
 {
   "name": "THE TRIBE Bielefeld - Events & Community",
   "short_name": "THE TRIBE",
-  "start_url": "/tribe",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
