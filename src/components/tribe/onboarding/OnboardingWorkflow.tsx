@@ -67,6 +67,16 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
         className="relative z-10 h-full flex flex-col items-center justify-center px-6"
       >
         <div className="w-full max-w-md text-center">
+          {/* Tagline */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="font-serif text-white/60 text-sm tracking-wider mb-4"
+          >
+            Deine Community für echte Begegnungen
+          </motion.p>
+
           {/* Title */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
