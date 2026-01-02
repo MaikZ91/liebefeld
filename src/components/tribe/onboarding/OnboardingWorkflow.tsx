@@ -72,17 +72,32 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="font-serif text-white/60 text-sm tracking-wider mb-4"
+            className="text-white/50 text-xs tracking-[0.3em] uppercase mb-6"
           >
             Deine Community für echte Begegnungen
           </motion.p>
 
-          {/* Title */}
+          {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.15 }}
+            className="flex justify-center mb-4"
+          >
+            <div className="relative w-10 h-10">
+              <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 22H22L12 2Z" className="fill-white" />
+                <circle cx="12" cy="14" r="3" className="fill-black" />
+              </svg>
+            </div>
+          </motion.div>
+
+          {/* Title - Modern sans-serif */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="font-serif text-3xl md:text-4xl font-light text-white tracking-wide mb-2"
+            className="text-3xl md:text-4xl font-black text-white tracking-[0.35em] uppercase mb-2"
           >
             THE TRIBE
           </motion.h1>
