@@ -46,6 +46,7 @@ export const NewMembersWidget: React.FC<NewMembersWidgetProps> = ({ onProfileCli
       const { data, error } = await supabase
         .from('user_profiles')
         .select('id, username, avatar, created_at')
+        .not('username', 'like', 'Guest_%')
         .order('created_at', { ascending: false })
         .limit(5);
 
