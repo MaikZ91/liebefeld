@@ -155,7 +155,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                   transition={{ delay: 0.2 }}
                   className="font-serif text-white/40 text-xs tracking-wider mb-4"
                 >
-                  Wie heißt du?
+                  Wie sollen dich andere nennen?
                 </motion.p>
 
                 <motion.div
@@ -168,7 +168,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                     type="text"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
-                    placeholder="Dein Name"
+                    placeholder="Vorname oder Spitzname"
                     className="font-serif w-full bg-transparent border-b border-white/25 py-3 text-center text-lg text-white placeholder:text-white/30 focus:outline-none focus:border-white/60 transition-colors tracking-wide"
                     autoFocus
                     onKeyDown={(e) => {
@@ -177,6 +177,9 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                       }
                     }}
                   />
+                  <p className="text-white/30 text-[10px] tracking-wider mt-2">
+                    Erscheint so in Chats und Events
+                  </p>
                 </motion.div>
               </motion.div>
             )}
