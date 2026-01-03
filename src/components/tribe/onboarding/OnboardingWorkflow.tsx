@@ -72,7 +72,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-white/50 text-xs tracking-[0.3em] uppercase mb-6"
+            className="text-white/40 text-[10px] font-medium tracking-[0.4em] uppercase mb-6"
           >
             Deine Community für echte Begegnungen
           </motion.p>
@@ -106,7 +106,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="font-serif text-white/50 text-sm tracking-wider mb-10"
+            className="text-white/40 text-xs font-light tracking-widest mb-10"
           >
             Personalisiere deine Experience
           </motion.p>
@@ -126,11 +126,11 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                 transition={{ duration: 0.4, delay: 0.6 + i * 0.05 }}
                 onClick={() => toggleInterest(cat.id)}
                 className={`
-                  font-serif py-3 px-4 text-xs tracking-[0.15em] uppercase
-                  transition-all duration-300 ease-out
+                  py-3 px-4 text-[11px] font-medium tracking-[0.2em] uppercase
+                  transition-all duration-300 ease-out rounded-sm
                   ${selectedInterests.has(cat.id)
                     ? 'bg-white text-black'
-                    : 'bg-transparent border border-white/25 text-white/70 hover:border-white/50 hover:text-white'
+                    : 'bg-transparent border border-white/20 text-white/60 hover:border-white/40 hover:text-white'
                   }
                 `}
               >
@@ -153,7 +153,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="font-serif text-white/40 text-xs tracking-wider mb-4"
+                  className="text-white/40 text-xs font-light tracking-widest mb-4"
                 >
                   Wie sollen dich andere in der Community nennen?
                 </motion.p>
@@ -169,7 +169,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="Vorname oder Spitzname"
-                    className="font-serif w-full bg-transparent border-b border-white/25 py-3 text-center text-lg text-white placeholder:text-white/30 focus:outline-none focus:border-white/60 transition-colors tracking-wide"
+                    className="w-full bg-transparent border-b border-white/20 py-3 text-center text-lg font-light text-white placeholder:text-white/25 focus:outline-none focus:border-white/50 transition-colors tracking-wide"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && canContinue) {
@@ -177,7 +177,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                       }
                     }}
                   />
-                  <p className="text-white/30 text-[10px] tracking-wider mt-2">
+                  <p className="text-white/25 text-[10px] font-light tracking-widest mt-3">
                     Erscheint so in Chats und Events
                   </p>
                 </motion.div>
@@ -193,11 +193,11 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             onClick={handleSubmit}
             disabled={!canContinue}
             className={`
-              font-serif flex items-center justify-center gap-3 w-full py-4 text-sm tracking-[0.2em] uppercase
-              transition-all duration-400
+              flex items-center justify-center gap-3 w-full py-4 text-[11px] font-medium tracking-[0.25em] uppercase rounded-sm
+              transition-all duration-300
               ${canContinue
                 ? 'bg-white text-black hover:bg-white/90'
-                : 'bg-white/10 text-white/30 cursor-not-allowed'
+                : 'bg-white/5 text-white/25 cursor-not-allowed'
               }
             `}
           >
