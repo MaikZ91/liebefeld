@@ -155,7 +155,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
                   transition={{ delay: 0.2 }}
                   className="font-serif text-white/40 text-xs tracking-wider mb-4"
                 >
-                  Wie sollen dich andere nennen?
+                  Wie sollen dich andere in der Community nennen?
                 </motion.p>
 
                 <motion.div
