@@ -108,7 +108,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             transition={{ duration: 0.8, delay: 0.4 }}
             className="font-serif text-white/50 text-sm tracking-wider mb-10"
           >
-            Wähle deine Interessen
+            Personalisiere deine Experience
           </motion.p>
 
           {/* Category Grid */}
