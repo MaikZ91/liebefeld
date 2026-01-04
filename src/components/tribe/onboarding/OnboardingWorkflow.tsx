@@ -100,12 +100,13 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             </div>
           </motion.div>
 
-          {/* Title - Same style as header */}
+          {/* Title - Modern sans-serif style */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-2xl font-extrabold tracking-[0.25em] text-white mb-2"
+            className="text-3xl font-light tracking-[0.35em] text-white mb-2 uppercase"
+            style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
           >
             THE TRIBE
           </motion.h1>
