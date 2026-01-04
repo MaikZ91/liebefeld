@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import nameBg from '@/assets/onboarding/name-bg.png';
+import { initializeFCM } from '@/services/firebaseMessaging';
 
 interface CategoryOption {
   id: string;
@@ -42,6 +43,13 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
       localStorage.setItem('tribe_preferred_categories', JSON.stringify(Array.from(selectedInterests)));
       localStorage.setItem('tribe_onboarding_completed', 'true');
       localStorage.setItem('tribe_seen_interests_dialog', 'true');
+      
+      // Initialize push notifications only after user registers with a real name
+      const selectedCity = localStorage.getItem('selectedCityName') || localStorage.getItem('selectedCityAbbr') || 'Bielefeld';
+      initializeFCM(selectedCity).catch(err => {
+        console.log('FCM initialization skipped or failed:', err);
+      });
+      
       onComplete({
         name: userName.trim(),
         interests: Array.from(selectedInterests),

@@ -8,7 +8,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { useStatusBar } from "./hooks/useStatusBar";
 import { EventProvider } from "./contexts/EventContext";
 import { initializeSupabase } from "./utils/initSupabase";
-import { initializeFCM } from "./services/firebaseMessaging";
+
 import { useEventContext } from "./contexts/EventContext";
 import { Layout } from './components/layouts/Layout';
 import OnboardingManager from './components/OnboardingManager';
@@ -60,12 +60,6 @@ function AppInitializer() {
         }
       });
 
-    // Delay Firebase initialization by 3 seconds - app is already visible by then
-    const fcmTimer = setTimeout(() => {
-      initializeFCM(selectedCity);
-    }, 3000);
-
-    return () => clearTimeout(fcmTimer);
   }, [selectedCity]);
 
   return null;
