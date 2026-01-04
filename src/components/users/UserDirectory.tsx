@@ -55,6 +55,18 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
     }
   };
 
+  // Check if avatar is a custom uploaded image (not a default assigned one)
+  const hasCustomAvatar = (avatar: string | null | undefined): boolean => {
+    if (!avatar) return false;
+    // Custom uploads are stored in Supabase storage or lovable-uploads
+    // Default avatars typically start with specific patterns like numbered files
+    const isUploadedImage = avatar.includes('supabase') || 
+                            avatar.includes('lovable-uploads') ||
+                            avatar.startsWith('blob:') ||
+                            avatar.startsWith('data:');
+    return isUploadedImage;
+  };
+
   const fetchOnlineUsers = async () => {
     try {
       setLoading(true);
@@ -70,7 +82,22 @@ const UserDirectory: React.FC<UserDirectoryProps> = ({
         throw profilesError;
       }
 
-      setUsers(userProfiles || []);
+      // Sort: prioritize profiles with custom avatars, then by last_online
+      const sortedProfiles = (userProfiles || []).sort((a, b) => {
+        const aHasCustom = hasCustomAvatar(a.avatar);
+        const bHasCustom = hasCustomAvatar(b.avatar);
+        
+        // If one has custom avatar and other doesn't, prioritize custom
+        if (aHasCustom && !bHasCustom) return -1;
+        if (!aHasCustom && bHasCustom) return 1;
+        
+        // Both have same avatar status, sort by last_online
+        const aTime = a.last_online ? new Date(a.last_online).getTime() : 0;
+        const bTime = b.last_online ? new Date(b.last_online).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      setUsers(sortedProfiles);
 
     } catch (err: any) {
       console.error('Error fetching online users:', err);
