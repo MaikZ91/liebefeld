@@ -13,7 +13,7 @@ import { ProfileView } from "./ProfileView";
 import { TribeLiveTicker } from "@/components/TribeLiveTicker";
 import { LocationBlockDialog } from "./LocationBlockDialog";
 import { AppDownloadPrompt } from "./AppDownloadPrompt";
-import { TribeUserMatcher } from "./TribeUserMatcher";
+import PeopleList from "./PeopleList";
 import { InterestsDialog } from "./InterestsDialog";
 import { MiaInlineChat } from "./MiaInlineChat";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
@@ -935,10 +935,8 @@ const TribeAppMain: React.FC<{
 
   // No longer need AUTH view - WelcomeOverlay is shown as overlay in parent
 
-  // Render User Matcher
-  if (view === ViewState.MATCHER) {
-    return <TribeUserMatcher currentUserProfile={userProfile} onBack={() => setView(ViewState.PROFILE)} />;
-  }
+  // People List dialog state
+  const [showPeopleList, setShowPeopleList] = useState(false);
 
   return (
     <div className="min-h-screen bg-black text-white pb-24 overflow-x-hidden relative font-sans selection:bg-gold selection:text-black">
@@ -1489,7 +1487,7 @@ const TribeAppMain: React.FC<{
             onToggleAttendance={(event) => handleToggleAttendance(event.id)}
             attendingEventIds={attendingEventIds}
             likedEventIds={likedEventIds}
-            onOpenMatcher={() => setView(ViewState.MATCHER)}
+            onOpenMatcher={() => setShowPeopleList(true)}
             onboardingStep={currentStep}
             onSignOut={handleSignOut}
             onProfileUpdate={(updatedProfile) => {
@@ -1561,6 +1559,13 @@ const TribeAppMain: React.FC<{
         open={showInterestsDialog}
         onClose={() => setShowInterestsDialog(false)}
         onInterestsSelected={handleInterestsSelected}
+      />
+
+      {/* --- PEOPLE LIST DIALOG --- */}
+      <PeopleList
+        open={showPeopleList}
+        onOpenChange={setShowPeopleList}
+        currentUsername={userProfile.username}
       />
     </div>
   );
