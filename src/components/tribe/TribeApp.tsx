@@ -168,6 +168,13 @@ const TribeAppMain: React.FC<{
     const saved = localStorage.getItem("tribe_selected_category");
     return saved || "ALL";
   });
+  
+  // Filter to show only events from onboarding categories (user's interests)
+  const [showOnlyMyCategories, setShowOnlyMyCategories] = useState<boolean>(() => {
+    // Default: show only my categories if user has selected any during onboarding
+    const preferredCategories = localStorage.getItem('tribe_preferred_categories');
+    return preferredCategories ? JSON.parse(preferredCategories).length > 0 : false;
+  });
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -573,6 +580,55 @@ const TribeAppMain: React.FC<{
       });
     }
 
+    // Filter by user's preferred categories from onboarding
+    if (showOnlyMyCategories && selectedCategory === "ALL") {
+      const preferredCategories = JSON.parse(localStorage.getItem('tribe_preferred_categories') || '[]') as string[];
+      if (preferredCategories.length > 0) {
+        result = result.filter((e) => {
+          const category = (e.category || "").toLowerCase();
+          const title = (e.title || "").toLowerCase();
+          const location = (e.location || "").toLowerCase();
+          const categoryGroup = getCategoryGroup(e.category || '');
+          
+          return preferredCategories.some((pref) => {
+            const prefLower = pref.toLowerCase();
+            
+            // Match ausgehen preference
+            if (prefLower === 'ausgehen' || prefLower === 'party') {
+              if (categoryGroup === 'Ausgehen') return true;
+              const ausgehenKeywords = ['party', 'club', 'disco', 'dj', 'bar', 'kneipe', 'festival'];
+              if (ausgehenKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
+            }
+            
+            // Match kreativitaet preference
+            if (prefLower === 'kreativitaet' || prefLower === 'kreativität' || prefLower === 'kultur') {
+              if (categoryGroup === 'Kreativität') return true;
+              const artKeywords = ['kreativ', 'kunst', 'art', 'theater', 'impro', 'workshop', 'vhs', 'ausstellung', 'lesung', 'comedy', 'kabarett', 'malen', 'zeichnen'];
+              if (artKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
+            }
+            
+            // Match sport preference  
+            if (prefLower === 'sport') {
+              if (categoryGroup === 'Sport') return true;
+              const sportKeywords = ['sport', 'fitness', 'yoga', 'lauf', 'run', 'training', 'hochschulsport'];
+              if (sportKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
+            }
+            
+            // Match konzerte preference
+            if (prefLower === 'konzerte' || prefLower === 'konzert') {
+              const concertKeywords = ['konzert', 'concert', 'live', 'band', 'musik'];
+              if (concertKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
+            }
+            
+            // Direct category match
+            if (category.includes(prefLower)) return true;
+            
+            return false;
+          });
+        });
+      }
+    }
+
     // Apply MIA filter if active (replaces old nexusFilter)
     // CRITICAL: Check for non-empty array - empty array should NOT filter
     if (miaFilteredEventIds && miaFilteredEventIds.length > 0) {
@@ -689,7 +745,7 @@ const TribeAppMain: React.FC<{
     });
 
     return result;
-  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, miaFilteredEventIds, selectedDate]);
+  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, miaFilteredEventIds, selectedDate, showOnlyMyCategories]);
 
   // State for infinite scroll in hero section
   const [heroLoadedCount, setHeroLoadedCount] = useState(10);
@@ -1079,6 +1135,30 @@ const TribeAppMain: React.FC<{
                   </button>
                 ))}
               </div>
+
+              {/* My Categories Toggle */}
+              {selectedCategory === "ALL" && (
+                <div className="mt-3 flex justify-between items-center">
+                  <button
+                    onClick={() => setShowOnlyMyCategories(!showOnlyMyCategories)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+                      showOnlyMyCategories 
+                        ? "bg-gold text-black" 
+                        : "bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700"
+                    }`}
+                  >
+                    <span>{showOnlyMyCategories ? "✓ Meine Interessen" : "Alle Events"}</span>
+                  </button>
+                  {showOnlyMyCategories && (
+                    <button
+                      onClick={() => setShowOnlyMyCategories(false)}
+                      className="text-[9px] text-zinc-400 hover:text-white underline"
+                    >
+                      Alle Events anzeigen
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Active MIA Filter Indicator */}
               {miaFilteredEventIds && (
