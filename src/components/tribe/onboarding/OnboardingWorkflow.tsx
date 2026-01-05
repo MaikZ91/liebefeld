@@ -115,9 +115,17 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-white/40 text-xs font-light tracking-widest mb-10"
+            className="text-white/40 text-xs font-light tracking-widest mb-2"
           >
             Personalisiere deine Experience
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="text-white/30 text-[10px] font-light tracking-wider mb-10 max-w-xs mx-auto"
+          >
+            Wir zeigen dir nur passende Events – du kannst den Filter jederzeit aufheben
           </motion.p>
 
           {/* Category Grid */}

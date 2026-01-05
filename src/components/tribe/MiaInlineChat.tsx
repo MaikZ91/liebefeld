@@ -58,15 +58,15 @@ const ONBOARDING_MESSAGES: Record<OnboardingStep, { text: string; showNext?: boo
     showNext: true,
   },
   select_interests: {
-    text: 'Was begeistert dich? Wähl deine Interessen – so finde ich Events, bei denen du Gleichgesinnte triffst! 🎯',
+    text: 'Was begeistert dich? Wähl deine Interessen – ich zeige dir dann nur passende Events! Du kannst später jederzeit „Alle Events" einblenden. 🎯',
     showInterests: true,
   },
   explain_likes: {
-    text: 'Perfekt! Ich zeige dir jetzt schon Events, die zu deinen Interessen passen – mit Match-Score! ❤️ Like Events, die dich ansprechen – so lerne ich dich noch besser kennen und finde Menschen für dich, die ähnlich ticken.',
+    text: 'Perfekt! Ab jetzt siehst du nur Events aus deinen Kategorien – mit Match-Score! ❤️ Like Events, die dich ansprechen – so lerne ich dich noch besser kennen. Tippe oben auf "Alle Events" um den Filter aufzuheben.',
     showHeart: true,
   },
   waiting_for_like: {
-    text: 'Scroll durch die Events und like das erste, das dich anspricht! Vielleicht trifft sich dort schon deine neue Crew? 👇',
+    text: 'Scroll durch deine Events und like das erste, das dich anspricht! Du siehst gerade nur Events aus deinen Interessen. 👇',
   },
   // Community onboarding steps - handled in TribeCommunityBoard
   community_intro: { text: '' },
