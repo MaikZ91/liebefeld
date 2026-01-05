@@ -603,7 +603,7 @@ const TribeAppMain: React.FC<{
             // Match kreativitaet preference
             if (prefLower === 'kreativitaet' || prefLower === 'kreativität' || prefLower === 'kultur') {
               if (categoryGroup === 'Kreativität') return true;
-              const artKeywords = ['kreativ', 'kunst', 'art', 'theater', 'impro', 'workshop', 'vhs', 'ausstellung', 'lesung', 'comedy', 'kabarett', 'malen', 'zeichnen'];
+              const artKeywords = ['kreativ', 'kunst', 'art', 'theater', 'impro', 'workshop', 'vhs', 'volkshochschule', 'ausstellung', 'lesung', 'comedy', 'kabarett', 'malen', 'zeichnen', 'krakeln'];
               if (artKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
             }
             
