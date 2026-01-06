@@ -405,48 +405,6 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
         {/* AI Summary - Shown when expanded */}
         {isExpanded && (
           <div className="px-1 pb-3 animate-fadeIn">
-            {/* Event Details Header */}
-            <div className="bg-gradient-to-r from-gold/10 to-transparent border border-gold/20 rounded-lg p-3 mb-3">
-              <div className="flex items-start gap-3">
-                {/* Date/Time Block */}
-                <div className="flex-shrink-0 bg-black/50 rounded-lg p-2 text-center min-w-[60px]">
-                  <div className="text-gold text-lg font-bold">{new Date(event.date).getDate()}</div>
-                  <div className="text-zinc-400 text-[9px] uppercase tracking-wide">
-                    {new Date(event.date).toLocaleDateString('de-DE', { month: 'short' })}
-                  </div>
-                  <div className="text-white text-xs font-mono mt-1">{formatTime(event.time)}</div>
-                </div>
-                {/* Event Info */}
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-white font-semibold text-sm leading-tight mb-1">{event.title}</h4>
-                  {event.location && (
-                    <div className="flex items-start gap-1 text-zinc-400 text-[10px] mb-1">
-                      <span className="text-gold">📍</span>
-                      <span className="leading-tight">{event.location}</span>
-                    </div>
-                  )}
-                  {event.category && (
-                    <span className="inline-block bg-zinc-800 text-zinc-400 text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide">
-                      {event.category}
-                    </span>
-                  )}
-                </div>
-              </div>
-              {/* Match Score & Attendees */}
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-zinc-800/50">
-                {matchScore !== undefined && (
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles size={12} className="text-gold" />
-                    <span className="text-gold text-xs font-bold">{matchScore}% Match</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-1.5 text-zinc-500 text-[10px]">
-                  <Users size={10} />
-                  <span>{currentAttendees} interessiert</span>
-                </div>
-              </div>
-            </div>
-
             {/* YouTube Video Preview */}
             {(loadingVideo || youtubeVideo) && (
               <div className="mb-3">
@@ -490,11 +448,14 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
               </div>
             )}
             
-            {/* AI Vybe Description */}
-            <div className="bg-zinc-900/50 border-l-2 border-gold px-3 py-2 relative mb-3 rounded-r-lg">
-              <div className="flex items-center gap-1.5 mb-1.5">
+            {/* AI Vybe Description with integrated details */}
+            <div className="bg-zinc-900/50 border-l-2 border-gold px-3 py-2.5 relative mb-3 rounded-r-lg">
+              <div className="flex items-center gap-1.5 mb-2">
                 <Sparkles size={10} className="text-gold" />
                 <span className="text-[9px] text-gold uppercase tracking-wider font-semibold">MIA's Vybe</span>
+                {matchScore !== undefined && (
+                  <span className="ml-auto text-gold text-[10px] font-bold">{matchScore}% Match</span>
+                )}
               </div>
               {loadingSummary ? (
                 <div className="flex items-center gap-2">
@@ -502,8 +463,40 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                   <span className="text-[10px] text-zinc-500">Analysiere Event...</span>
                 </div>
               ) : summary ? (
-                <div>
-                  <p className="text-[11px] text-zinc-300 leading-relaxed italic">"{summary}"</p>
+                <div className="space-y-2">
+                  {/* Integrated Event Details in flowing text */}
+                  <p className="text-[11px] text-zinc-300 leading-relaxed">
+                    <span className="text-gold font-semibold">{event.title}</span>
+                    {' '}findet am{' '}
+                    <span className="text-white font-medium">
+                      {new Date(event.date).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </span>
+                    {event.time && (
+                      <>
+                        {' '}um{' '}
+                        <span className="text-white font-mono font-medium">{formatTime(event.time)} Uhr</span>
+                      </>
+                    )}
+                    {event.location && (
+                      <>
+                        {' '}im{' '}
+                        <span className="text-white font-medium">{event.location}</span>
+                      </>
+                    )}
+                    {' '}statt.
+                    {event.category && (
+                      <span className="text-zinc-500 text-[10px]"> ({event.category})</span>
+                    )}
+                  </p>
+                  {/* AI Summary */}
+                  <p className="text-[11px] text-zinc-300 leading-relaxed italic border-t border-zinc-800 pt-2">
+                    "{summary}"
+                  </p>
+                  {/* Attendees info */}
+                  <div className="flex items-center gap-1.5 text-zinc-500 text-[10px] pt-1">
+                    <Users size={10} />
+                    <span>{currentAttendees} Leute interessiert</span>
+                  </div>
                 </div>
               ) : null}
             </div>
