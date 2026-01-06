@@ -90,13 +90,13 @@ const EVENT_IMAGES: Record<string, string> = {
   workshop: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop',
   seminar: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop',
   
-  // Art Night / Sip & Sketch - using local generated images
-  'art night': '/src/assets/events/art-night.jpg',
-  artnight: '/src/assets/events/art-night.jpg',
-  'sip & sketch': '/src/assets/events/sip-sketch.jpg',
-  'sip&sketch': '/src/assets/events/sip-sketch.jpg',
-  sipsketch: '/src/assets/events/sip-sketch.jpg',
-  'sip and sketch': '/src/assets/events/sip-sketch.jpg',
+  // Art Night / Sip & Sketch
+  'art night': '/images/events/art-night.jpg',
+  artnight: '/images/events/art-night.jpg',
+  'sip & sketch': '/images/events/sip-sketch.jpg',
+  'sip&sketch': '/images/events/sip-sketch.jpg',
+  sipsketch: '/images/events/sip-sketch.jpg',
+  'sip and sketch': '/images/events/sip-sketch.jpg',
 };
 
 // Default image for unknown events
