@@ -365,30 +365,36 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                             </div>
           </div>
 
-          {/* Quick Actions - Minimal */}
+          {/* Quick Actions - Vybe prominent */}
           {!isExpanded && (
-            <div className="flex gap-1.5 flex-shrink-0">
+            <div className="flex gap-1 flex-shrink-0 items-center">
+              {/* VYBE Button - Made prominent */}
               <button 
                 onClick={handleGetSummary}
                 disabled={loadingSummary}
-                className={`p-1 transition-colors ${summary ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
-                title="Get Vibe"
+                className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 transition-all ${
+                  summary 
+                    ? 'bg-gold text-black' 
+                    : 'bg-gradient-to-r from-gold/20 to-amber-500/20 text-gold border border-gold/40 hover:bg-gold hover:text-black'
+                }`}
+                title="Vybe anzeigen"
               >
                 {loadingSummary ? (
-                  <div className="w-3 h-3 border border-zinc-600 border-t-gold rounded-full animate-spin" />
+                  <div className="w-3 h-3 border border-gold border-t-black rounded-full animate-spin" />
                 ) : (
-                  <Sparkles size={12} fill={summary ? "currentColor" : "none"} />
+                  <Sparkles size={10} fill={summary ? "currentColor" : "none"} />
                 )}
+                <span>Vybe</span>
               </button>
               <button 
                 onClick={(e) => handleInteractionClick('dislike', e)}
-                className="p-1 text-zinc-600 hover:text-red-500 transition-colors"
+                className="p-1 text-zinc-700 hover:text-red-500 transition-colors"
               >
                 <X size={12} />
               </button>
               <button 
                 onClick={(e) => handleInteractionClick('like', e)}
-                className={`p-1 transition-colors ${isLiked ? 'text-gold' : 'text-zinc-600 hover:text-gold'}`}
+                className={`p-1.5 rounded-full transition-all ${isLiked ? 'text-gold bg-gold/20' : 'text-zinc-600 hover:text-gold hover:bg-gold/10'}`}
               >
                 <Heart size={12} fill={isLiked ? "currentColor" : "none"} />
               </button>
@@ -398,17 +404,62 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
 
         {/* AI Summary - Shown when expanded */}
         {isExpanded && (
-          <div className="px-1 pb-2 animate-fadeIn">
+          <div className="px-1 pb-3 animate-fadeIn">
+            {/* Event Details Header */}
+            <div className="bg-gradient-to-r from-gold/10 to-transparent border border-gold/20 rounded-lg p-3 mb-3">
+              <div className="flex items-start gap-3">
+                {/* Date/Time Block */}
+                <div className="flex-shrink-0 bg-black/50 rounded-lg p-2 text-center min-w-[60px]">
+                  <div className="text-gold text-lg font-bold">{new Date(event.date).getDate()}</div>
+                  <div className="text-zinc-400 text-[9px] uppercase tracking-wide">
+                    {new Date(event.date).toLocaleDateString('de-DE', { month: 'short' })}
+                  </div>
+                  <div className="text-white text-xs font-mono mt-1">{formatTime(event.time)}</div>
+                </div>
+                {/* Event Info */}
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-white font-semibold text-sm leading-tight mb-1">{event.title}</h4>
+                  {event.location && (
+                    <div className="flex items-start gap-1 text-zinc-400 text-[10px] mb-1">
+                      <span className="text-gold">📍</span>
+                      <span className="leading-tight">{event.location}</span>
+                    </div>
+                  )}
+                  {event.category && (
+                    <span className="inline-block bg-zinc-800 text-zinc-400 text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wide">
+                      {event.category}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {/* Match Score & Attendees */}
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-zinc-800/50">
+                {matchScore !== undefined && (
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles size={12} className="text-gold" />
+                    <span className="text-gold text-xs font-bold">{matchScore}% Match</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 text-zinc-500 text-[10px]">
+                  <Users size={10} />
+                  <span>{currentAttendees} interessiert</span>
+                </div>
+              </div>
+            </div>
+
             {/* YouTube Video Preview */}
             {(loadingVideo || youtubeVideo) && (
-              <div className="mb-2">
+              <div className="mb-3">
                 {loadingVideo ? (
-                  <div className="aspect-video bg-zinc-900 rounded flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-zinc-600 border-t-gold rounded-full animate-spin" />
+                  <div className="aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-6 h-6 border-2 border-zinc-600 border-t-gold rounded-full animate-spin" />
+                      <span className="text-[9px] text-zinc-500">Video wird geladen...</span>
+                    </div>
                   </div>
                 ) : youtubeVideo && !showVideo ? (
                   <div 
-                    className="relative aspect-video bg-zinc-900 rounded overflow-hidden cursor-pointer group"
+                    className="relative aspect-video bg-zinc-900 rounded-lg overflow-hidden cursor-pointer group"
                     onClick={(e) => { e.stopPropagation(); setShowVideo(true); }}
                   >
                     <img 
@@ -417,16 +468,16 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-colors">
-                      <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center shadow-lg">
-                        <Play size={18} className="text-white ml-0.5" fill="white" />
+                      <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                        <Play size={20} className="text-white ml-0.5" fill="white" />
                       </div>
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
-                      <p className="text-[8px] text-white/80 truncate">{youtubeVideo.channelTitle}</p>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <p className="text-[9px] text-white/80 truncate">{youtubeVideo.channelTitle}</p>
                     </div>
                   </div>
                 ) : youtubeVideo && showVideo ? (
-                  <div className="aspect-video rounded overflow-hidden">
+                  <div className="aspect-video rounded-lg overflow-hidden">
                     <iframe
                       src={`https://www.youtube.com/embed/${youtubeVideo.videoId}?autoplay=1`}
                       title={youtubeVideo.title}
@@ -439,53 +490,66 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
               </div>
             )}
             
-            <div className="bg-zinc-900/50 border-l-2 border-gold px-2 py-1.5 relative mb-2">
+            {/* AI Vybe Description */}
+            <div className="bg-zinc-900/50 border-l-2 border-gold px-3 py-2 relative mb-3 rounded-r-lg">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Sparkles size={10} className="text-gold" />
+                <span className="text-[9px] text-gold uppercase tracking-wider font-semibold">MIA's Vybe</span>
+              </div>
               {loadingSummary ? (
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 border border-zinc-600 border-t-gold rounded-full animate-spin" />
-                  <span className="text-[10px] text-zinc-500">Loading Vibe...</span>
+                  <span className="text-[10px] text-zinc-500">Analysiere Event...</span>
                 </div>
               ) : summary ? (
                 <div>
-                  <p className="text-[10px] text-zinc-300 leading-relaxed pr-4 mb-1.5">"{summary}"</p>
-                  {event.link && (
-                    <a 
-                      href={event.link} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 text-[9px] text-zinc-500 hover:text-gold transition-colors"
-                    >
-                      <ExternalLink size={8} />
-                      Mehr erfahren
-                    </a>
-                  )}
+                  <p className="text-[11px] text-zinc-300 leading-relaxed italic">"{summary}"</p>
                 </div>
               ) : null}
             </div>
-            {/* Actions row when expanded */}
-            <div className="flex justify-between items-center">
-              <div className="flex gap-2">
-                <button 
-                  onClick={(e) => handleInteractionClick('dislike', e)}
-                  className="px-2 py-1 text-zinc-600 hover:text-red-500 transition-colors text-[9px] border border-zinc-800 rounded"
-                >
-                  <X size={10} className="inline mr-1" /> Skip
-                </button>
-                <button 
-                  onClick={(e) => handleInteractionClick('like', e)}
-                  className={`px-2 py-1 transition-colors text-[9px] border rounded ${isLiked ? 'text-gold border-gold' : 'text-zinc-600 border-zinc-800 hover:text-gold hover:border-gold'}`}
-                >
-                  <Heart size={10} fill={isLiked ? "currentColor" : "none"} className="inline mr-1" /> Like
-                </button>
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setIsExpanded(false); setSummary(null); }}
-                className="text-[9px] text-zinc-500 hover:text-white px-2 py-1"
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button 
+                onClick={(e) => handleInteractionClick('dislike', e)}
+                className="flex-1 px-3 py-2 bg-zinc-800/50 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 transition-all text-xs border border-zinc-700 rounded-lg flex items-center justify-center gap-1.5"
               >
-                Schließen
+                <X size={12} /> Nicht mein Ding
+              </button>
+              <button 
+                onClick={(e) => handleInteractionClick('like', e)}
+                className={`flex-1 px-3 py-2 transition-all text-xs border rounded-lg flex items-center justify-center gap-1.5 ${
+                  isLiked 
+                    ? 'bg-gold/20 text-gold border-gold' 
+                    : 'bg-zinc-800/50 text-zinc-300 border-zinc-700 hover:text-gold hover:border-gold hover:bg-gold/10'
+                }`}
+              >
+                <Heart size={12} fill={isLiked ? "currentColor" : "none"} /> 
+                {isLiked ? 'Geliked!' : 'Like'}
               </button>
             </div>
+
+            {/* External Link */}
+            {event.link && (
+              <a 
+                href={event.link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="mt-2 w-full block text-center py-2 text-[10px] text-zinc-500 hover:text-gold transition-colors border border-zinc-800 rounded-lg hover:border-gold/30"
+              >
+                <ExternalLink size={10} className="inline mr-1" />
+                Mehr Infos & Tickets
+              </a>
+            )}
+
+            {/* Close Button */}
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsExpanded(false); setSummary(null); setShowVideo(false); }}
+              className="mt-2 w-full text-[10px] text-zinc-600 hover:text-white py-1.5 transition-colors"
+            >
+              ▲ Schließen
+            </button>
           </div>
         )}
       </div>
