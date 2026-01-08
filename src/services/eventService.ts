@@ -48,7 +48,14 @@ export const fetchSupabaseEvents = async (selectedCity?: string, currentDate?: s
     console.log('踏 [fetchSupabaseEvents] Raw data received:', eventsData?.length || 0, 'events');
     
     if (eventsData) {
-      const transformedEvents = eventsData.map(event => ({
+      // Filter out events with location in title (e.g. "Event (@Location)")
+      // Keep only clean versions with location in separate field
+      const cleanEvents = eventsData.filter(event => {
+        const hasLocationInTitle = /\(@[^)]+\)/.test(event.title || '');
+        return !hasLocationInTitle;
+      });
+      
+      const transformedEvents = cleanEvents.map(event => ({
         id: event.id.toString(),
         title: event.title,
         description: event.description || '',
