@@ -1,6 +1,15 @@
 import { TribeEvent } from '@/types/tribe';
 
 /**
+ * Check if event has location in title (duplicate entry)
+ * Returns true if this is a "dirty" entry that should be filtered out
+ */
+export const hasLocationInTitle = (title: string): boolean => {
+  // Match titles ending with (...) like "TRIBE FUSSBALL (@Obersee Fussballplatz)"
+  return /\([^)]+\)\s*$/.test(title || '');
+};
+
+/**
  * Convert community_events to TribeEvent format
  */
 export const convertToTribeEvent = (event: any): TribeEvent => {
