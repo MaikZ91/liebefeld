@@ -48,10 +48,10 @@ export const fetchSupabaseEvents = async (selectedCity?: string, currentDate?: s
     console.log('踏 [fetchSupabaseEvents] Raw data received:', eventsData?.length || 0, 'events');
     
     if (eventsData) {
-      // Filter out events with location in title (e.g. "Event (@Location)")
+      // Filter out events with location in title (e.g. "Event (@Location)" or "Event (Location)")
       // Keep only clean versions with location in separate field
       const cleanEvents = eventsData.filter(event => {
-        const hasLocationInTitle = /\(@[^)]+\)/.test(event.title || '');
+        const hasLocationInTitle = /\([^)]+\)\s*$/.test(event.title || '');
         return !hasLocationInTitle;
       });
       
