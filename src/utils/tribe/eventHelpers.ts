@@ -1,36 +1,50 @@
 import { TribeEvent } from '@/types/tribe';
 
 /**
- * Check if event has location in title (duplicate entry)
- * Returns true if this is a "dirty" entry that should be filtered out
- * Only matches (@...) pattern, not regular parentheses
+ * Check if event has location in title pattern (@...)
  */
 export const hasLocationInTitle = (title: string): boolean => {
-  // Match titles containing (@...) like "TRIBE FUSSBALL (@Obersee Fussballplatz)"
   return /\(@[^)]+\)/.test(title || '');
+};
+
+/**
+ * Extract location from title if it contains (@location) pattern
+ * Returns { cleanTitle, extractedLocation }
+ */
+const extractLocationFromTitle = (title: string, existingLocation?: string | null): { cleanTitle: string; location: string | null } => {
+  const match = title?.match(/\(@([^)]+)\)\s*$/);
+  if (match) {
+    return {
+      cleanTitle: title.replace(/\s*\(@[^)]+\)\s*$/, '').trim(),
+      location: existingLocation || match[1]
+    };
+  }
+  return { cleanTitle: title, location: existingLocation || null };
 };
 
 /**
  * Convert community_events to TribeEvent format
  */
 export const convertToTribeEvent = (event: any): TribeEvent => {
+  // Extract location from title if present (e.g. "TRIBE FUSSBALL (@Obersee)")
+  const { cleanTitle, location } = extractLocationFromTitle(event.title, event.location);
+  
   return {
     id: event.id,
     date: event.date,
     time: event.time,
-    title: event.title,
-    event: event.title,
+    title: cleanTitle,
+    event: cleanTitle,
     category: event.category,
     description: event.description,
     link: event.link || '',
     image_url: event.image_url,
     city: event.city,
-    location: event.location,
-    created_at: event.created_at, // For "New" badge detection
-    source: event.source, // For "TRIBE" badge detection
+    location: location,
+    created_at: event.created_at,
+    source: event.source,
     likes: event.likes || 0,
     liked_by_users: event.liked_by_users,
-    // Calculate match score based on likes and recency
     matchScore: calculateMatchScore(event),
     attendees: event.likes || Math.floor(Math.random() * 50) + 10,
     vibe: inferVibe(event),
