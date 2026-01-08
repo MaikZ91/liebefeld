@@ -3,10 +3,11 @@ import { TribeEvent } from '@/types/tribe';
 /**
  * Check if event has location in title (duplicate entry)
  * Returns true if this is a "dirty" entry that should be filtered out
+ * Only matches (@...) pattern, not regular parentheses
  */
 export const hasLocationInTitle = (title: string): boolean => {
-  // Match titles ending with (...) like "TRIBE FUSSBALL (@Obersee Fussballplatz)"
-  return /\([^)]+\)\s*$/.test(title || '');
+  // Match titles containing (@...) like "TRIBE FUSSBALL (@Obersee Fussballplatz)"
+  return /\(@[^)]+\)/.test(title || '');
 };
 
 /**
