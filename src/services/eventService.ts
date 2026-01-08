@@ -48,41 +48,49 @@ export const fetchSupabaseEvents = async (selectedCity?: string, currentDate?: s
     console.log('踏 [fetchSupabaseEvents] Raw data received:', eventsData?.length || 0, 'events');
     
     if (eventsData) {
-      // Filter out events with location in title (e.g. "Event (@Location)" or "Event (Location)")
-      // Keep only clean versions with location in separate field
-      const cleanEvents = eventsData.filter(event => {
-        const hasLocationInTitle = /\([^)]+\)\s*$/.test(event.title || '');
-        return !hasLocationInTitle;
-      });
-      
-      const transformedEvents = cleanEvents.map(event => ({
-        id: event.id.toString(),
-        title: event.title,
-        description: event.description || '',
-        date: event.date,
-        time: event.time?.toString() || '00:00',
-        location: event.location || '',
-        organizer: event.organizer || '',
-        category: event.category,
-        link: event.link,
-        image_url: event.image_url,
-        image_urls: event.image_url ? [event.image_url] : [], // Shim for backward compatibility
-        likes: event.likes || 0,
-        liked_by_users: Array.isArray(event.liked_by_users) ? event.liked_by_users as Array<{username: string; avatar_url?: string | null; timestamp: string}> : [],
-        rsvp_yes: event.rsvp_yes || 0,
-        rsvp_no: event.rsvp_no || 0,
-        rsvp_maybe: event.rsvp_maybe || 0,
-        source: (event.source as 'community' | 'github' | 'ai_generated') || 'community',
-        external_id: event.external_id,
-        is_paid: event.is_paid || false,
-        created_at: event.created_at, // Add created_at for DB-based NEW badge
-        city: event.city || undefined,
-        rsvp: {
-          yes: event.rsvp_yes || 0,
-          no: event.rsvp_no || 0,
-          maybe: event.rsvp_maybe || 0
+      // Helper to extract location from title if it contains (@location) pattern
+      const extractLocationFromTitle = (title: string, existingLocation?: string | null): { cleanTitle: string; location: string } => {
+        const match = title?.match(/\(@([^)]+)\)\s*$/);
+        if (match) {
+          return {
+            cleanTitle: title.replace(/\s*\(@[^)]+\)\s*$/, '').trim(),
+            location: existingLocation || match[1]
+          };
         }
-      }));
+        return { cleanTitle: title, location: existingLocation || '' };
+      };
+      
+      const transformedEvents = eventsData.map(event => {
+        const { cleanTitle, location } = extractLocationFromTitle(event.title, event.location);
+        return {
+          id: event.id.toString(),
+          title: cleanTitle,
+          description: event.description || '',
+          date: event.date,
+          time: event.time?.toString() || '00:00',
+          location: location,
+          organizer: event.organizer || '',
+          category: event.category,
+          link: event.link,
+          image_url: event.image_url,
+          image_urls: event.image_url ? [event.image_url] : [],
+          likes: event.likes || 0,
+          liked_by_users: Array.isArray(event.liked_by_users) ? event.liked_by_users as Array<{username: string; avatar_url?: string | null; timestamp: string}> : [],
+          rsvp_yes: event.rsvp_yes || 0,
+          rsvp_no: event.rsvp_no || 0,
+          rsvp_maybe: event.rsvp_maybe || 0,
+          source: (event.source as 'community' | 'github' | 'ai_generated') || 'community',
+          external_id: event.external_id,
+          is_paid: event.is_paid || false,
+          created_at: event.created_at,
+          city: event.city || undefined,
+          rsvp: {
+            yes: event.rsvp_yes || 0,
+            no: event.rsvp_no || 0,
+            maybe: event.rsvp_maybe || 0
+          }
+        };
+      });
       return transformedEvents;
     }
     

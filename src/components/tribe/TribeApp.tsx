@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ViewState, TribeEvent, Post, UserProfile, NexusFilter } from "@/types/tribe";
 import { UserProfile as ChatUserProfile } from "@/types/chatTypes";
-import { convertToTribeEvent, hasLocationInTitle } from "@/utils/tribe/eventHelpers";
+import { convertToTribeEvent } from "@/utils/tribe/eventHelpers";
 import { groupSimilarEvents, GroupedEvent } from "@/utils/tribe/eventGrouping";
 import { getCategoryGroup } from "@/utils/eventCategoryGroups";
 import { TribeEventCard } from "./TribeEventCard";
@@ -420,9 +420,7 @@ const TribeAppMain: React.FC<{
 
         if (error) throw error;
         
-        // Filter out events with location in title (duplicates)
-        const cleanData = (data || []).filter(e => !hasLocationInTitle(e.title));
-        const tribeEvents = cleanData.map(convertToTribeEvent);
+        const tribeEvents = (data || []).map(convertToTribeEvent);
         
         // Merge with existing events
         setAllEvents((prev) => {
@@ -454,9 +452,7 @@ const TribeAppMain: React.FC<{
         
         console.log("🔄 [fetchEvents] Received:", data?.length, "events");
         
-        // Filter out events with location in title (duplicates)
-        const cleanData = (data || []).filter(e => !hasLocationInTitle(e.title));
-        const tribeEvents = cleanData.map(convertToTribeEvent);
+        const tribeEvents = (data || []).map(convertToTribeEvent);
         
         if (isInitial) {
           setAllEvents(tribeEvents);
