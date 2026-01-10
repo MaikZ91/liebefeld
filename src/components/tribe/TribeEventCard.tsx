@@ -193,8 +193,17 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
     e.stopPropagation();
     if (type === 'dislike') {
       setSwipeDirection('left');
-    }
-    if (onInteraction) {
+      if (onInteraction) {
+        // For grouped events, collect all event IDs and pass the primary one
+        // The parent will handle hiding all related events
+        const allEventIds = allTimes && allTimes.length > 1 
+          ? allTimes.map(slot => slot.eventId)
+          : [event.id];
+        
+        // Call onInteraction for each event ID to ensure all get hidden
+        allEventIds.forEach(id => onInteraction(id, type));
+      }
+    } else if (onInteraction) {
       onInteraction(event.id, type);
     }
   };
