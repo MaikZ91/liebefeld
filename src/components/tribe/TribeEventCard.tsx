@@ -599,13 +599,13 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
                 {/* Like/Dislike - TOP RIGHT */}
                 <div className="absolute right-2 top-2 flex gap-1.5 z-20">
                   <button 
-                    onClick={(e) => { e.stopPropagation(); onInteraction?.(event.id, 'dislike'); }}
+                    onClick={(e) => handleInteractionClick('dislike', e)}
                     className="w-7 h-7 rounded-full bg-black/60 border border-zinc-600 flex items-center justify-center text-zinc-300 hover:text-white backdrop-blur-sm"
                   >
                     <X size={14} />
                   </button>
                   <button 
-                    onClick={(e) => { e.stopPropagation(); onInteraction?.(event.id, 'like'); }}
+                    onClick={(e) => handleInteractionClick('like', e)}
                     className={`w-7 h-7 rounded-full bg-black/60 border flex items-center justify-center transition-colors backdrop-blur-sm ${isLiked ? 'border-gold text-gold bg-gold/20' : 'border-zinc-600 text-zinc-300 hover:border-gold hover:text-gold'}`}
                   >
                     <Heart size={14} fill={isLiked ? "currentColor" : "none"} />
