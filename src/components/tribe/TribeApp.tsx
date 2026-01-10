@@ -55,7 +55,7 @@ const CITIES = [
 ];
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
-const CATEGORIES = ["ALL", "PARTY", "ART", "CONCERT", "SPORT"];
+const CATEGORIES = ["ALL", "FÜR MICH", "PARTY", "ART", "CONCERT", "SPORT"];
 
 const AVATAR_OPTIONS = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150",
@@ -169,12 +169,7 @@ const TribeAppMain: React.FC<{
     return saved || "ALL";
   });
   
-  // Filter to show only events from onboarding categories (user's interests)
-  const [showOnlyMyCategories, setShowOnlyMyCategories] = useState<boolean>(() => {
-    // Default: show only my categories if user has selected any during onboarding
-    const preferredCategories = localStorage.getItem('tribe_preferred_categories');
-    return preferredCategories ? JSON.parse(preferredCategories).length > 0 : false;
-  });
+  // "FÜR MICH" filter is now integrated into selectedCategory
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -581,7 +576,7 @@ const TribeAppMain: React.FC<{
     }
 
     // Filter by user's preferred categories from onboarding
-    if (showOnlyMyCategories && selectedCategory === "ALL") {
+    if (selectedCategory === "FÜR MICH") {
       const preferredCategories = JSON.parse(localStorage.getItem('tribe_preferred_categories') || '[]') as string[];
       if (preferredCategories.length > 0) {
         result = result.filter((e) => {
@@ -745,7 +740,7 @@ const TribeAppMain: React.FC<{
     });
 
     return result;
-  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, miaFilteredEventIds, selectedDate, showOnlyMyCategories]);
+  }, [allEvents, selectedCity, selectedCategory, hiddenEventIds, likedEventIds, miaFilteredEventIds, selectedDate]);
 
   // State for infinite scroll in hero section
   const [heroLoadedCount, setHeroLoadedCount] = useState(10);
@@ -1122,43 +1117,32 @@ const TribeAppMain: React.FC<{
           <div className="animate-fadeIn pb-20">
             {/* Category Tabs */}
             <div className="px-6 pt-2 pb-4 bg-gradient-to-b from-black via-black to-transparent">
-              <div className="flex gap-6 overflow-x-auto no-scrollbar pb-3">
-                {CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors ${
-                      selectedCategory === cat ? "text-gold" : "text-zinc-600 hover:text-zinc-400"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-3">
+                {CATEGORIES.map((cat) => {
+                  const isForMe = cat === "FÜR MICH";
+                  const hasPreferences = (() => {
+                    const prefs = localStorage.getItem('tribe_preferred_categories');
+                    return prefs ? JSON.parse(prefs).length > 0 : false;
+                  })();
+                  
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                        selectedCategory === cat 
+                          ? isForMe ? "text-gold bg-gold/20 px-2 py-1 rounded-full" : "text-gold" 
+                          : "text-zinc-600 hover:text-zinc-400"
+                      } ${isForMe && !hasPreferences ? "opacity-50" : ""}`}
+                      title={isForMe && !hasPreferences ? "Wähle zuerst deine Interessen im Profil" : undefined}
+                    >
+                      {isForMe && <span>❤️</span>}
+                      {cat}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* My Categories Toggle */}
-              {selectedCategory === "ALL" && (
-                <div className="mt-3 flex justify-between items-center">
-                  <button
-                    onClick={() => setShowOnlyMyCategories(!showOnlyMyCategories)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
-                      showOnlyMyCategories 
-                        ? "bg-gold text-black" 
-                        : "bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700"
-                    }`}
-                  >
-                    <span>{showOnlyMyCategories ? "✓ Meine Interessen" : "Alle Events"}</span>
-                  </button>
-                  {showOnlyMyCategories && (
-                    <button
-                      onClick={() => setShowOnlyMyCategories(false)}
-                      className="text-[9px] text-zinc-400 hover:text-white underline"
-                    >
-                      Alle Events anzeigen
-                    </button>
-                  )}
-                </div>
-              )}
 
               {/* Active MIA Filter Indicator */}
               {miaFilteredEventIds && (
