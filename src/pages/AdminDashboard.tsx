@@ -285,31 +285,28 @@ export default function AdminDashboard() {
                   stroke="hsl(var(--primary))" 
                   fillOpacity={1}
                   fill="url(#colorActivity)"
+                  label={({ x, y, payload }) => {
+                    const data = payload as HourlyData;
+                    if (!data.users || data.users.length === 0) return null;
+                    const displayName = data.users.length === 1 
+                      ? data.users[0].substring(0, 8) 
+                      : `${data.users[0].substring(0, 6)}+${data.users.length - 1}`;
+                    return (
+                      <text 
+                        x={x} 
+                        y={y - 8} 
+                        fill="hsl(var(--muted-foreground))" 
+                        fontSize={8} 
+                        textAnchor="middle"
+                      >
+                        {displayName}
+                      </text>
+                    );
+                  }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
-          
-          {/* User Timeline - shows active users per hour */}
-          <div className="px-6 pb-4 overflow-x-auto">
-            <div className="flex gap-1 min-w-max">
-              {hourlyData.filter(h => h.users.length > 0).map((hourData, idx) => (
-                <div key={idx} className="flex flex-col items-start bg-muted/30 rounded-lg px-2 py-1.5 min-w-[80px]">
-                  <span className="text-[10px] text-muted-foreground font-medium mb-1">{hourData.hour}</span>
-                  <div className="flex flex-wrap gap-0.5">
-                    {hourData.users.slice(0, 3).map((user, i) => (
-                      <span key={i} className="text-[10px] bg-primary/20 text-primary px-1 py-0.5 rounded truncate max-w-[70px]">
-                        {user}
-                      </span>
-                    ))}
-                    {hourData.users.length > 3 && (
-                      <span className="text-[10px] text-muted-foreground">+{hourData.users.length - 3}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </Card>
 
         {/* Tabs for detailed views */}
