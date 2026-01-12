@@ -29,6 +29,7 @@ interface ActivityStats {
 interface HourlyData {
   hour: string;
   count: number;
+  users: string[];
 }
 
 export default function AdminDashboard() {
@@ -139,29 +140,36 @@ export default function AdminDashboard() {
 
       const { data } = await supabase
         .from('user_activity_logs')
-        .select('created_at')
+        .select('created_at, username')
         .gte('created_at', last24h.toISOString())
         .order('created_at', { ascending: true });
 
-      // Group by hour
-      const hourCounts: Record<string, number> = {};
+      // Group by hour with user tracking
+      const hourData: Record<string, { count: number; users: Set<string> }> = {};
       
       for (let i = 0; i < 24; i++) {
         const hour = startOfHour(subHours(now, 23 - i));
         const key = format(hour, 'HH:mm');
-        hourCounts[key] = 0;
+        hourData[key] = { count: 0, users: new Set() };
       }
 
       data?.forEach(item => {
         const hour = format(new Date(item.created_at), 'HH:mm');
         const roundedHour = hour.split(':')[0] + ':00';
-        if (hourCounts[roundedHour] !== undefined) {
-          hourCounts[roundedHour]++;
+        if (hourData[roundedHour] !== undefined) {
+          hourData[roundedHour].count++;
+          if (item.username) {
+            hourData[roundedHour].users.add(item.username);
+          }
         }
       });
 
       setHourlyData(
-        Object.entries(hourCounts).map(([hour, count]) => ({ hour, count }))
+        Object.entries(hourData).map(([hour, data]) => ({ 
+          hour, 
+          count: data.count,
+          users: Array.from(data.users)
+        }))
       );
     } catch (error) {
       console.error('Error fetching hourly data:', error);
@@ -266,7 +274,35 @@ export default function AdminDashboard() {
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    maxWidth: '300px'
+                  }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload as HourlyData;
+                      return (
+                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                          <p className="font-medium text-foreground">{data.hour} Uhr</p>
+                          <p className="text-sm text-muted-foreground">{data.count} Aktivitäten</p>
+                          {data.users.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-border">
+                              <p className="text-xs text-muted-foreground mb-1">Aktive Nutzer ({data.users.length}):</p>
+                              <div className="flex flex-wrap gap-1">
+                                {data.users.slice(0, 10).map((user, i) => (
+                                  <span key={i} className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                    {user}
+                                  </span>
+                                ))}
+                                {data.users.length > 10 && (
+                                  <span className="text-xs text-muted-foreground">+{data.users.length - 10} mehr</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
                 />
                 <Area 
