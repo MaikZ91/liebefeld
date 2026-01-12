@@ -285,9 +285,9 @@ export default function AdminDashboard() {
                   stroke="hsl(var(--primary))" 
                   fillOpacity={1}
                   fill="url(#colorActivity)"
-                  label={({ x, y, payload }) => {
-                    const data = payload as HourlyData;
-                    if (!data.users || data.users.length === 0) return null;
+                  label={({ x, y, index }) => {
+                    const data = hourlyData[index];
+                    if (!data?.users || data.users.length === 0) return null;
                     const displayName = data.users.length === 1 
                       ? data.users[0].substring(0, 8) 
                       : `${data.users[0].substring(0, 6)}+${data.users.length - 1}`;
