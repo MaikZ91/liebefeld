@@ -288,18 +288,22 @@ export default function AdminDashboard() {
                   label={({ x, y, index }) => {
                     const data = hourlyData[index];
                     if (!data?.users || data.users.length === 0) return null;
-                    const allNames = data.users.map(u => u.substring(0, 8)).join(', ');
                     return (
-                      <text 
-                        x={x} 
-                        y={y - 10} 
-                        fill="hsl(var(--primary))" 
-                        fontSize={7} 
-                        textAnchor="middle"
-                        fontWeight="500"
-                      >
-                        {allNames}
-                      </text>
+                      <g>
+                        {data.users.map((user, i) => (
+                          <text 
+                            key={i}
+                            x={x} 
+                            y={y - 12 - (i * 9)} 
+                            fill="hsl(var(--primary))" 
+                            fontSize={7} 
+                            textAnchor="middle"
+                            fontWeight="500"
+                          >
+                            {user.substring(0, 10)}
+                          </text>
+                        ))}
+                      </g>
                     );
                   }}
                 />
