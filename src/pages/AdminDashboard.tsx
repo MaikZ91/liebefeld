@@ -274,36 +274,10 @@ export default function AdminDashboard() {
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                    maxWidth: '300px'
+                    borderRadius: '8px'
                   }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload as HourlyData;
-                      return (
-                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-                          <p className="font-medium text-foreground">{data.hour} Uhr</p>
-                          <p className="text-sm text-muted-foreground">{data.count} Aktivitäten</p>
-                          {data.users.length > 0 && (
-                            <div className="mt-2 pt-2 border-t border-border">
-                              <p className="text-xs text-muted-foreground mb-1">Aktive Nutzer ({data.users.length}):</p>
-                              <div className="flex flex-wrap gap-1">
-                                {data.users.slice(0, 10).map((user, i) => (
-                                  <span key={i} className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                                    {user}
-                                  </span>
-                                ))}
-                                {data.users.length > 10 && (
-                                  <span className="text-xs text-muted-foreground">+{data.users.length - 10} mehr</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
+                  formatter={(value: number) => [`${value} Aktivitäten`, '']}
+                  labelFormatter={(label) => `${label} Uhr`}
                 />
                 <Area 
                   type="monotone" 
@@ -315,6 +289,27 @@ export default function AdminDashboard() {
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
+          
+          {/* User Timeline - shows active users per hour */}
+          <div className="px-6 pb-4 overflow-x-auto">
+            <div className="flex gap-1 min-w-max">
+              {hourlyData.filter(h => h.users.length > 0).map((hourData, idx) => (
+                <div key={idx} className="flex flex-col items-start bg-muted/30 rounded-lg px-2 py-1.5 min-w-[80px]">
+                  <span className="text-[10px] text-muted-foreground font-medium mb-1">{hourData.hour}</span>
+                  <div className="flex flex-wrap gap-0.5">
+                    {hourData.users.slice(0, 3).map((user, i) => (
+                      <span key={i} className="text-[10px] bg-primary/20 text-primary px-1 py-0.5 rounded truncate max-w-[70px]">
+                        {user}
+                      </span>
+                    ))}
+                    {hourData.users.length > 3 && (
+                      <span className="text-[10px] text-muted-foreground">+{hourData.users.length - 3}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </Card>
 
         {/* Tabs for detailed views */}
