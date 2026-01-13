@@ -556,8 +556,11 @@ const TribeAppMain: React.FC<{
           return artKeywords.some(kw => title.includes(kw) || location.includes(kw));
         }
         
-        // PARTY filter
+        // PARTY filter - exclude VHS/Volkshochschule events (they belong to Kreativität)
         if (selectedCategory === "PARTY") {
+          const excludeKeywords = ['vhs', 'volkshochschule', 'workshop', 'kurs', 'seminar', 'kreativ', 'malen', 'zeichnen'];
+          if (excludeKeywords.some(kw => title.includes(kw) || location.includes(kw))) return false;
+          
           if (categoryGroup === "Ausgehen") return true;
           const partyKeywords = ['party', 'club', 'disco', 'dj', 'techno', 'house'];
           return partyKeywords.some(kw => title.includes(kw) || location.includes(kw));
