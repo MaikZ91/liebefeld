@@ -847,11 +847,30 @@ const TribeAppMain: React.FC<{
     const event = allEvents.find((e) => e.id === eventId);
 
     if (type === "dislike") {
-      setHiddenEventIds((prev) => new Set([...prev, eventId]));
+      // Find all events with the same title (grouped events) and hide them all at once
+      const eventTitle = event?.title?.toLowerCase().trim();
+      const idsToHide = eventTitle
+        ? allEvents
+            .filter(e => e.title?.toLowerCase().trim() === eventTitle)
+            .map(e => e.id)
+        : [eventId];
+      
+      console.log(`🚫 Hiding ${idsToHide.length} events with title "${eventTitle}"`, idsToHide);
+      
+      setHiddenEventIds((prev) => {
+        const newSet = new Set(prev);
+        idsToHide.forEach(id => newSet.add(id));
+        return newSet;
+      });
 
       // Track dislike for personalization
       if (event) {
         personalizationService.trackDislike(event);
+      }
+
+      // Dislike all grouped events in the service
+      for (const id of idsToHide) {
+        await dislikeService.dislikeEvent(id, event?.location || undefined);
       }
 
       const { shouldAskBlock, location } = await dislikeService.dislikeEvent(eventId, event?.location || undefined);
