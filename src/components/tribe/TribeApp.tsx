@@ -166,7 +166,12 @@ const TribeAppMain: React.FC<{
   });
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     const saved = localStorage.getItem("tribe_selected_category");
-    return saved || "ALL";
+    // Default to "FÜR MICH" if user has preferred categories from onboarding
+    if (!saved) {
+      const hasPreferred = localStorage.getItem('tribe_preferred_categories');
+      return hasPreferred ? "FÜR MICH" : "ALL";
+    }
+    return saved;
   });
   
   // "FÜR MICH" filter is now integrated into selectedCategory
@@ -530,8 +535,8 @@ const TribeAppMain: React.FC<{
       console.log("🔄 [TribeApp filteredEvents] After date filter:", result.length);
     }
 
-    // Filter by category
-    if (selectedCategory !== "ALL") {
+    // Filter by category (skip for "ALL" and "FÜR MICH" which have their own logic)
+    if (selectedCategory !== "ALL" && selectedCategory !== "FÜR MICH") {
       result = result.filter((e) => {
         const category = e.category || "";
         const title = (e.title || "").toLowerCase();
@@ -575,9 +580,11 @@ const TribeAppMain: React.FC<{
       });
     }
 
-    // Filter by user's preferred categories from onboarding
+    // Filter by user's preferred categories from onboarding ("FÜR MICH" filter)
     if (selectedCategory === "FÜR MICH") {
       const preferredCategories = JSON.parse(localStorage.getItem('tribe_preferred_categories') || '[]') as string[];
+      console.log('🔍 FÜR MICH Filter - preferredCategories:', preferredCategories, 'events before:', result.length);
+      
       if (preferredCategories.length > 0) {
         result = result.filter((e) => {
           const category = (e.category || "").toLowerCase();
@@ -591,27 +598,27 @@ const TribeAppMain: React.FC<{
             // Match ausgehen preference
             if (prefLower === 'ausgehen' || prefLower === 'party') {
               if (categoryGroup === 'Ausgehen') return true;
-              const ausgehenKeywords = ['party', 'club', 'disco', 'dj', 'bar', 'kneipe', 'festival'];
+              const ausgehenKeywords = ['party', 'club', 'disco', 'dj', 'bar', 'kneipe', 'festival', 'konzert', 'concert', 'live'];
               if (ausgehenKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
             }
             
             // Match kreativitaet preference
             if (prefLower === 'kreativitaet' || prefLower === 'kreativität' || prefLower === 'kultur') {
               if (categoryGroup === 'Kreativität') return true;
-              const artKeywords = ['kreativ', 'kunst', 'art', 'theater', 'impro', 'workshop', 'vhs', 'volkshochschule', 'ausstellung', 'lesung', 'comedy', 'kabarett', 'malen', 'zeichnen', 'krakeln'];
+              const artKeywords = ['kreativ', 'kunst', 'art', 'theater', 'impro', 'workshop', 'vhs', 'volkshochschule', 'ausstellung', 'lesung', 'comedy', 'kabarett', 'malen', 'zeichnen', 'krakeln', 'kultur', 'museum'];
               if (artKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
             }
             
             // Match sport preference  
             if (prefLower === 'sport') {
               if (categoryGroup === 'Sport') return true;
-              const sportKeywords = ['sport', 'fitness', 'yoga', 'lauf', 'run', 'training', 'hochschulsport'];
+              const sportKeywords = ['sport', 'fitness', 'yoga', 'lauf', 'run', 'training', 'hochschulsport', 'schwimmen', 'fußball', 'basketball', 'tennis'];
               if (sportKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
             }
             
             // Match konzerte preference
             if (prefLower === 'konzerte' || prefLower === 'konzert') {
-              const concertKeywords = ['konzert', 'concert', 'live', 'band', 'musik'];
+              const concertKeywords = ['konzert', 'concert', 'live', 'band', 'musik', 'open air'];
               if (concertKeywords.some(kw => title.includes(kw) || location.includes(kw) || category.includes(kw))) return true;
             }
             
@@ -621,6 +628,10 @@ const TribeAppMain: React.FC<{
             return false;
           });
         });
+        console.log('🔍 FÜR MICH Filter - events after:', result.length);
+      } else {
+        // No preferences saved - show all events as fallback
+        console.log('🔍 FÜR MICH Filter - no preferences saved, showing all events');
       }
     }
 
