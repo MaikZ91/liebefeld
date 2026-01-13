@@ -556,11 +556,8 @@ const TribeAppMain: React.FC<{
           return artKeywords.some(kw => title.includes(kw) || location.includes(kw));
         }
         
-        // PARTY filter - exclude VHS/Volkshochschule events (they belong to Kreativität)
+        // PARTY filter
         if (selectedCategory === "PARTY") {
-          const excludeKeywords = ['vhs', 'volkshochschule', 'workshop', 'kurs', 'seminar', 'kreativ', 'malen', 'zeichnen'];
-          if (excludeKeywords.some(kw => title.includes(kw) || location.includes(kw))) return false;
-          
           if (categoryGroup === "Ausgehen") return true;
           const partyKeywords = ['party', 'club', 'disco', 'dj', 'techno', 'house'];
           return partyKeywords.some(kw => title.includes(kw) || location.includes(kw));
@@ -850,30 +847,11 @@ const TribeAppMain: React.FC<{
     const event = allEvents.find((e) => e.id === eventId);
 
     if (type === "dislike") {
-      // Find all events with the same title (grouped events) and hide them all at once
-      const eventTitle = event?.title?.toLowerCase().trim();
-      const idsToHide = eventTitle
-        ? allEvents
-            .filter(e => e.title?.toLowerCase().trim() === eventTitle)
-            .map(e => e.id)
-        : [eventId];
-      
-      console.log(`🚫 Hiding ${idsToHide.length} events with title "${eventTitle}"`, idsToHide);
-      
-      setHiddenEventIds((prev) => {
-        const newSet = new Set(prev);
-        idsToHide.forEach(id => newSet.add(id));
-        return newSet;
-      });
+      setHiddenEventIds((prev) => new Set([...prev, eventId]));
 
       // Track dislike for personalization
       if (event) {
         personalizationService.trackDislike(event);
-      }
-
-      // Dislike all grouped events in the service
-      for (const id of idsToHide) {
-        await dislikeService.dislikeEvent(id, event?.location || undefined);
       }
 
       const { shouldAskBlock, location } = await dislikeService.dislikeEvent(eventId, event?.location || undefined);
