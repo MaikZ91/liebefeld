@@ -122,7 +122,7 @@ export const TribeLiveTicker: React.FC<TribeLiveTickerProps> = ({ events, select
             }
           }
           .ticker-scroll {
-            animation: ticker 900s linear infinite;
+            animation: ticker 480s linear infinite;
           }
           .ticker-paused {
             animation-play-state: paused;
