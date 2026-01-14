@@ -9,7 +9,7 @@ import { getFutureEvents, getEventsForDay, getWeekRange } from '@/utils/eventUti
 import { fetchWeather } from '@/utils/weatherUtils';
 import { useEventNotifications } from '@/hooks/useEventNotifications';
 import { createEventNotificationMessage, getNewEventsFromIds } from '@/utils/eventNotificationUtils';
-import { useEventContext } from '@/contexts/EventContext';
+import { useEventContext, cities } from '@/contexts/EventContext';
 import { useDailyPerfectDay } from '@/hooks/useDailyPerfectDay';
 import { createCitySpecificGroupId } from '@/utils/groupIdUtils';
 
@@ -26,6 +26,76 @@ export const useChatLogic = (
 ) => {
   // Get events and selectedCity from EventContext instead of props
   const { events, selectedCity } = useEventContext();
+
+  const resolveCommunityGroupId = useCallback(async (category: string, cityInput?: string) => {
+    const inputCity = cityInput || selectedCity || 'bi';
+    const normalizedInput = inputCity.toLowerCase();
+    const cityEntryByAbbr = cities.find(c => c.abbr.toLowerCase() === normalizedInput);
+    const cityEntryByName = cities.find(c => c.name.toLowerCase() === normalizedInput);
+
+    const normalizedCategory = category.toLowerCase();
+
+    const normalizedCityName = (cityEntryByAbbr?.name || cityEntryByName?.name || inputCity)
+      .toLowerCase();
+    const sanitizedCityName = normalizedCityName
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .trim();
+
+    const cityNameVariants = [
+      sanitizedCityName,
+      sanitizedCityName.replace(/\s+/g, ''),
+      sanitizedCityName.replace(/\s+/g, '-'),
+      sanitizedCityName.replace(/\s+/g, '_'),
+    ];
+
+    const cityAbbrVariants = [
+      cityEntryByAbbr?.abbr?.toLowerCase(),
+      cityEntryByName?.abbr?.toLowerCase(),
+      normalizedInput,
+      normalizedInput.replace(/[^a-z0-9]/g, ''),
+    ];
+
+    const cityVariants = Array.from(new Set([
+      ...cityNameVariants,
+      ...cityAbbrVariants,
+    ].filter(Boolean)));
+
+    const possibleIds = new Set<string>();
+    for (const cityVariant of cityVariants) {
+      possibleIds.add(createCitySpecificGroupId(normalizedCategory, cityVariant));
+      possibleIds.add(`${cityVariant}_${normalizedCategory}`);
+      possibleIds.add(`${cityVariant}-${normalizedCategory}`);
+      possibleIds.add(`${normalizedCategory}_${cityVariant}`);
+      possibleIds.add(`${normalizedCategory}-${cityVariant}`);
+    }
+
+    for (const groupId of possibleIds) {
+      const { data, error } = await supabase
+        .from('chat_groups')
+        .select('id')
+        .eq('id', groupId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[useChatLogic] Error checking chat group existence:', groupId, error);
+        continue;
+      }
+
+      if (data?.id) {
+        return data.id;
+      }
+    }
+
+    console.error('[useChatLogic] No matching chat group found for', {
+      category: normalizedCategory,
+      inputCity,
+      variants: Array.from(possibleIds),
+    });
+
+    throw new Error('chat-group-not-found');
+  }, [selectedCity]);
   
   const [isVisible, setIsVisible] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(fullPage);
@@ -489,8 +559,17 @@ export const useChatLogic = (
       
       // Determine the correct community group ID based on selected city
       const cityAbbr = selectedCity || 'BI';
-      const communityGroupId = createCitySpecificGroupId('ausgehen', cityAbbr);
-      
+      let communityGroupId: string;
+
+      try {
+        communityGroupId = await resolveCommunityGroupId('ausgehen', cityAbbr);
+      } catch (groupError) {
+        console.error('[useChatLogic] Unable to resolve community group:', groupError);
+        toast.error('Community-Chat konnte nicht gefunden werden. Bitte versuche es später erneut.');
+        isSendingRef.current = false;
+        return;
+      }
+
       console.log('[useChatLogic] Posting meetup to group:', communityGroupId);
       
       // Prepare meetup text with category hashtag for visibility
