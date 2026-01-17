@@ -40,30 +40,29 @@ export interface ChatQuery {
 export interface Message {
   id: string;
   created_at: string;
-  text: string; // Changed from 'content' to 'text'
-  user_name: string; // Keeping for backward compatibility
-  user_avatar: string; // Keeping for backward compatibility
-  sender?: string; // Updated to match database field (optional for backward compatibility)
-  avatar?: string; // Updated to match database field (optional for backward compatibility)
+  text: string;
+  user_name: string;
+  user_avatar: string;
+  sender?: string;
+  avatar?: string;
   group_id: string;
   event_data?: EventShare;
-  event_id?: string; // Added event_id for joining event chats
-  event_title?: string; // Added event_title for display
-  event_date?: string; // Added for meetup proposals
-  event_location?: string; // Added for meetup proposals
-  meetup_responses?: { // Added for meetup proposals
+  event_id?: string;
+  event_title?: string;
+  event_date?: string;
+  event_location?: string;
+  meetup_responses?: {
     'bin dabei'?: Array<{ username: string; avatar?: string }>;
     'diesmal nicht'?: Array<{ username: string; avatar?: string }>;
   };
   read_by?: string[];
-  reactions?: { emoji: string; users: string[] }[]; // Added reactions
-  // Reply fields
+  reactions?: { emoji: string; users: string[] }[];
+  media_url?: string | null;
   reply_to_message_id?: string;
   reply_to_sender?: string;
   reply_to_text?: string;
-  // Poll fields - keep as raw database types
   poll_question?: string;
-  poll_options?: any; // Can be array or JSON depending on source
+  poll_options?: any;
   poll_votes?: { [optionIndex: number]: { username: string; avatar?: string }[] };
   poll_allow_multiple?: boolean;
 }

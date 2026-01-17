@@ -167,7 +167,7 @@ const MessageList: React.FC<MessageListProps> = ({
                         eventId={message.event_id}
                         eventTitle={message.event_title}
                         messageId={message.id}
-                        reactions={message.reactions || []} // Pass reactions directly
+                        reactions={message.reactions || []}
                         onReact={handleReaction(message.id)}
                         currentUsername={username}
                         onJoinEventChat={onJoinEventChat}
@@ -181,6 +181,7 @@ const MessageList: React.FC<MessageListProps> = ({
                           avatar: undefined
                         } : undefined}
                         onScrollToMessage={scrollToMessage}
+                        mediaUrl={message.media_url}
                       />
                     </div>
                   )}
