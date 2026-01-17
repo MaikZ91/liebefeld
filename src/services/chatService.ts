@@ -11,10 +11,27 @@ const recentSends = new Map<string, number>();
 const DUP_WINDOW_MS = 2000;
 
 export const chatService = {
-  async sendMessage(groupId: string, content: string, username: string, avatar?: string) {
+  async sendMessage(groupId: string, content: string, username: string, avatarOrMediaUrl?: string, mediaUrl?: string | null) {
     try {
+      // Handle both old signature (avatar as 4th param) and new signature (mediaUrl as 4th param)
+      let avatar: string | undefined;
+      let finalMediaUrl: string | null = null;
+      
+      // If 5th param exists, 4th is avatar and 5th is mediaUrl
+      if (mediaUrl !== undefined) {
+        avatar = avatarOrMediaUrl;
+        finalMediaUrl = mediaUrl;
+      } else if (avatarOrMediaUrl) {
+        // Check if 4th param looks like a URL (media) or avatar
+        if (avatarOrMediaUrl.startsWith('http') && avatarOrMediaUrl.includes('chat-media')) {
+          finalMediaUrl = avatarOrMediaUrl;
+        } else {
+          avatar = avatarOrMediaUrl;
+        }
+      }
+      
       // Client-side de-duplication to avoid double inserts within a short window
-      const key = `${groupId}:${username}:${content.trim()}`;
+      const key = `${groupId}:${username}:${content.trim()}:${finalMediaUrl || ''}`;
       const now = Date.now();
       const last = recentSends.get(key);
       if (last && now - last < DUP_WINDOW_MS) {
@@ -27,9 +44,10 @@ export const chatService = {
         .from('chat_messages')
         .insert({
           group_id: groupId,
-          text: content, // Use 'text' instead of 'content'
-          sender: username, // Use 'sender' instead of 'user_name'
+          text: content,
+          sender: username,
           avatar: avatar || null,
+          media_url: finalMediaUrl,
         })
         .select()
         .single();

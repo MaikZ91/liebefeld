@@ -110,8 +110,8 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
     });
   }, [messages, messageFilter, groupId]);
   
-  const handleSendMessage = async () => {
-    if (!input.trim() || !username) return;
+  const handleSendMessage = async (eventData?: any, mediaUrl?: string | null) => {
+    if ((!input.trim() && !mediaUrl) || !username) return;
     
     try {
       setSending(true);
@@ -126,12 +126,13 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
           .insert([{
             group_id: groupId,
             sender: username,
-            text: messageText,
+            text: messageText || '📷 Bild',
             avatar: localStorage.getItem(AVATAR_KEY),
             reply_to_message_id: replyTo.messageId,
             reply_to_sender: replyTo.sender,
             reply_to_text: replyTo.text.length > 100 ? replyTo.text.substring(0, 100) + '...' : replyTo.text,
-            read_by: [username]
+            read_by: [username],
+            media_url: mediaUrl
           }])
           .select('id')
           .single();
@@ -151,7 +152,7 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
         
         clearReply();
       } else {
-        await chatService.sendMessage(groupId, messageText, username);
+        await chatService.sendMessage(groupId, messageText || '📷 Bild', username, mediaUrl);
       }
       
     } catch (error) {
@@ -394,6 +395,18 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
                             </div>
                           )}
                           
+                          {/* Display image if present */}
+                          {(message as any).media_url && (
+                            <div className="mb-2">
+                              <img 
+                                src={(message as any).media_url} 
+                                alt="Geteiltes Bild" 
+                                className="max-w-full max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => window.open((message as any).media_url, '_blank')}
+                              />
+                            </div>
+                          )}
+                          
                           <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                             {message.text}
                           </p>
@@ -440,38 +453,25 @@ const CommunityChatSheet: React.FC<CommunityChatSheetProps> = ({
             
           {/* Premium Urban Chat Input - Floating separated */}
           <div className="absolute bottom-3 left-3 right-3">
-            {replyTo && (
-              <div className="mb-2 mx-1">
-                <ReplyPreview 
-                  replyTo={replyTo} 
-                  onCancel={clearReply}
-                  groupType={activeCategory as 'ausgehen' | 'sport' | 'kreativität'}
-                />
-              </div>
-            )}
-            <div className="flex items-center gap-3 bg-black rounded-full px-5 py-3.5 border border-white/20">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="Nachricht schreiben..."
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/50 text-base"
-                disabled={sending}
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={sending || !input.trim()}
-                className="text-white/70 hover:text-white disabled:opacity-30 transition-all flex-shrink-0"
-              >
-                <Send className="h-5 w-5" />
-              </button>
-            </div>
+            <MessageInput
+              username={username}
+              groupId={groupId}
+              handleSendMessage={handleSendMessage}
+              isSending={sending}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder="Nachricht schreiben..."
+              mode="community"
+              groupType={activeCategory as 'ausgehen' | 'sport' | 'kreativität'}
+              replyTo={replyTo}
+              onClearReply={clearReply}
+            />
           </div>
         </Card>
       </div>
