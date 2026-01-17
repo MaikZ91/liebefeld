@@ -70,6 +70,7 @@ interface ChatMessageProps {
   replyTo?: ReplyData | null;
   onScrollToMessage?: (messageId: string) => void;
   onShowEvent?: (eventId: string) => void;
+  mediaUrl?: string | null;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -94,7 +95,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   avatar,
   replyTo,
   onScrollToMessage,
-  onShowEvent
+  onShowEvent,
+  mediaUrl
 }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -442,6 +444,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         
         {/* Outer flex container for text and reactions */}
         <div className="flex flex-col relative z-10">
+          {/* Display image if mediaUrl is present */}
+          {mediaUrl && (
+            <div className="mb-2">
+              <img 
+                src={mediaUrl} 
+                alt="Shared image" 
+                className="max-w-full max-h-64 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(mediaUrl, '_blank');
+                }}
+              />
+            </div>
+          )}
+          
           <div className="chat-message-bubble w-full">
             {formatContent()}
           </div>
