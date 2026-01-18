@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
-import { ArrowRight, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3 } from 'lucide-react';
+import { ArrowRight, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { chatMediaService } from '@/services/chatMediaService';
 import { NewMembersWidget } from './NewMembersWidget';
 import { Badge } from '@/components/ui/badge';
 import { OnboardingStep } from '@/hooks/useOnboardingFlow';
@@ -93,6 +94,12 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   const [onboardingMiaMessage, setOnboardingMiaMessage] = useState<string | null>(null);
   const [greetingGenerated, setGreetingGenerated] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Image upload state
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Handle community onboarding
   useEffect(() => {
@@ -278,7 +285,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
       tags: allTags,
       userAvatar: msg.avatar,
       comments: [],
-      meetup_responses: msg.meetup_responses || {}
+      meetup_responses: msg.meetup_responses || {},
+      mediaUrl: msg.media_url || null
     };
   };
 
@@ -455,33 +463,72 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   }, [posts, dismissedPosts, activeTab, selectedCity, topicDislikes, userProfile]);
 
 
+  // Handle image selection
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Bitte nur Bilder hochladen');
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Bild darf maximal 5MB groß sein');
+        return;
+      }
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+    // Reset input
+    if (e.target) e.target.value = '';
+  };
+
+  const clearSelectedImage = () => {
+    setSelectedImage(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+  };
+
   const handlePost = async () => {
-    if (!newPost.trim()) return;
+    if (!newPost.trim() && !selectedImage) return;
     
-    // Auto-tag 'TribeCall' if text implies it (simple check for demo)
-    const tags = [...generatedTags];
-    if (newPost.toLowerCase().includes('suche') || newPost.toLowerCase().includes('tribe') || newPost.toLowerCase().includes('wer')) {
-        if (!tags.includes('TribeCall')) tags.push('TribeCall');
-    }
-
-    // Add hashtags to text
-    let postText = newPost;
-    if (tags.length > 0) {
-      postText += '\n\n' + tags.map(t => `#${t}`).join(' ');
-    }
-
+    setIsUploading(true);
+    
     try {
+      // Upload image if selected
+      let mediaUrl: string | null = null;
+      if (selectedImage) {
+        mediaUrl = await chatMediaService.uploadChatImage(selectedImage);
+      }
+      
+      // Auto-tag 'TribeCall' if text implies it (simple check for demo)
+      const tags = [...generatedTags];
+      if (newPost.toLowerCase().includes('suche') || newPost.toLowerCase().includes('tribe') || newPost.toLowerCase().includes('wer')) {
+          if (!tags.includes('TribeCall')) tags.push('TribeCall');
+      }
+
+      // Add hashtags to text
+      let postText = newPost.trim() || (mediaUrl ? '📷 Bild' : '');
+      if (tags.length > 0) {
+        postText += '\n\n' + tags.map(t => `#${t}`).join(' ');
+      }
+
       await supabase
         .from('chat_messages')
         .insert({
           group_id: TRIBE_BOARD_GROUP_ID,
           sender: userProfile?.username || 'Guest',
           text: postText,
-          avatar: userProfile?.avatarUrl || userProfile?.avatar || null
+          avatar: userProfile?.avatarUrl || userProfile?.avatar || null,
+          media_url: mediaUrl
         });
 
       setNewPost('');
       setGeneratedTags([]);
+      clearSelectedImage();
       
       // If during onboarding greeting step, mark it complete
       if (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') {
@@ -489,6 +536,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
       }
     } catch (error) {
       console.error('Error posting:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -643,19 +692,55 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                 />
                 
                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {/* Hidden file input */}
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                    
+                    {/* Image upload button */}
+                    <button 
+                        onClick={() => imageInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="p-1.5 text-zinc-500 hover:text-gold transition-colors disabled:opacity-50"
+                        title="Bild hinzufügen"
+                    >
+                        <Image size={18} />
+                    </button>
+                    
                     <button 
                         onClick={handlePost} 
-                        disabled={!newPost} 
-                        className={`text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors disabled:opacity-50 ${
+                        disabled={(!newPost.trim() && !selectedImage) || isUploading} 
+                        className={`text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors disabled:opacity-50 flex items-center gap-1 ${
                           (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
                             ? 'bg-gold hover:bg-gold/90 animate-pulse'
                             : 'bg-gold hover:bg-white'
                         }`}
                     >
-                        Post
+                        {isUploading ? <Loader2 size={12} className="animate-spin" /> : 'Post'}
                     </button>
                 </div>
             </div>
+            
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="relative mt-2 inline-block">
+                <img 
+                  src={imagePreview} 
+                  alt="Preview" 
+                  className="h-20 w-20 object-cover rounded-lg border border-white/20"
+                />
+                <button
+                  onClick={clearSelectedImage}
+                  className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 hover:bg-red-600 transition-colors"
+                >
+                  <X size={12} className="text-white" />
+                </button>
+              </div>
+            )}
             
             {/* Tags Preview - only show when tags exist */}
             {generatedTags.length > 0 && (
@@ -834,6 +919,18 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-[52px]">
                             {post.text}
                         </p>
+                        
+                        {/* Post Image */}
+                        {post.mediaUrl && (
+                          <div className="pl-[52px] mb-2">
+                            <img 
+                              src={post.mediaUrl} 
+                              alt="Post image" 
+                              className="max-w-full max-h-64 rounded-lg border border-white/10 cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => window.open(post.mediaUrl!, '_blank')}
+                            />
+                          </div>
+                        )}
 
                         {/* Tags */}
                         {post.tags.length > 0 && (
