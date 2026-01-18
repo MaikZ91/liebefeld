@@ -74,6 +74,7 @@ export interface Post {
   isTribeCall?: boolean;
   meetup_responses?: Record<string, Array<{username: string; avatar?: string}>>;
   relevanceScore?: number;
+  mediaUrl?: string | null;
 }
 
 export enum ViewState {
