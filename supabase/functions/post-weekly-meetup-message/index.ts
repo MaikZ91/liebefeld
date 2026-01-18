@@ -27,12 +27,19 @@ Deno.serve(async (req) => {
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(); 
 
     // 1. Nachrichten-Inhalte definieren
-    const kennenlernabendMessageContent = `TRIBE Kennenlernabend
-🗓️ **Jeden Sonntag**
+    const kennenlernabendMessageContent = `🍻 TRIBE Stammtisch – Jeden Mittwoch!
 
-Lust auf neue Leute, echte Gespräche und gemeinsame Ideen? Ob einfach quatschen, kreative Projekte planen oder zukünftige Treffen – beim TRIBE-Abend findet ihr Raum dafür.
+Hey Leute! Diese Woche ist wieder Stammtisch-Zeit! 🎉
 
-Lasst uns den Sonntagabend gemeinsam gestalten! Findet euch in der Stadt zusammen und sichert euch einen gemütlichen Platz, wo immer es euch passt. Wer hat Lust, dabei zu sein und sich um die Koordination zu kümmern? 👍 unter diese Nachricht, um euch abzustimmen!`;
+Ob du neu in der Stadt bist, einfach mal raus willst oder schon Teil der Tribe bist – komm vorbei und lerne neue Leute kennen!
+
+📅 **Wann:** Jeden Mittwoch ab 19:30 Uhr
+📍 **Wo:** Wird kurzfristig bekannt gegeben
+
+Wer ist dabei? 👍 unter diese Nachricht, um dich anzumelden!`;
+
+    // Bild-URL für Kennenlernabend
+    const kennenlernabendImageUrl = 'https://liebefeld.lovable.app/images/tribe/tribe-stammtisch.jpg';
 
     const wandersamstagMessageContent = `TRIBE Wandersamstag
 🗓️ Jeden letzten Samstag im Monat
@@ -78,41 +85,57 @@ Teilt eure Ideen, findet Mitstreiter und gestaltet unvergessliche Momente. Wer i
     let successCount = 0;
     let errorCount = 0;
 
-    // 3. Nachricht an jede Gruppe posten, basierend auf der Kategorie (OHNE Wochentagsprüfung)
+    // 3. Nachricht an jede Gruppe posten, basierend auf der Kategorie und Wochentag
+    // Mittwoch = 3 (0=Sonntag, 1=Montag, ..., 3=Mittwoch)
+    const isWednesday = dayOfWeek === 3;
+    
     for (const group of relevantGroups) {
       let messageToPost = '';
       let groupCategory = '';
-      // shouldPost ist jetzt immer true, um alle Nachrichten gleichzeitig zu posten
-      let shouldPost = true; 
+      let shouldPost = false;
+      let imageUrl: string | null = null;
 
       if (group.id.endsWith('_ausgehen')) {
-        messageToPost = kennenlernabendMessageContent;
-        groupCategory = 'Ausgehen';
+        // Kennenlernabend nur am Mittwoch posten
+        if (isWednesday) {
+          messageToPost = kennenlernabendMessageContent;
+          imageUrl = kennenlernabendImageUrl;
+          groupCategory = 'Ausgehen';
+          shouldPost = true;
+        }
       } else if (group.id.endsWith('_sport')) {
-        // Da BEIDE Sport-Nachrichten (Wandersamstag und Tuesday Run)
-        // gleichzeitig gepostet werden sollen, kombinieren wir sie hier.
+        // Sport-Nachrichten immer posten
         messageToPost = wandersamstagMessageContent + "\n\n---\n\n" + tuesdayRunMessageContent;
         groupCategory = 'Sport';
+        shouldPost = true;
       } else if (group.id.endsWith('_kreativität')) {
+        // Kreativität-Nachrichten immer posten
         messageToPost = creativeCircleMessageContent;
         groupCategory = 'Kreativität';
+        shouldPost = true;
       } else {
-        console.warn(`Gruppe ${group.id} passt zu keiner bekannten Kategorie (_ausgehen, _sport oder _kreativität), überspringe.`);
-        shouldPost = false; // Diese Gruppe überspringen, wenn sie keiner Kategorie zugeordnet werden kann
+        console.warn(`Gruppe ${group.id} passt zu keiner bekannten Kategorie, überspringe.`);
         continue;
       }
 
       if (shouldPost && messageToPost) {
         try {
+          const insertData: any = {
+            group_id: group.id,
+            sender: 'MIA',
+            avatar: 'https://ykleosfvtqcmqxqihnod.supabase.co/storage/v1/object/public/avatars/mia-avatar.png',
+            text: messageToPost,
+            read_by: []
+          };
+          
+          // Bild hinzufügen wenn vorhanden
+          if (imageUrl) {
+            insertData.media_url = imageUrl;
+          }
+          
           const { error: insertError } = await supabase
             .from('chat_messages')
-            .insert({
-              group_id: group.id,
-              sender: 'TRIBE Bot',
-              avatar: 'https://cdn.jsdelivr.net/gh/MaikZ91/productiontools/bot_avatar.png',
-              text: messageToPost,
-              read_by: []
-            });
+            .insert(insertData);
 
           if (insertError) {
             console.error(`Fehler beim Posten der Nachricht an Gruppe ${group.id} (${group.name}) [Kategorie: ${groupCategory}]:`, insertError);
@@ -126,7 +149,7 @@ Teilt eure Ideen, findet Mitstreiter und gestaltet unvergessliche Momente. Wer i
           errorCount++;
         }
       } else {
-        console.log(`Posten für Gruppe ${group.name} übersprungen, da keine Nachricht zugeordnet oder Bedingung nicht erfüllt.`);
+        console.log(`Posten für Gruppe ${group.name} übersprungen (Wochentag: ${dayOfWeek}, isWednesday: ${isWednesday}).`);
       }
     }
 
