@@ -33,11 +33,11 @@ const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 // Community onboarding messages
 const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: boolean; showAction?: 'avatar' | 'post'; showGuidanceChoice?: boolean }> = {
   community_intro: {
-    text: 'Willkommen in der Community! 🎉 Hier treffen sich Menschen, die wie du rausgehen und echte Connections knüpfen wollen – bei Events, Aktivitäten und spontanen Treffen.',
+    text: 'Hey! Willkommen bei THE TRIBE! 🎉\n\nWir sind eine Community von Leuten in Bielefeld, die keine Lust mehr haben alleine rumzuhängen. Hier findest du Events, spontane Treffen und echte Menschen die auch Bock haben was zu erleben!',
     showNext: true,
   },
   explain_profile: {
-    text: 'Damit andere dich finden können, brauchen wir ein bisschen mehr über dich. Dein Profil zeigt, wer du bist und was dich begeistert – so finden dich Menschen mit ähnlichen Interessen für gemeinsame Erlebnisse! ✨',
+    text: 'Damit andere dich finden können, brauchen wir ein bisschen mehr über dich. Dein Profil zeigt, wer du bist und was dich begeistert – so finden dich Menschen mit ähnlichen Interessen! ✨',
     showNext: true,
   },
   waiting_for_avatar_click: {
@@ -45,18 +45,18 @@ const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: b
     showAction: 'avatar',
   },
   editing_profile: {
-    text: 'Super! Füge ein Bild hinzu und erzähl uns von deinen Interessen – das macht es anderen leichter, dich anzusprechen und gemeinsame Aktivitäten zu planen! 💫',
+    text: 'Super! Füge ein Bild hinzu und erzähl uns von deinen Interessen – das macht es anderen leichter, dich anzusprechen! 💫',
   },
   greeting_ready: {
-    text: 'Perfekt! 🙌 Jetzt stell dich der Community vor. Ich hab schon eine Nachricht für dich vorbereitet – ergänze gerne noch einen Fun Fact und klick auf Post! So finden dich Gleichgesinnte.',
+    text: 'Perfekt! 🙌 Zeit dich vorzustellen! Ich hab schon eine Nachricht vorbereitet – ergänze noch einen Fun Fact über dich (z.B. dein guilty pleasure, ein Talent oder was Lustiges) und klick auf Post!',
     showAction: 'post',
   },
   waiting_for_post: {
-    text: 'Klick auf "Post" um dich vorzustellen! Deine erste Chance, neue Leute kennenzulernen 👇',
+    text: 'Klick auf "Post" um dich vorzustellen! 👇',
     showAction: 'post',
   },
   offer_guidance: {
-    text: 'Herzlichen Glückwunsch – du bist jetzt Teil der Tribe! 🎊\n\nAb jetzt kannst du Events entdecken, Leute treffen und echte Verbindungen aufbauen. Soll ich dir noch mehr zeigen?',
+    text: 'Willkommen in der Tribe! 🎊 Ab jetzt kannst du Events entdecken, Leute treffen und echte Verbindungen aufbauen.',
     showGuidanceChoice: true,
   },
 };
