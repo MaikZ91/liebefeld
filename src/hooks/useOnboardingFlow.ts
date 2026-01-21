@@ -24,23 +24,32 @@ interface OnboardingState {
 
 export const useOnboardingFlow = () => {
   const [state, setState] = useState<OnboardingState>(() => {
-    const completed = localStorage.getItem('tribe_onboarding_completed') === 'true';
+    const onboardingWorkflowDone = localStorage.getItem('tribe_onboarding_completed') === 'true';
+    const communityIntroSeen = localStorage.getItem('tribe_community_intro_seen') === 'true';
     const profileDone = localStorage.getItem('tribe_profile_onboarding_done') === 'true';
     const greetingPosted = localStorage.getItem('tribe_greeting_posted') === 'true';
     
     // Determine initial step based on saved progress
     let initialStep: OnboardingStep = 'welcome';
-    if (completed) {
-      initialStep = 'completed';
-    } else if (greetingPosted) {
+    
+    if (greetingPosted) {
+      // User already posted their greeting - fully complete
       initialStep = 'completed';
     } else if (profileDone) {
+      // Profile is done, waiting for greeting post
       initialStep = 'greeting_ready';
+    } else if (communityIntroSeen) {
+      // Already saw the intro, waiting for avatar click
+      initialStep = 'waiting_for_avatar_click';
+    } else if (onboardingWorkflowDone) {
+      // Just finished OnboardingWorkflow -> start community intro
+      initialStep = 'community_intro';
     }
+    // else: still in initial onboarding (welcome/interests/name)
     
     return {
       currentStep: initialStep,
-      hasCompletedOnboarding: completed,
+      hasCompletedOnboarding: greetingPosted,
       hasCompletedProfile: profileDone,
       hasPostedGreeting: greetingPosted,
     };
@@ -66,8 +75,13 @@ export const useOnboardingFlow = () => {
       const currentIndex = steps.indexOf(prev.currentStep);
       const nextStep = steps[Math.min(currentIndex + 1, steps.length - 1)];
       
+      // Mark community intro as seen when advancing past it
+      if (prev.currentStep === 'community_intro') {
+        localStorage.setItem('tribe_community_intro_seen', 'true');
+      }
+      
       if (nextStep === 'completed') {
-        localStorage.setItem('tribe_onboarding_completed', 'true');
+        localStorage.setItem('tribe_greeting_posted', 'true');
       }
       
       return {
