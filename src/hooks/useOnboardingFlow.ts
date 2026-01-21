@@ -130,27 +130,26 @@ export const useOnboardingFlow = () => {
     });
   }, []);
 
-  // Generate personalized greeting from profile
+  // Generate personalized greeting from profile with fun fact placeholder
   const generateGreeting = useCallback((profile: { username?: string; interests?: string[]; favorite_locations?: string[] }) => {
     const name = profile.username || 'ich';
     const interests = profile.interests || [];
-    const locations = profile.favorite_locations || [];
     
-    let greeting = `Hey Leute! 👋 Ich bin ${name}`;
+    let greeting = `Hey! 👋 Ich bin ${name}`;
     
     if (interests.length > 0) {
-      const interestText = interests.slice(0, 3).join(', ');
-      greeting += ` und ich liebe ${interestText}! 🔥`;
+      const interestLabels: Record<string, string> = {
+        'ausgehen': 'Ausgehen',
+        'kreativitaet': 'Kreativität',
+        'sport': 'Sport'
+      };
+      const interestText = interests.slice(0, 3).map(i => interestLabels[i] || i).join(' & ');
+      greeting += ` und stehe auf ${interestText}!`;
     } else {
       greeting += '!';
     }
     
-    if (locations.length > 0) {
-      const locationText = locations[0];
-      greeting += ` Ihr findet mich oft in ${locationText}.`;
-    }
-    
-    greeting += '\n\nFreue mich mega, Teil der Community zu sein! Wer hat Bock, was zusammen zu unternehmen? 🙌';
+    greeting += '\n\n🎲 Fun Fact: ';
     
     return greeting;
   }, []);
