@@ -17,17 +17,12 @@ Deno.serve(async (req) => {
   )
 
   try {
-    console.log('Starte das Posten der wöchentlichen Community-Nachrichten (Alle gleichzeitig)...');
+    console.log('Starte das Posten der wöchentlichen Stammtisch-Nachricht ins Community Board...');
 
-    // Wochentag und Monatstag werden nicht mehr für die bedingte Posting-Logik verwendet,
-    // bleiben aber als Referenz oder für zukünftige erweiterte Logik erhalten.
-    const today = new Date();
-    const dayOfWeek = today.getDay(); 
-    const dayOfMonth = today.getDate();
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(); 
+    const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 
-    // 1. Nachrichten-Inhalte definieren
-    const kennenlernabendMessageContent = `🍻 TRIBE Stammtisch – Jeden Mittwoch!
+    // Stammtisch Nachricht
+    const stammtischMessage = `🍻 TRIBE Stammtisch – Jeden Mittwoch!
 
 Hey Leute! Diese Woche ist wieder Stammtisch-Zeit! 🎉
 
@@ -36,131 +31,34 @@ Ob du neu in der Stadt bist, einfach mal raus willst oder schon Teil der Tribe b
 📅 **Wann:** Jeden Mittwoch ab 19:30 Uhr
 📍 **Wo:** Wird kurzfristig bekannt gegeben
 
-Wer ist dabei? 👍 unter diese Nachricht, um dich anzumelden!`;
+Wer ist dabei? Kommentiere unten! 👇`;
 
-    // Bild-URL für Kennenlernabend
-    const kennenlernabendImageUrl = 'https://liebefeld.lovable.app/images/tribe/tribe-stammtisch.jpg';
+    // Bild-URL für Stammtisch
+    const stammtischImageUrl = 'https://liebefeld.lovable.app/images/tribe/tribe-stammtisch.jpg';
 
-    const wandersamstagMessageContent = `TRIBE Wandersamstag
-🗓️ Jeden letzten Samstag im Monat
+    // Post ins Tribe Community Board
+    const { error: insertError } = await supabase
+      .from('chat_messages')
+      .insert({
+        group_id: TRIBE_BOARD_GROUP_ID,
+        sender: 'MIA',
+        avatar: 'https://ykleosfvtqcmqxqihnod.supabase.co/storage/v1/object/public/avatars/mia-avatar.png',
+        text: stammtischMessage,
+        media_url: stammtischImageUrl,
+        read_by: []
+      });
 
-Packt eure Rucksäcke und schnürt die Schuhe! Lust auf frische Luft, neue Wege und gute Gespräche in der Natur? Der TRIBE Wandersamstag ist eure Gelegenheit, gemeinsam die Umgebung zu erkunden und neue Leute kennenzulernen.
-
-Lasst uns den Wandersamstag gemeinsam gestalten! Findet euch zusammen und stimmt eine schöne Route ab. Wer ist dabei und hat Lust, eine Wanderung zu organisieren? 👍 unter diese Nachricht, um euch abzustimmen!`;
-
-    const tuesdayRunMessageContent = `TRIBE Tuesday Run
-🗓️ Jeden Dienstag
-
-Lust auf eine gemeinsame Laufrunde, neue Bestzeiten und gute Gespräche? Schließ dich dem TRIBE Tuesday Run an und starte fit in die Woche! Egal ob Anfänger oder Fortgeschritten – der Spaß steht im Vordergrund.
-
-Finde dich mit anderen Läufern zusammen und entdeckt neue Strecken in der Stadt. Wer ist dabei und hat Lust, eine Laufrunde zu organisieren? 👍 unter diese Nachricht, um euch abzustimmen!`;
-
-    const creativeCircleMessageContent = `TRIBE Creative Circle
-🗓️ Jeden letzten Freitag im Monat
-
-Lasst eurer Kreativität freien Lauf! Ob Jammen, Fotowalk, gemeinsame Auftritte oder Malen – der Creative Circle bietet Raum für Austausch, Inspiration und gemeinsame Projekte.
-
-Teilt eure Ideen, findet Mitstreiter und gestaltet unvergessliche Momente. Wer ist dabei und hat Lust, den nächsten Creative Circle mitzugestalten? 👍 unter diese Nachricht, um euch abzustimmen!`;
-
-
-    // 2. Alle relevanten Gruppen abrufen (Ausgehen, Sport und Kreativität)
-    const { data: relevantGroups, error: groupsError } = await supabase
-      .from('chat_groups')
-      .select('id, name')
-      .or('id.like.%_ausgehen,id.like.%_sport,id.like.%_kreativität');
-
-    if (groupsError) {
-      console.error('Fehler beim Abrufen der relevanten Gruppen:', groupsError);
-      throw new Error(`Fehler beim Abrufen der Gruppen: ${groupsError.message}`);
+    if (insertError) {
+      console.error('Fehler beim Posten der Stammtisch-Nachricht:', insertError);
+      throw new Error(`Fehler beim Posten: ${insertError.message}`);
     }
 
-    if (!relevantGroups || relevantGroups.length === 0) {
-      console.log('Keine relevanten Gruppen gefunden, an die Nachrichten gepostet werden können.');
-      return new Response(
-        JSON.stringify({ success: true, message: 'Keine relevanten Gruppen gefunden.' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
-    }
-
-    let successCount = 0;
-    let errorCount = 0;
-
-    // 3. Nachricht an jede Gruppe posten, basierend auf der Kategorie und Wochentag
-    // Mittwoch = 3 (0=Sonntag, 1=Montag, ..., 3=Mittwoch)
-    const isWednesday = dayOfWeek === 3;
-    
-    for (const group of relevantGroups) {
-      let messageToPost = '';
-      let groupCategory = '';
-      let shouldPost = false;
-      let imageUrl: string | null = null;
-
-      if (group.id.endsWith('_ausgehen')) {
-        // Kennenlernabend nur am Mittwoch posten
-        if (isWednesday) {
-          messageToPost = kennenlernabendMessageContent;
-          imageUrl = kennenlernabendImageUrl;
-          groupCategory = 'Ausgehen';
-          shouldPost = true;
-        }
-      } else if (group.id.endsWith('_sport')) {
-        // Sport-Nachrichten immer posten
-        messageToPost = wandersamstagMessageContent + "\n\n---\n\n" + tuesdayRunMessageContent;
-        groupCategory = 'Sport';
-        shouldPost = true;
-      } else if (group.id.endsWith('_kreativität')) {
-        // Kreativität-Nachrichten immer posten
-        messageToPost = creativeCircleMessageContent;
-        groupCategory = 'Kreativität';
-        shouldPost = true;
-      } else {
-        console.warn(`Gruppe ${group.id} passt zu keiner bekannten Kategorie, überspringe.`);
-        continue;
-      }
-
-      if (shouldPost && messageToPost) {
-        try {
-          const insertData: any = {
-            group_id: group.id,
-            sender: 'MIA',
-            avatar: 'https://ykleosfvtqcmqxqihnod.supabase.co/storage/v1/object/public/avatars/mia-avatar.png',
-            text: messageToPost,
-            read_by: []
-          };
-          
-          // Bild hinzufügen wenn vorhanden
-          if (imageUrl) {
-            insertData.media_url = imageUrl;
-          }
-          
-          const { error: insertError } = await supabase
-            .from('chat_messages')
-            .insert(insertData);
-
-          if (insertError) {
-            console.error(`Fehler beim Posten der Nachricht an Gruppe ${group.id} (${group.name}) [Kategorie: ${groupCategory}]:`, insertError);
-            errorCount++;
-          } else {
-            successCount++;
-            console.log(`Nachricht erfolgreich an Gruppe ${group.name} [Kategorie: ${groupCategory}] gepostet.`);
-          }
-        } catch (postError) {
-          console.error(`Ausnahme beim Posten der Nachricht an Gruppe ${group.id}:`, postError);
-          errorCount++;
-        }
-      } else {
-        console.log(`Posten für Gruppe ${group.name} übersprungen (Wochentag: ${dayOfWeek}, isWednesday: ${isWednesday}).`);
-      }
-    }
-
-    console.log(`Posten der Community-Nachrichten abgeschlossen: ${successCount} erfolgreich, ${errorCount} Fehler`);
+    console.log('Stammtisch-Nachricht erfolgreich ins Community Board gepostet!');
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Wöchentliche Community-Nachrichten an ${successCount} Gruppen gepostet.`,
-        errors: errorCount,
-        totalGroups: relevantGroups.length
+        message: 'Stammtisch-Nachricht erfolgreich ins Tribe Community Board gepostet.'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
