@@ -33,8 +33,8 @@ const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 // Community onboarding messages
 const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: boolean; showAction?: 'avatar' | 'post'; showGuidanceChoice?: boolean }> = {
   community_intro: {
-    text: 'Hey! Willkommen bei THE TRIBE! 🎉\n\nWir sind eine Community von Leuten in Bielefeld, die keine Lust mehr haben alleine rumzuhängen. Hier findest du Events, spontane Treffen und echte Menschen die auch Bock haben was zu erleben!',
-    showNext: true,
+    text: '🎉 Willkommen bei THE TRIBE!\n\nWir sind eine Community von Leuten in Bielefeld, die keine Lust mehr haben alleine rumzuhängen.\n\nHier findest du Events, spontane Treffen und echte Menschen!\n\n👇 Stell dich unten kurz vor – ergänze noch einen Fun Fact über dich!',
+    showNext: false, // User posts their greeting to advance
   },
   explain_profile: {
     text: 'Damit andere dich finden können, brauchen wir ein bisschen mehr über dich. Dein Profil zeigt, wer du bist und was dich begeistert – so finden dich Menschen mit ähnlichen Interessen! ✨',
@@ -48,7 +48,7 @@ const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: b
     text: 'Super! Füge ein Bild hinzu und erzähl uns von deinen Interessen – das macht es anderen leichter, dich anzusprechen! 💫',
   },
   greeting_ready: {
-    text: 'Perfekt! 🙌 Zeit dich vorzustellen! Ich hab schon eine Nachricht vorbereitet – ergänze noch einen Fun Fact über dich (z.B. dein guilty pleasure, ein Talent oder was Lustiges) und klick auf Post!',
+    text: 'Perfekt! 🙌 Deine Vorstellung ist fast fertig – ergänze noch einen Fun Fact über dich (z.B. dein guilty pleasure, ein Talent oder was Lustiges) und klick auf Post!',
     showAction: 'post',
   },
   waiting_for_post: {
@@ -113,10 +113,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         setOnboardingMiaMessage(message.text);
       }
       
-      // No auto-advance - user clicks "Weiter" button instead
-      
-      // Generate greeting when reaching greeting_ready step
-      if (onboardingStep === 'greeting_ready' && generateGreeting && !greetingGenerated) {
+      // Generate greeting immediately when community_intro starts (new users)
+      // This pre-fills the post area so users see it right away
+      if ((onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready') && generateGreeting && !greetingGenerated) {
         const greeting = generateGreeting({
           username: userProfile.username,
           interests: userProfile.interests,
@@ -531,7 +530,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
       clearSelectedImage();
       
       // If during onboarding greeting step, mark it complete
-      if (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') {
+      if (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') {
         onMarkGreetingPosted?.();
       }
     } catch (error) {
@@ -669,7 +668,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
             )}
             
             <div className={`bg-surface border rounded-lg p-1.5 shadow-lg flex items-end gap-2 ${
-              (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
+              (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
                 ? 'border-gold/50 ring-2 ring-gold/20' 
                 : 'border-white/10'
             }`}>
@@ -683,7 +682,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                     }}
                     placeholder={
-                      (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
+                      (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
                         ? 'Ergänze gerne noch einen Fun Fact über dich...'
                         : `What's happening in ${selectedCity}?`
                     }
