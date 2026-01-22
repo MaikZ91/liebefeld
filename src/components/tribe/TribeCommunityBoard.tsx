@@ -608,20 +608,21 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
             {/* MIA onboarding message above input for ALL community onboarding steps */}
             {onboardingMiaMessage && (
-              <div 
-                onClick={onEditProfile}
-                className="flex items-start gap-2 mb-2 p-2 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn cursor-pointer hover:bg-zinc-900/70 hover:border-gold/40 transition-all active:scale-[0.98]"
-              >
+              <div className="flex items-start gap-2 mb-2 p-2 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn relative">
+                <button
+                  onClick={() => setOnboardingMiaMessage(null)}
+                  className="absolute top-1.5 right-1.5 p-1 text-white/40 hover:text-white/80 transition-colors"
+                  aria-label="Schließen"
+                >
+                  <X size={14} />
+                </button>
                 <img 
                   src={MIA_AVATAR} 
                   className="w-8 h-8 rounded-full ring-2 ring-gold/50 object-cover flex-shrink-0" 
                   alt="MIA" 
                 />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-gold">MIA</span>
-                    <ArrowRight size={14} className="text-gold/60" />
-                  </div>
+                <div className="flex-1 min-w-0 pr-4">
+                  <span className="text-xs font-bold text-gold">MIA</span>
                   <p className="text-xs text-white/90 leading-relaxed mt-0.5 whitespace-pre-line">
                     {onboardingMiaMessage}
                   </p>
