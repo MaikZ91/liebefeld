@@ -608,61 +608,23 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
             {/* MIA onboarding message above input for ALL community onboarding steps */}
             {onboardingMiaMessage && (
-              <div className="flex items-start gap-2 mb-2 p-2 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn">
+              <div 
+                onClick={onEditProfile}
+                className="flex items-start gap-2 mb-2 p-2 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn cursor-pointer hover:bg-zinc-900/70 hover:border-gold/40 transition-all active:scale-[0.98]"
+              >
                 <img 
                   src={MIA_AVATAR} 
                   className="w-8 h-8 rounded-full ring-2 ring-gold/50 object-cover flex-shrink-0" 
                   alt="MIA" 
                 />
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-bold text-gold">MIA</span>
-                  <p className="text-xs text-white/90 leading-relaxed mt-0.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-gold">MIA</span>
+                    <ArrowRight size={14} className="text-gold/60" />
+                  </div>
+                  <p className="text-xs text-white/90 leading-relaxed mt-0.5 whitespace-pre-line">
                     {onboardingMiaMessage}
                   </p>
-                  
-                  {/* Show "Weiter" button for steps that need manual advancement */}
-                  {onboardingStep && COMMUNITY_ONBOARDING_MESSAGES[onboardingStep]?.showNext && onAdvanceOnboarding && (
-                    <button
-                      onClick={onAdvanceOnboarding}
-                      className="mt-2 px-3 py-1.5 bg-gold text-black text-xs font-semibold rounded-full hover:bg-gold/90 transition-all"
-                    >
-                      Weiter →
-                    </button>
-                  )}
-                  
-                  {/* Show guidance choice buttons */}
-                  {onboardingStep === 'offer_guidance' && (
-                    <div className="mt-3 flex flex-col gap-2">
-                      <button
-                        onClick={() => {
-                          // For now, just complete onboarding - future: guided tour
-                          onAdvanceOnboarding?.();
-                        }}
-                        className="w-full px-3 py-2 bg-gold text-black text-xs font-semibold rounded-lg hover:bg-gold/90 transition-all flex items-center justify-center gap-2"
-                      >
-                        <Sparkles size={14} />
-                        Zeig mir, wie ich Leute treffe
-                      </button>
-                      <button
-                        onClick={() => {
-                          // Complete onboarding
-                          onAdvanceOnboarding?.();
-                        }}
-                        className="w-full px-3 py-2 bg-white/10 text-white text-xs font-semibold rounded-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2"
-                      >
-                        <Users size={14} />
-                        Direkt loslegen & entdecken
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* Show hint to click avatar during waiting_for_avatar_click */}
-                  {onboardingStep === 'waiting_for_avatar_click' && (
-                    <div className="mt-2 flex items-center gap-2 text-gold animate-pulse">
-                      <span className="text-lg">👆</span>
-                      <span className="text-[10px] font-medium">Klick auf deinen Avatar oben rechts!</span>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
