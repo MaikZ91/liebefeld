@@ -31,7 +31,7 @@ const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
 const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 
 const getCommunityIntroMessage = (username?: string) => ({
-  text: `🎉 Willkommen bei THE TRIBE, ${username || 'du'}!\n\nWir sind eine Community für echte Begegnungen und reale Treffen in Bielefeld.\n\nHier findest du Events, spontane Treffen und Menschen, die Lust haben Neues zu erleben!\n\n👇 Stell dich unten kurz vor – ergänze noch einen Fun Fact über dich!`,
+  text: `Hey ${username || 'du'}! 👋 Schön, dass du da bist! THE TRIBE ist dein Ort für echte Begegnungen – ob spontane Treffen, coole Events oder einfach neue Leute kennenlernen. Stell dich unten kurz vor und erzähl uns einen Fun Fact über dich! 🎲`,
   showNext: false,
 });
 
