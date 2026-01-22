@@ -30,12 +30,12 @@ const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
 const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
 
-// Community onboarding messages
+const getCommunityIntroMessage = (username?: string) => ({
+  text: `🎉 Willkommen bei THE TRIBE, ${username || 'du'}!\n\nWir sind eine Community für echte Begegnungen und reale Treffen in Bielefeld.\n\nHier findest du Events, spontane Treffen und Menschen, die Lust haben Neues zu erleben!\n\n👇 Stell dich unten kurz vor – ergänze noch einen Fun Fact über dich!`,
+  showNext: false,
+});
+
 const COMMUNITY_ONBOARDING_MESSAGES: Record<string, { text: string; showNext?: boolean; showAction?: 'avatar' | 'post'; showGuidanceChoice?: boolean }> = {
-  community_intro: {
-    text: '🎉 Willkommen bei THE TRIBE!\n\nWir sind eine Community von Leuten in Bielefeld, die keine Lust mehr haben alleine rumzuhängen.\n\nHier findest du Events, spontane Treffen und echte Menschen!\n\n👇 Stell dich unten kurz vor – ergänze noch einen Fun Fact über dich!',
-    showNext: false, // User posts their greeting to advance
-  },
   explain_profile: {
     text: 'Damit andere dich finden können, brauchen wir ein bisschen mehr über dich. Dein Profil zeigt, wer du bist und was dich begeistert – so finden dich Menschen mit ähnlichen Interessen! ✨',
     showNext: true,
@@ -108,9 +108,14 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     const isCommunityStep = ['community_intro', 'explain_profile', 'waiting_for_avatar_click', 'editing_profile', 'greeting_ready', 'waiting_for_post', 'offer_guidance'].includes(onboardingStep);
     
     if (isCommunityStep) {
-      const message = COMMUNITY_ONBOARDING_MESSAGES[onboardingStep];
-      if (message?.text) {
-        setOnboardingMiaMessage(message.text);
+      // Use dynamic message for community_intro (with username), otherwise use static messages
+      if (onboardingStep === 'community_intro') {
+        setOnboardingMiaMessage(getCommunityIntroMessage(userProfile.username).text);
+      } else {
+        const message = COMMUNITY_ONBOARDING_MESSAGES[onboardingStep];
+        if (message?.text) {
+          setOnboardingMiaMessage(message.text);
+        }
       }
       
       // Generate greeting immediately when community_intro starts (new users)
