@@ -611,29 +611,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         
         {/* --- INPUT AREA --- */}
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
-            {/* MIA onboarding message above input for ALL community onboarding steps */}
-            {onboardingMiaMessage && (
-              <div className="flex items-start gap-2 mb-2 p-2 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn relative">
-                <button
-                  onClick={() => setOnboardingMiaMessage(null)}
-                  className="absolute top-1.5 right-1.5 p-1 text-white/40 hover:text-white/80 transition-colors"
-                  aria-label="Schließen"
-                >
-                  <X size={14} />
-                </button>
-                <img 
-                  src={MIA_AVATAR} 
-                  className="w-8 h-8 rounded-full ring-2 ring-gold/50 object-cover flex-shrink-0" 
-                  alt="MIA" 
-                />
-                <div className="flex-1 min-w-0 pr-4">
-                  <span className="text-xs font-bold text-gold">MIA</span>
-                  <p className="text-xs text-white/90 leading-relaxed mt-0.5 whitespace-pre-line">
-                    {onboardingMiaMessage}
-                  </p>
-                </div>
-              </div>
-            )}
             
             <div className={`bg-surface border rounded-lg p-1.5 shadow-lg flex items-end gap-2 ${
               (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
@@ -651,7 +628,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                     }}
                     placeholder={
                       (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
-                        ? 'Ergänze gerne noch einen Fun Fact über dich...'
+                        ? '👋 Stell dich vor...'
                         : `What's happening in ${selectedCity}?`
                     }
                     className="flex-1 bg-transparent text-white text-sm placeholder-zinc-600 outline-none resize-none min-h-[28px] max-h-[120px] py-1"
@@ -737,6 +714,30 @@ export const TribeCommunityBoard: React.FC<Props> = ({
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
+            {/* MIA Willkommensnachricht - scrollbar im Feed */}
+            {onboardingMiaMessage && (
+              <div className="flex items-start gap-2 p-3 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn relative">
+                <button
+                  onClick={() => setOnboardingMiaMessage(null)}
+                  className="absolute top-2 right-2 p-1 text-white/40 hover:text-white/80 transition-colors"
+                  aria-label="Schließen"
+                >
+                  <X size={14} />
+                </button>
+                <img 
+                  src={MIA_AVATAR} 
+                  className="w-10 h-10 rounded-full ring-2 ring-gold/50 object-cover flex-shrink-0" 
+                  alt="MIA" 
+                />
+                <div className="flex-1 min-w-0 pr-6">
+                  <span className="text-xs font-bold text-gold">MIA</span>
+                  <p className="text-sm text-white/90 leading-relaxed mt-1">
+                    {onboardingMiaMessage}
+                  </p>
+                </div>
+              </div>
+            )}
+            
             {/* Profile Creation Banner - simple, closable - HIDE during onboarding */}
             {userProfile && !profileBannerDismissed && !onboardingStep && (() => {
               const hasAvatar = !!userProfile.avatarUrl || !!userProfile.avatar;
