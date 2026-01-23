@@ -121,9 +121,7 @@ export const isHochschulsportEvent = (title?: string, organizer?: string): boole
 const isKeywordVenue = (location?: string): boolean => {
   if (!location) return false;
   const lower = location.toLowerCase();
-  return lower.includes('vhs') || 
-         lower.includes('volkshochschule') ||
-         lower.includes('hochschulsport');
+  return lower.includes('hochschulsport');
 };
 
 /**
@@ -133,6 +131,14 @@ const isCinemaEvent = (location?: string): boolean => {
   if (!location) return false;
   const lower = location.toLowerCase();
   return lower.includes('cinemaxx') || lower.includes('kino');
+};
+
+/**
+ * Check if event is a VHS event (Volkshochschule)
+ */
+const isVhsEvent = (location?: string, title?: string): boolean => {
+  const combined = `${location || ''} ${title || ''}`.toLowerCase();
+  return combined.includes('vhs') || combined.includes('volkshochschule');
 };
 
 /**
@@ -170,7 +176,16 @@ export const getEventDisplayImage = (
     return getKeywordImage(title, location) || DEFAULT_EVENT_IMAGE;
   }
   
-  // For certain venues (vhs, hochschulsport), always use keyword-specific images
+  // For VHS events: prioritize scraped image_url if it exists and is real
+  if (isVhsEvent(location, title)) {
+    if (imageUrl && !imageUrl.includes('placeholder') && !imageUrl.includes('default') && !imageUrl.includes('unsplash')) {
+      return imageUrl; // Use the scraped VHS event image
+    }
+    // Fallback to generic VHS/education image
+    return getKeywordImage(title, location) || DEFAULT_EVENT_IMAGE;
+  }
+  
+  // For certain venues (hochschulsport), always use keyword-specific images
   if (isHochschulsportEvent(title, location) || isKeywordVenue(location)) {
     return getKeywordImage(title, location) || DEFAULT_EVENT_IMAGE;
   }
