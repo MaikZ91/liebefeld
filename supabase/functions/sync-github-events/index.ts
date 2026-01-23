@@ -248,7 +248,7 @@ Deno.serve(async (req) => {
       
       const existingData = existingEventsMap.get(externalId);
 
-      // Determine image URL - try to scrape for cinema events
+      // Determine image URL - try to scrape for cinema and VHS events
       let imageUrl = githubEvent.image_url || null;
       
       // For Kino/Cinema events, try to scrape the movie poster from the event link
@@ -256,12 +256,18 @@ Deno.serve(async (req) => {
                            location.toLowerCase().includes('cinemaxx') || 
                            location.toLowerCase().includes('kino');
       
-      if (isCinemaEvent && !imageUrl && githubEvent.link) {
-        console.log(`[CINEMA EVENT] Attempting to scrape movie poster for: ${title}`);
+      // For VHS events, try to scrape the event image from the event link
+      const isVhsEvent = location.toLowerCase().includes('vhs') || 
+                        location.toLowerCase().includes('volkshochschule') ||
+                        (title.toLowerCase().includes('vhs') && !title.toLowerCase().includes('dvhs'));
+      
+      if ((isCinemaEvent || isVhsEvent) && !imageUrl && githubEvent.link) {
+        const eventType = isCinemaEvent ? 'CINEMA' : 'VHS';
+        console.log(`[${eventType} EVENT] Attempting to scrape image for: ${title}`);
         const scrapedImage = await scrapeMovieImage(githubEvent.link);
         if (scrapedImage) {
           imageUrl = scrapedImage;
-          console.log(`[CINEMA EVENT] Successfully scraped poster for: ${title} -> ${imageUrl}`);
+          console.log(`[${eventType} EVENT] Successfully scraped image for: ${title} -> ${imageUrl}`);
         }
       }
 
