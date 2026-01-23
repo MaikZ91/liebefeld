@@ -21,6 +21,68 @@ interface GitHubEvent {
   city?: string;
 }
 
+// Helper function to scrape movie image from kino.cylex.de or similar pages
+async function scrapeMovieImage(link: string): Promise<string | null> {
+  if (!link) return null;
+  
+  try {
+    console.log(`[SCRAPE] Attempting to fetch movie image from: ${link}`);
+    
+    const response = await fetch(link, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      },
+    });
+    
+    if (!response.ok) {
+      console.log(`[SCRAPE] Failed to fetch page: ${response.status}`);
+      return null;
+    }
+    
+    const html = await response.text();
+    
+    // Try to find og:image meta tag first (most reliable for movie posters)
+    const ogImageMatch = html.match(/<meta\s+(?:property|name)=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+                        html.match(/<meta\s+content=["']([^"']+)["']\s+(?:property|name)=["']og:image["']/i);
+    
+    if (ogImageMatch && ogImageMatch[1]) {
+      console.log(`[SCRAPE] Found og:image: ${ogImageMatch[1]}`);
+      return ogImageMatch[1];
+    }
+    
+    // Try to find twitter:image meta tag
+    const twitterImageMatch = html.match(/<meta\s+(?:property|name)=["']twitter:image["']\s+content=["']([^"']+)["']/i) ||
+                              html.match(/<meta\s+content=["']([^"']+)["']\s+(?:property|name)=["']twitter:image["']/i);
+    
+    if (twitterImageMatch && twitterImageMatch[1]) {
+      console.log(`[SCRAPE] Found twitter:image: ${twitterImageMatch[1]}`);
+      return twitterImageMatch[1];
+    }
+    
+    // Try to find main movie poster image - look for common patterns
+    const posterPatterns = [
+      /<img[^>]+class=["'][^"']*(?:poster|movie|film|cover)[^"']*["'][^>]+src=["']([^"']+)["']/i,
+      /<img[^>]+src=["']([^"']+)["'][^>]+class=["'][^"']*(?:poster|movie|film|cover)[^"']*["']/i,
+      /<img[^>]+alt=["'][^"']*(?:poster|plakat|film)[^"']*["'][^>]+src=["']([^"']+)["']/i,
+    ];
+    
+    for (const pattern of posterPatterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        console.log(`[SCRAPE] Found poster image via pattern: ${match[1]}`);
+        return match[1];
+      }
+    }
+    
+    console.log(`[SCRAPE] No movie image found on page`);
+    return null;
+  } catch (error) {
+    console.error(`[SCRAPE] Error scraping movie image:`, error);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -186,6 +248,23 @@ Deno.serve(async (req) => {
       
       const existingData = existingEventsMap.get(externalId);
 
+      // Determine image URL - try to scrape for cinema events
+      let imageUrl = githubEvent.image_url || null;
+      
+      // For Kino/Cinema events, try to scrape the movie poster from the event link
+      const isCinemaEvent = category === 'Kino' || 
+                           location.toLowerCase().includes('cinemaxx') || 
+                           location.toLowerCase().includes('kino');
+      
+      if (isCinemaEvent && !imageUrl && githubEvent.link) {
+        console.log(`[CINEMA EVENT] Attempting to scrape movie poster for: ${title}`);
+        const scrapedImage = await scrapeMovieImage(githubEvent.link);
+        if (scrapedImage) {
+          imageUrl = scrapedImage;
+          console.log(`[CINEMA EVENT] Successfully scraped poster for: ${title} -> ${imageUrl}`);
+        }
+      }
+
       const transformedEvent = {
         source: 'github',
         external_id: externalId,
@@ -198,7 +277,7 @@ Deno.serve(async (req) => {
         organizer: githubEvent.organizer || 'Unbekannt', // Use organizer from source if available
         category: category,
         link: githubEvent.link || null,
-        image_url: githubEvent.image_url || null,
+        image_url: imageUrl,
         is_paid: false, // Assuming GitHub events are not paid unless explicitly stated
         likes: existingData ? existingData.likes : 0,
         rsvp_yes: existingData ? existingData.rsvp_yes : 0,
@@ -206,7 +285,7 @@ Deno.serve(async (req) => {
         rsvp_maybe: existingData ? existingData.rsvp_maybe : 0
       };
 
-      console.log(`[Transformed Event Debug] Event: ${transformedEvent.title}, Date: ${transformedEvent.date}, Time: ${transformedEvent.time}, External ID: ${transformedEvent.external_id}, Category: ${transformedEvent.category}`);
+      console.log(`[Transformed Event Debug] Event: ${transformedEvent.title}, Date: ${transformedEvent.date}, Time: ${transformedEvent.time}, External ID: ${transformedEvent.external_id}, Category: ${transformedEvent.category}, Image: ${transformedEvent.image_url}`);
       transformedEvents.push(transformedEvent);
     }
 
