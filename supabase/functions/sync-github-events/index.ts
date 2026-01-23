@@ -22,18 +22,26 @@ interface GitHubEvent {
 }
 
 // Helper function to scrape movie image from kino.cylex.de or similar pages
-async function scrapeMovieImage(link: string): Promise<string | null> {
+// With timeout to prevent function timeout
+async function scrapeMovieImage(link: string, timeoutMs: number = 3000): Promise<string | null> {
   if (!link) return null;
   
   try {
     console.log(`[SCRAPE] Attempting to fetch movie image from: ${link}`);
+    
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
     const response = await fetch(link, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       },
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
       console.log(`[SCRAPE] Failed to fetch page: ${response.status}`);
@@ -78,7 +86,12 @@ async function scrapeMovieImage(link: string): Promise<string | null> {
     console.log(`[SCRAPE] No movie image found on page`);
     return null;
   } catch (error) {
-    console.error(`[SCRAPE] Error scraping movie image:`, error);
+    // Check if it was a timeout/abort
+    if (error.name === 'AbortError') {
+      console.log(`[SCRAPE] Request timed out for: ${link}`);
+    } else {
+      console.error(`[SCRAPE] Error scraping movie image:`, error);
+    }
     return null;
   }
 }
@@ -138,6 +151,10 @@ Deno.serve(async (req) => {
 
     const now = new Date();
     const transformedEvents = [];
+    
+    // Limit scraping to avoid timeout - max 5 scrape attempts per sync
+    let scrapeCount = 0;
+    const MAX_SCRAPE_ATTEMPTS = 5;
 
     for (const githubEvent of githubEvents) {
       // Clean title from special characters and extract location
@@ -261,10 +278,11 @@ Deno.serve(async (req) => {
                         location.toLowerCase().includes('volkshochschule') ||
                         (title.toLowerCase().includes('vhs') && !title.toLowerCase().includes('dvhs'));
       
-      if ((isCinemaEvent || isVhsEvent) && !imageUrl && githubEvent.link) {
+      if ((isCinemaEvent || isVhsEvent) && !imageUrl && githubEvent.link && scrapeCount < MAX_SCRAPE_ATTEMPTS) {
+        scrapeCount++;
         const eventType = isCinemaEvent ? 'CINEMA' : 'VHS';
-        console.log(`[${eventType} EVENT] Attempting to scrape image for: ${title}`);
-        const scrapedImage = await scrapeMovieImage(githubEvent.link);
+        console.log(`[${eventType} EVENT] Attempting to scrape image for: ${title} (attempt ${scrapeCount}/${MAX_SCRAPE_ATTEMPTS})`);
+        const scrapedImage = await scrapeMovieImage(githubEvent.link, 2000); // 2 second timeout
         if (scrapedImage) {
           imageUrl = scrapedImage;
           console.log(`[${eventType} EVENT] Successfully scraped image for: ${title} -> ${imageUrl}`);
