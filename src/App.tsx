@@ -29,6 +29,7 @@ const Heatmap = lazy(() => import('@/pages/Heatmap'));
 const Tribe = lazy(() => import("./pages/Tribe"));
 const UserDirectory = lazy(() => import("./components/users/UserDirectory"));
 const EventCalendar = lazy(() => import("./components/EventCalendar"));
+const AppDownload = lazy(() => import("./pages/AppDownload"));
 
 // SEO Landing Pages
 const PartyBielefeld = lazy(() => import("./pages/seo/PartyBielefeld"));
@@ -193,6 +194,9 @@ function App() {
                   {/* Layout-wrapped pages */}
                   <Route path="/users" element={<Layout><UserDirectory open={true} onOpenChange={() => {}} onSelectUser={() => {}} /></Layout>} />
                   <Route path="/events" element={<Layout><EventCalendar /></Layout>} />
+                  
+                  {/* App Download/Platform Selection */}
+                  <Route path="/app" element={<AppDownload />} />
                   
                   <Route path="*" element={<NotFound />} />
                 </Routes>

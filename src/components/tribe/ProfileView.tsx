@@ -294,9 +294,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                    {isSubmitting ? 'Speichern...' : 'Speichern'}
                  </button>
                </>
-             ) : (
-                <>
-                  <ShareAppQRCode />
+              ) : (
+                 <>
+                   <button
+                     onClick={() => setIsEditing(true)}
+                     className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
+                   >
+                     <Edit3 size={14} />
+                     Bearbeiten
+                   </button>
                   <button
                     onClick={() => setIsEditing(true)}
                     className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
@@ -494,8 +500,11 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                    </div>
                  )}
                </div>
-           </div>
-        </div>
+               
+               {/* Share QR Code - Inline */}
+               {!isEditing && <ShareAppQRCode variant="inline" />}
+            </div>
+         </div>
 
        {/* Tabs */}
        <div className="flex border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur z-20">
