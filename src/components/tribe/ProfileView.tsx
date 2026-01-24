@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, TribeEvent } from '@/types/tribe';
 import { TribeEventCard } from './TribeEventCard';
 import { Shield, Sparkles, MapPin, Edit3, X, Save, Upload, Plus, LogOut } from 'lucide-react';
+import { ShareAppQRCode } from './ShareAppQRCode';
 import { personalizationService } from '@/services/personalizationService';
 import { supabase } from '@/integrations/supabase/client';
 import { userService } from '@/services/userService';
@@ -294,24 +295,25 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                  </button>
                </>
              ) : (
-               <>
-                 <button
-                   onClick={() => setIsEditing(true)}
-                   className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
-                 >
-                   <Edit3 size={14} />
-                   Bearbeiten
-                 </button>
-                 {onSignOut && (
-                   <button
-                     onClick={onSignOut}
-                     className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-500/50 transition-all text-xs uppercase tracking-widest"
-                   >
-                     <LogOut size={14} />
-                     Abmelden
-                   </button>
-                 )}
-               </>
+                <>
+                  <ShareAppQRCode />
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
+                  >
+                    <Edit3 size={14} />
+                    Bearbeiten
+                  </button>
+                  {onSignOut && (
+                    <button
+                      onClick={onSignOut}
+                      className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-500/50 transition-all text-xs uppercase tracking-widest"
+                    >
+                      <LogOut size={14} />
+                      Abmelden
+                    </button>
+                  )}
+                </>
              )}
            </div>
           
