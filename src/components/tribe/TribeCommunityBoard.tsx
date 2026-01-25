@@ -22,7 +22,7 @@ interface Props {
   generateGreeting?: (profile: { username?: string; interests?: string[]; favorite_locations?: string[] }) => string;
 }
 
-type Tab = 'ALL' | 'TRIBE';
+
 
 const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 
@@ -76,7 +76,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   const [newPost, setNewPost] = useState('');
   
   const [generatedTags, setGeneratedTags] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<Tab>('ALL');
+  
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -454,7 +454,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         // Filter out dismissed posts
         if (dismissedPosts.has(p.id)) return false;
         if (selectedCity !== 'All' && p.city !== selectedCity) return false;
-        if (activeTab === 'TRIBE') return p.tags.includes('TribeCall') || p.tags.includes('Connect');
         return true;
       })
       .map(p => ({ ...p, relevanceScore: calculateRelevanceScore(p) }))
@@ -464,7 +463,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         const bTime = getLastActivityTime(b);
         return bTime - aTime;
       });
-  }, [posts, dismissedPosts, activeTab, selectedCity, topicDislikes, userProfile]);
+  }, [posts, dismissedPosts, selectedCity, topicDislikes, userProfile]);
 
 
   // Handle image selection
@@ -695,21 +694,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                 </div>
             )}
         </div>
-
-        {/* --- CHANNELS / TABS --- */}
-        <div className="px-4 py-2 flex gap-3 overflow-x-auto no-scrollbar border-b border-white/5">
-            {[
-                { id: 'ALL', label: 'All Posts' },
-                { id: 'TRIBE', label: 'Tribe Search' },
-            ].map(tab => (
-                <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as Tab)}
-                    className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 transition-all ${activeTab === tab.id ? 'bg-white text-black' : 'text-zinc-500 hover:text-white border border-white/10'}`}
-                >
-                    {tab.label}
-                </button>
-            ))}
+        {/* --- HEADER --- */}
+        <div className="px-4 py-2 border-b border-white/5">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-white bg-black border border-white/20 px-2.5 py-1">
+                Posts
+            </span>
         </div>
 
         {/* --- FEED --- */}
