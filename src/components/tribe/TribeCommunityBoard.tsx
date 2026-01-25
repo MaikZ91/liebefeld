@@ -660,8 +660,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 transition-colors disabled:opacity-50 flex items-center gap-1 ${
                           (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
                             ? 'bg-gold text-black hover:bg-gold/90 animate-pulse'
-                            : 'bg-[#FFFFFF] text-black hover:bg-gray-100 shadow-[0_0_8px_rgba(255,255,255,0.6)]'
+                            : '!bg-white text-black hover:!bg-neutral-100'
                         }`}
+                        style={(onboardingStep !== 'greeting_ready' && onboardingStep !== 'waiting_for_post') ? { backgroundColor: '#FFFFFF' } : undefined}
                     >
                         {isUploading ? <Loader2 size={12} className="animate-spin" /> : 'Post'}
                     </button>
