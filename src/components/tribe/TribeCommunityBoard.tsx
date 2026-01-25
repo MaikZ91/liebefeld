@@ -657,10 +657,10 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                     <button 
                         onClick={handlePost} 
                         disabled={(!newPost.trim() && !selectedImage) || isUploading} 
-                        className={`text-black text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded transition-colors disabled:opacity-50 flex items-center gap-1 ${
+                        className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 transition-colors disabled:opacity-50 flex items-center gap-1 ${
                           (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
-                            ? 'bg-gold hover:bg-gold/90 animate-pulse'
-                            : 'bg-gold hover:bg-white'
+                            ? 'bg-gold text-black hover:bg-gold/90 animate-pulse'
+                            : 'bg-white text-black hover:bg-white/90 border border-white/20'
                         }`}
                     >
                         {isUploading ? <Loader2 size={12} className="animate-spin" /> : 'Post'}
@@ -693,12 +693,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                     ))}
                 </div>
             )}
-        </div>
-        {/* --- HEADER --- */}
-        <div className="px-4 py-2 border-b border-white/5">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-white bg-black border border-white/20 px-2.5 py-1">
-                Posts
-            </span>
         </div>
 
         {/* --- FEED --- */}
