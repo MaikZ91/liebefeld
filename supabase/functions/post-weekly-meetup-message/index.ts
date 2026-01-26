@@ -42,7 +42,7 @@ Wer ist dabei? Kommentiere unten! 👇`;
       .insert({
         group_id: TRIBE_BOARD_GROUP_ID,
         sender: 'MIA',
-        avatar: 'https://ykleosfvtqcmqxqihnod.supabase.co/storage/v1/object/public/avatars/mia-avatar.png',
+        avatar: '/lovable-uploads/34a26dea-fa36-4fd0-8d70-cd579a646f06.png',
         text: stammtischMessage,
         media_url: stammtischImageUrl,
         read_by: []
