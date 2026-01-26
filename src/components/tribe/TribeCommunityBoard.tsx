@@ -657,10 +657,10 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                     <button 
                         onClick={handlePost} 
                         disabled={(!newPost.trim() && !selectedImage) || isUploading} 
-                        className={`isolate relative z-10 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 transition-colors disabled:opacity-50 flex items-center gap-1 rounded ${
+                        className={`isolate relative z-10 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 transition-colors flex items-center gap-1 rounded ${
                           (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
                             ? 'bg-gold text-black hover:bg-gold/90 animate-pulse'
-                            : 'text-black'
+                            : 'text-black disabled:text-black/50'
                         }`}
                         style={{ backgroundColor: (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') ? undefined : '#FFFFFF' }}
                     >
