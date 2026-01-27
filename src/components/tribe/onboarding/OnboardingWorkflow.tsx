@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 
-// Background image URL - loaded after initial paint
-const nameBg = '/lovable-uploads/4a08308d-0a6d-4114-b820-f511ce7d7a65.png';
+// Background image - use dynamic URL for lazy loading
+const nameBg = new URL('@/assets/onboarding/name-bg.png', import.meta.url).href;
 
 interface CategoryOption {
   id: string;
