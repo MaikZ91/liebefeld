@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import nameBg from '@/assets/onboarding/name-bg.png';
 import { initializeFCM } from '@/services/firebaseMessaging';
+
+// Lazy load background image for better FCP
+const nameBg = new URL('@/assets/onboarding/name-bg.png', import.meta.url).href;
 
 interface CategoryOption {
   id: string;
@@ -25,6 +27,14 @@ interface OnboardingWorkflowProps {
 export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComplete }) => {
   const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set());
   const [userName, setUserName] = useState('');
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Preload background image
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setImageLoaded(true);
+    img.src = nameBg;
+  }, []);
 
   const hasSelectedInterests = selectedInterests.size > 0;
   const canContinue = hasSelectedInterests && userName.trim().length > 0;
@@ -60,9 +70,9 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
 
   return (
     <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
-      {/* Background Image */}
+      {/* Background: Solid color first, then image fades in */}
       <div 
-        className="absolute inset-0 bg-cover bg-center"
+        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: `url(${nameBg})` }}
       />
       <div className="absolute inset-0 bg-black/50" />
