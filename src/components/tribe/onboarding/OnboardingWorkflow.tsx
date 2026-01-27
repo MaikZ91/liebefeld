@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { initializeFCM } from '@/services/firebaseMessaging';
 
-// Lazy load background image for better FCP
-const nameBg = new URL('@/assets/onboarding/name-bg.png', import.meta.url).href;
+// Background image URL - loaded after initial paint
+const nameBg = '/lovable-uploads/4a08308d-0a6d-4114-b820-f511ce7d7a65.png';
 
 interface CategoryOption {
   id: string;
@@ -28,9 +26,14 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
   const [selectedInterests, setSelectedInterests] = useState<Set<string>>(new Set());
   const [userName, setUserName] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [contentVisible, setContentVisible] = useState(false);
 
-  // Preload background image
+  // Show content immediately, preload background image
   useEffect(() => {
+    // Content fades in immediately
+    requestAnimationFrame(() => setContentVisible(true));
+    
+    // Background image loads in background
     const img = new Image();
     img.onload = () => setImageLoaded(true);
     img.src = nameBg;
@@ -54,10 +57,12 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
       localStorage.setItem('tribe_onboarding_completed', 'true');
       localStorage.setItem('tribe_seen_interests_dialog', 'true');
       
-      // Initialize push notifications only after user registers with a real name
+      // Initialize push notifications lazily after completion
       const selectedCity = localStorage.getItem('selectedCityName') || localStorage.getItem('selectedCityAbbr') || 'Bielefeld';
-      initializeFCM(selectedCity).catch(err => {
-        console.log('FCM initialization skipped or failed:', err);
+      import('@/services/firebaseMessaging').then(({ initializeFCM }) => {
+        initializeFCM(selectedCity).catch(err => {
+          console.log('FCM initialization skipped or failed:', err);
+        });
       });
       
       onComplete({
@@ -75,17 +80,14 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
       
       {/* Background image fades in after loading */}
       <div 
-        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: `url(${nameBg})` }}
       />
       <div className="absolute inset-0 bg-black/40" />
 
-      {/* Content */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.25 }}
-        className="relative z-10 h-full flex flex-col items-center justify-center px-6"
+      {/* Content - uses CSS transitions instead of framer-motion */}
+      <div
+        className={`relative z-10 h-full flex flex-col items-center justify-center px-6 transition-opacity duration-150 ${contentVisible ? 'opacity-100' : 'opacity-0'}`}
       >
         <div className="w-full max-w-md text-center">
           {/* Tagline */}
@@ -138,41 +140,33 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             ))}
           </div>
 
-          {/* Name Input - Only shows when interests are selected */}
-          <AnimatePresence>
-            {hasSelectedInterests && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <p className="text-white/40 text-xs font-light tracking-widest mb-4">
-                  Wie sollen dich andere in der Community nennen?
-                </p>
+          {/* Name Input - CSS transition instead of AnimatePresence */}
+          <div
+            className={`overflow-hidden transition-all duration-200 ${hasSelectedInterests ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}
+          >
+            <p className="text-white/40 text-xs font-light tracking-widest mb-4">
+              Wie sollen dich andere in der Community nennen?
+            </p>
 
-                <div className="mb-8">
-                  <input
-                    type="text"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    placeholder="Vorname oder Spitzname"
-                    className="w-full bg-transparent border-b border-white/20 py-3 text-center text-lg font-light text-white placeholder:text-white/25 focus:outline-none focus:border-white/50 transition-colors tracking-wide"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && canContinue) {
-                        handleSubmit();
-                      }
-                    }}
-                  />
-                  <p className="text-white/25 text-[10px] font-light tracking-widest mt-3">
-                    Erscheint so in Chats und Events
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <div className="mb-8">
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Vorname oder Spitzname"
+                className="w-full bg-transparent border-b border-white/20 py-3 text-center text-lg font-light text-white placeholder:text-white/25 focus:outline-none focus:border-white/50 transition-colors tracking-wide"
+                autoFocus={hasSelectedInterests}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && canContinue) {
+                    handleSubmit();
+                  }
+                }}
+              />
+              <p className="text-white/25 text-[10px] font-light tracking-widest mt-3">
+                Erscheint so in Chats und Events
+              </p>
+            </div>
+          </div>
 
           {/* Continue Button */}
           <button
@@ -191,7 +185,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };
