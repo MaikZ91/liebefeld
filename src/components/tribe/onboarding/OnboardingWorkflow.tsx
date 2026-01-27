@@ -69,13 +69,16 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black overflow-hidden">
-      {/* Background: Solid color first, then image fades in */}
+    <div className="fixed inset-0 z-[100] overflow-hidden">
+      {/* Instant gradient placeholder - shows immediately */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a1628] via-[#0d1a30] to-[#1a0a0a]" />
+      
+      {/* Background image fades in after loading */}
       <div 
-        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: `url(${nameBg})` }}
       />
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/40" />
 
       {/* Content */}
       <motion.div

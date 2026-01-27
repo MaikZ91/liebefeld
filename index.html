@@ -68,14 +68,12 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
-    <!-- Leaflet: Deferred to not block initial render -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'"/>
-    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script defer src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <!-- Leaflet loaded dynamically when map is needed -->
     
     <!-- Critical inline CSS for instant FCP -->
     <style>
-      body { margin: 0; font-family: 'Outfit', system-ui, -apple-system, sans-serif; background-color: #000; color: #fff; }
+      /* Critical CSS for instant FCP */
+      body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #0a1628 0%, #0d1a30 50%, #1a0a0a 100%); color: #fff; min-height: 100vh; }
       #root { min-height: 100vh; }
       ::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

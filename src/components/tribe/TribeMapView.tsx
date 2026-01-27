@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { TribeEvent } from '@/types/tribe';
 import { Calendar, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { loadLeaflet } from '@/utils/leafletLoader';
 
 interface TribeMapViewProps {
   events: TribeEvent[];
@@ -62,6 +63,14 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
   
   const [filterMode, setFilterMode] = useState<'TODAY' | 'TOMORROW' | 'WEEK'>('TODAY');
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, {lat: number, lng: number}>>(new Map());
+  const [leafletReady, setLeafletReady] = useState(typeof (window as any).L !== 'undefined');
+
+  // Load Leaflet dynamically when component mounts
+  useEffect(() => {
+    if (!leafletReady) {
+      loadLeaflet().then(() => setLeafletReady(true)).catch(console.error);
+    }
+  }, [leafletReady]);
 
   // Filter events based on date range
   const filteredEvents = useMemo(() => {
@@ -125,7 +134,7 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
 
   // Initialize and update map
   useEffect(() => {
-    if (!mapRef.current || typeof (window as any).L === 'undefined') return;
+    if (!mapRef.current || !leafletReady) return;
 
     const L = (window as any).L;
 
@@ -218,7 +227,7 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
       map.flyTo(CITY_COORDS[selectedCity], 13, { duration: 1.5 });
     }
 
-  }, [filteredEvents, eventCoordinates, selectedCity, onEventClick]);
+  }, [filteredEvents, eventCoordinates, selectedCity, onEventClick, leafletReady]);
 
   return (
     <div className="h-full w-full relative bg-surface">
