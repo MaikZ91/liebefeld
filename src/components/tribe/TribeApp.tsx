@@ -390,7 +390,8 @@ const TribeAppMain: React.FC<{
       if (isLoadingMore && !isInitial) return;
       setIsLoadingMore(true);
 
-      const today = new Date().toISOString().split("T")[0];
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
       const cityLower = selectedCity.toLowerCase();
       const cityAbbr = cityLower.substring(0, 2);
       const isGermanyWide = selectedCity === "Deutschland";
@@ -428,16 +429,69 @@ const TribeAppMain: React.FC<{
           const unique = Array.from(new Map(merged.map((e) => [e.id, e])).values());
           return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         });
+      } else if (isInitial) {
+        // IMPROVED: Initial load - fetch at least 7 days of events + ensure TRIBE events are included
+        const sevenDaysLater = new Date(today);
+        sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+        const sevenDaysStr = sevenDaysLater.toISOString().split("T")[0];
+        
+        console.log("🔄 [fetchEvents] Initial load: 7 days from", todayStr, "to", sevenDaysStr);
+        
+        // Load first 7 days
+        let weekQuery = supabase
+          .from("community_events")
+          .select("*")
+          .gte("date", todayStr)
+          .lte("date", sevenDaysStr)
+          .order("date", { ascending: true });
+
+        if (!isGermanyWide) {
+          weekQuery = weekQuery.or(`city.is.null,city.ilike.${selectedCity},city.ilike.${cityAbbr}`);
+        }
+
+        const { data: weekData, error: weekError } = await weekQuery;
+
+        if (weekError) throw weekError;
+        
+        // Also fetch featured TRIBE events from the next 30 days to ensure they're always visible
+        const thirtyDaysLater = new Date(today);
+        thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+        const thirtyDaysStr = thirtyDaysLater.toISOString().split("T")[0];
+        
+        let tribeQuery = supabase
+          .from("community_events")
+          .select("*")
+          .gte("date", todayStr)
+          .lte("date", thirtyDaysStr)
+          .or("title.ilike.%TRIBE KENNENLERNABEND%,title.ilike.%TRIBE TUESDAY RUN%,title.ilike.%tribe stammtisch%");
+
+        if (!isGermanyWide) {
+          tribeQuery = tribeQuery.or(`city.is.null,city.ilike.${selectedCity},city.ilike.${cityAbbr}`);
+        }
+
+        const { data: tribeData } = await tribeQuery;
+        
+        console.log("🔄 [fetchEvents] Week events:", weekData?.length, "Featured TRIBE events:", tribeData?.length);
+        
+        // Merge week events with tribe events
+        const allData = [...(weekData || []), ...(tribeData || [])];
+        const uniqueData = Array.from(new Map(allData.map((e) => [e.id, e])).values());
+        
+        const tribeEvents = uniqueData.map(convertToTribeEvent);
+        
+        setAllEvents(tribeEvents);
+        setLoadedEventCount(tribeEvents.length);
+        setHasMoreEvents(true); // There's always more after 7 days
       } else {
-        // Pagination: use offset/limit
-        const offset = isInitial ? 0 : loadedEventCount;
+        // Pagination: load next batch after day 7
+        const offset = loadedEventCount;
         
         console.log("🔄 [fetchEvents] Pagination load, offset:", offset, "limit:", PAGE_SIZE);
         
         let query = supabase
           .from("community_events")
           .select("*")
-          .gte("date", today)
+          .gte("date", todayStr)
           .order("date", { ascending: true })
           .range(offset, offset + PAGE_SIZE - 1);
 
@@ -454,18 +508,13 @@ const TribeAppMain: React.FC<{
         
         const tribeEvents = (data || []).map(convertToTribeEvent);
         
-        if (isInitial) {
-          setAllEvents(tribeEvents);
-          setLoadedEventCount(tribeEvents.length);
-        } else {
-          // Append for infinite scroll
-          setAllEvents((prev) => {
-            const merged = [...prev, ...tribeEvents];
-            const unique = Array.from(new Map(merged.map((e) => [e.id, e])).values());
-            return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          });
-          setLoadedEventCount((prev) => prev + tribeEvents.length);
-        }
+        // Append for infinite scroll
+        setAllEvents((prev) => {
+          const merged = [...prev, ...tribeEvents];
+          const unique = Array.from(new Map(merged.map((e) => [e.id, e])).values());
+          return unique.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        });
+        setLoadedEventCount((prev) => prev + tribeEvents.length);
         
         // No more events if we got less than PAGE_SIZE
         setHasMoreEvents(tribeEvents.length === PAGE_SIZE);
@@ -690,8 +739,11 @@ const TribeAppMain: React.FC<{
     // Helper: Check if event is a featured Tribe Community Event (always shown first)
     const isFeaturedTribeEvent = (event: TribeEvent): boolean => {
       const title = event.title?.toLowerCase() || '';
-      return title.includes('tribe stammtisch') || 
+      // Match all variations of TRIBE community events
+      return title.includes('tribe kennenlernabend') || 
+             title.includes('tribe stammtisch') || 
              title.includes('kennenlernabend') || 
+             title.includes('tribe tuesday run') ||
              title.includes('tuesday run') ||
              title.includes('dienstagslauf');
     };
