@@ -97,6 +97,14 @@ const EVENT_IMAGES: Record<string, string> = {
   'sip&sketch': '/images/events/sip-sketch.jpg',
   sipsketch: '/images/events/sip-sketch.jpg',
   'sip and sketch': '/images/events/sip-sketch.jpg',
+  
+  // Tribe Community Events - Priority images
+  'tribe stammtisch': '/images/tribe/tribe-kennenlernabend.jpg',
+  'kennenlernabend': '/images/tribe/tribe-kennenlernabend.jpg',
+  'stammtisch': '/images/tribe/tribe-kennenlernabend.jpg',
+  'tribe tuesday run': '/images/tribe/tribe-tuesday-run.jpg',
+  'tuesday run': '/images/tribe/tribe-tuesday-run.jpg',
+  'dienstagslauf': '/images/tribe/tribe-tuesday-run.jpg',
 };
 
 // Default image for unknown events

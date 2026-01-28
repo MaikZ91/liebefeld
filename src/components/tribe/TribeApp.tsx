@@ -687,9 +687,30 @@ const TribeAppMain: React.FC<{
       return ausgehenKeywords.some((keyword) => title.includes(keyword) || location.includes(keyword));
     };
 
-    // Sort with priority based on Tribe events first, then match scores
+    // Helper: Check if event is a featured Tribe Community Event (always shown first)
+    const isFeaturedTribeEvent = (event: TribeEvent): boolean => {
+      const title = event.title?.toLowerCase() || '';
+      return title.includes('tribe stammtisch') || 
+             title.includes('kennenlernabend') || 
+             title.includes('tuesday run') ||
+             title.includes('dienstagslauf');
+    };
+
+    // Sort with priority based on featured Tribe events first, then other tribe events, then match scores
     result.sort((a, b) => {
-      // PRIORITY 0: Tribe/Community events ALWAYS come first per day
+      // PRIORITY 0: Featured Tribe Community Events ALWAYS come first (regardless of date/likes/score)
+      const isFeaturedA = isFeaturedTribeEvent(a);
+      const isFeaturedB = isFeaturedTribeEvent(b);
+      
+      if (isFeaturedA && !isFeaturedB) return -1;
+      if (!isFeaturedA && isFeaturedB) return 1;
+      
+      // If both are featured, sort by date
+      if (isFeaturedA && isFeaturedB) {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+
+      // PRIORITY 1: Other Tribe/Community events per day
       const isTribeA = a.source === 'community' || a.source === 'tribe';
       const isTribeB = b.source === 'community' || b.source === 'tribe';
       
@@ -699,7 +720,7 @@ const TribeAppMain: React.FC<{
         if (!isTribeA && isTribeB) return 1;
       }
 
-      // Priority 1: Match score (higher score = better match)
+      // Priority 2: Match score (higher score = better match)
       const scoreA = eventMatchScores.get(a.id) || 50;
       const scoreB = eventMatchScores.get(b.id) || 50;
       if (scoreB !== scoreA) {
@@ -709,7 +730,7 @@ const TribeAppMain: React.FC<{
       const isLikedA = likedEventIds.has(a.id);
       const isLikedB = likedEventIds.has(b.id);
 
-      // Priority 2: Liked events come next
+      // Priority 3: Liked events come next
       if (isLikedA && !isLikedB) return -1;
       if (!isLikedA && isLikedB) return 1;
 
@@ -717,11 +738,11 @@ const TribeAppMain: React.FC<{
       const hasImageA = !!a.image_url;
       const hasImageB = !!b.image_url;
 
-      // Priority 3: ALL events with images come before events without images
+      // Priority 4: ALL events with images come before events without images
       if (hasImageA && !hasImageB) return -1;
       if (!hasImageA && hasImageB) return 1;
 
-      // Priority 4: Among events with images, sort by category priority
+      // Priority 5: Among events with images, sort by category priority
       const isAusgehenA = isAusgehenEvent(a);
       const isAusgehenB = isAusgehenEvent(b);
 
@@ -736,14 +757,14 @@ const TribeAppMain: React.FC<{
         sport: 3,
       };
 
-      const categoryA = categoryOrder[a.category?.toLowerCase() || ""] || 4; // Other categories with images get priority 4
+      const categoryA = categoryOrder[a.category?.toLowerCase() || ""] || 4;
       const categoryB = categoryOrder[b.category?.toLowerCase() || ""] || 4;
 
       if (categoryA !== categoryB) {
         return categoryA - categoryB;
       }
 
-      // Priority 5: Within same category, sort by date and time
+      // Priority 6: Within same category, sort by date and time
       const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
       if (dateCompare !== 0) return dateCompare;
 
