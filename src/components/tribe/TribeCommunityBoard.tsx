@@ -939,54 +939,53 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                               </button>
                             </div>
                             
-                            {/* Compact participants display with avatars + names */}
+                            {/* Compact participants display with avatars + all names */}
                             {(meetupResponses?.['bin dabei']?.length > 0 || meetupResponses?.['vielleicht']?.length > 0) && (
-                              <div className="flex items-center gap-3 text-[8px]">
-                                {/* Attending */}
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[8px]">
+                                {/* Attending - show all names */}
                                 {meetupResponses?.['bin dabei']?.length > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <div className="flex -space-x-1.5">
-                                      {meetupResponses['bin dabei'].slice(0, 4).map((u, i) => (
+                                  <div className="flex items-center gap-1.5">
+                                    <Check size={8} className="text-green-500" />
+                                    <div className="flex -space-x-1">
+                                      {meetupResponses['bin dabei'].map((u, i) => (
                                         <div 
                                           key={i} 
-                                          className="w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ring-green-500/30"
-                                          title={u.username}
+                                          className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden ring-1 ring-green-500/40"
                                         >
                                           {u.avatar ? (
                                             <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
                                           ) : (
-                                            <span className="text-[7px] flex items-center justify-center h-full text-green-400">{u.username[0]}</span>
+                                            <span className="text-[6px] flex items-center justify-center h-full text-green-400">{u.username[0]}</span>
                                           )}
                                         </div>
                                       ))}
                                     </div>
-                                    <span className="text-green-400/80 max-w-[120px] truncate">
-                                      {meetupResponses['bin dabei'].slice(0, 2).map(u => u.username).join(', ')}
-                                      {meetupResponses['bin dabei'].length > 2 && ` +${meetupResponses['bin dabei'].length - 2}`}
+                                    <span className="text-green-400/90">
+                                      {meetupResponses['bin dabei'].map(u => u.username).join(', ')}
                                     </span>
                                   </div>
                                 )}
                                 
-                                {/* Maybe */}
+                                {/* Maybe - show all names */}
                                 {meetupResponses?.['vielleicht']?.length > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    <div className="flex -space-x-1.5">
-                                      {meetupResponses['vielleicht'].slice(0, 2).map((u, i) => (
+                                  <div className="flex items-center gap-1.5 opacity-70">
+                                    <HelpCircle size={8} className="text-yellow-500" />
+                                    <div className="flex -space-x-1">
+                                      {meetupResponses['vielleicht'].map((u, i) => (
                                         <div 
                                           key={i} 
-                                          className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden opacity-60"
-                                          title={u.username}
+                                          className="w-3.5 h-3.5 rounded-full border border-black bg-zinc-800 overflow-hidden"
                                         >
                                           {u.avatar ? (
                                             <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
                                           ) : (
-                                            <span className="text-[6px] flex items-center justify-center h-full text-yellow-400">{u.username[0]}</span>
+                                            <span className="text-[5px] flex items-center justify-center h-full text-yellow-400">{u.username[0]}</span>
                                           )}
                                         </div>
                                       ))}
                                     </div>
-                                    <span className="text-yellow-400/60 text-[7px]">
-                                      {meetupResponses['vielleicht'].length}× vllt
+                                    <span className="text-yellow-400/80">
+                                      {meetupResponses['vielleicht'].map(u => u.username).join(', ')}
                                     </span>
                                   </div>
                                 )}
