@@ -893,78 +893,105 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                             </div>
                         )}
 
-                        {/* RSVP Buttons for TribeCalls with integrated avatars */}
+                        {/* RSVP Buttons for TribeCalls with integrated avatars and names */}
                         {isTribeCall && (
-                          <div className="flex items-center gap-2 mb-3 pl-[52px] flex-wrap">
-                            <button
-                              onClick={() => handleRSVP(post.id, 'yes')}
-                              className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
-                                userRSVP === 'bin dabei' 
-                                  ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                                  : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-green-500/30 hover:text-green-400'
-                              }`}
-                            >
-                              <Check size={10} />
-                              Dabei
-                              {meetupResponses?.['bin dabei']?.length > 0 && (
-                                <div className="flex -space-x-1 ml-1">
-                                  {meetupResponses['bin dabei'].slice(0, 3).map((u, i) => (
-                                    <div key={i} className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden">
-                                      {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : <span className="text-[6px] flex items-center justify-center h-full">{u.username[0]}</span>}
+                          <div className="pl-[52px] mb-3 space-y-2">
+                            {/* Compact RSVP buttons row */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <button
+                                onClick={() => handleRSVP(post.id, 'yes')}
+                                className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
+                                  userRSVP === 'bin dabei' 
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                    : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-green-500/30 hover:text-green-400'
+                                }`}
+                              >
+                                <Check size={10} />
+                                Dabei
+                                {meetupResponses?.['bin dabei']?.length > 0 && (
+                                  <span className="text-[8px] ml-0.5 opacity-80">({meetupResponses['bin dabei'].length})</span>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleRSVP(post.id, 'maybe')}
+                                className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
+                                  userRSVP === 'vielleicht' 
+                                    ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' 
+                                    : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-yellow-500/30 hover:text-yellow-400'
+                                }`}
+                              >
+                                <HelpCircle size={10} />
+                                Vielleicht
+                                {meetupResponses?.['vielleicht']?.length > 0 && (
+                                  <span className="text-[8px] ml-0.5 opacity-80">({meetupResponses['vielleicht'].length})</span>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleRSVP(post.id, 'no')}
+                                className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
+                                  userRSVP === 'diesmal nicht' 
+                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                                    : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-red-500/30 hover:text-red-400'
+                                }`}
+                              >
+                                <X size={10} />
+                                Nein
+                              </button>
+                            </div>
+                            
+                            {/* Compact participants display with avatars + names */}
+                            {(meetupResponses?.['bin dabei']?.length > 0 || meetupResponses?.['vielleicht']?.length > 0) && (
+                              <div className="flex items-center gap-3 text-[8px]">
+                                {/* Attending */}
+                                {meetupResponses?.['bin dabei']?.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <div className="flex -space-x-1.5">
+                                      {meetupResponses['bin dabei'].slice(0, 4).map((u, i) => (
+                                        <div 
+                                          key={i} 
+                                          className="w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ring-green-500/30"
+                                          title={u.username}
+                                        >
+                                          {u.avatar ? (
+                                            <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
+                                          ) : (
+                                            <span className="text-[7px] flex items-center justify-center h-full text-green-400">{u.username[0]}</span>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
-                                  {meetupResponses['bin dabei'].length > 3 && (
-                                    <span className="text-[7px] ml-0.5 opacity-70">+{meetupResponses['bin dabei'].length - 3}</span>
-                                  )}
-                                </div>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleRSVP(post.id, 'maybe')}
-                              className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
-                                userRSVP === 'vielleicht' 
-                                  ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' 
-                                  : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-yellow-500/30 hover:text-yellow-400'
-                              }`}
-                            >
-                              <HelpCircle size={10} />
-                              Vielleicht
-                              {meetupResponses?.['vielleicht']?.length > 0 && (
-                                <div className="flex -space-x-1 ml-1">
-                                  {meetupResponses['vielleicht'].slice(0, 3).map((u, i) => (
-                                    <div key={i} className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden">
-                                      {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : <span className="text-[6px] flex items-center justify-center h-full">{u.username[0]}</span>}
+                                    <span className="text-green-400/80 max-w-[120px] truncate">
+                                      {meetupResponses['bin dabei'].slice(0, 2).map(u => u.username).join(', ')}
+                                      {meetupResponses['bin dabei'].length > 2 && ` +${meetupResponses['bin dabei'].length - 2}`}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {/* Maybe */}
+                                {meetupResponses?.['vielleicht']?.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <div className="flex -space-x-1.5">
+                                      {meetupResponses['vielleicht'].slice(0, 2).map((u, i) => (
+                                        <div 
+                                          key={i} 
+                                          className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden opacity-60"
+                                          title={u.username}
+                                        >
+                                          {u.avatar ? (
+                                            <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
+                                          ) : (
+                                            <span className="text-[6px] flex items-center justify-center h-full text-yellow-400">{u.username[0]}</span>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
-                                  {meetupResponses['vielleicht'].length > 3 && (
-                                    <span className="text-[7px] ml-0.5 opacity-70">+{meetupResponses['vielleicht'].length - 3}</span>
-                                  )}
-                                </div>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleRSVP(post.id, 'no')}
-                              className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
-                                userRSVP === 'diesmal nicht' 
-                                  ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
-                                  : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-red-500/30 hover:text-red-400'
-                              }`}
-                            >
-                              <X size={10} />
-                              Nein
-                              {meetupResponses?.['diesmal nicht']?.length > 0 && (
-                                <div className="flex -space-x-1 ml-1">
-                                  {meetupResponses['diesmal nicht'].slice(0, 3).map((u, i) => (
-                                    <div key={i} className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden">
-                                      {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : <span className="text-[6px] flex items-center justify-center h-full">{u.username[0]}</span>}
-                                    </div>
-                                  ))}
-                                  {meetupResponses['diesmal nicht'].length > 3 && (
-                                    <span className="text-[7px] ml-0.5 opacity-70">+{meetupResponses['diesmal nicht'].length - 3}</span>
-                                  )}
-                                </div>
-                              )}
-                            </button>
+                                    <span className="text-yellow-400/60 text-[7px]">
+                                      {meetupResponses['vielleicht'].length}× vllt
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
 
