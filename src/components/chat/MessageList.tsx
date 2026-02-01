@@ -100,12 +100,12 @@ const MessageList: React.FC<MessageListProps> = ({
   // No loading skeleton - messages appear immediately
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-visible">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
       {error && (
         <div className="text-center text-red-500 text-lg font-semibold py-4">Error: {error}</div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-20 overflow-x-visible"> {/* Changed overflow-x to visible */}
+      <div className="flex-1 overflow-y-auto p-4 bg-black min-h-0 pb-20 overflow-x-hidden">
         <div className="flex flex-col space-y-1 w-full max-w-full">
           {messages.length === 0 && !loading && !error && (
             <div className="text-center text-gray-400 py-4">No messages yet. Start the conversation!</div>
