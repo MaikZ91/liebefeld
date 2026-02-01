@@ -940,13 +940,13 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                             </div>
                             
                             {/* Compact participants display with avatars + all names */}
-                            {(meetupResponses?.['bin dabei']?.length > 0 || meetupResponses?.['vielleicht']?.length > 0) && (
+                            {(meetupResponses?.['bin dabei']?.length > 0 || meetupResponses?.['vielleicht']?.length > 0 || meetupResponses?.['diesmal nicht']?.length > 0) && (
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[8px]">
                                 {/* Attending - show all names */}
                                 {meetupResponses?.['bin dabei']?.length > 0 && (
                                   <div className="flex items-center gap-1.5">
-                                    <Check size={8} className="text-green-500" />
-                                    <div className="flex -space-x-1">
+                                    <Check size={8} className="text-green-500 flex-shrink-0" />
+                                    <div className="flex -space-x-1 flex-shrink-0">
                                       {meetupResponses['bin dabei'].map((u, i) => (
                                         <div 
                                           key={i} 
@@ -969,8 +969,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                 {/* Maybe - show all names */}
                                 {meetupResponses?.['vielleicht']?.length > 0 && (
                                   <div className="flex items-center gap-1.5 opacity-70">
-                                    <HelpCircle size={8} className="text-yellow-500" />
-                                    <div className="flex -space-x-1">
+                                    <HelpCircle size={8} className="text-yellow-500 flex-shrink-0" />
+                                    <div className="flex -space-x-1 flex-shrink-0">
                                       {meetupResponses['vielleicht'].map((u, i) => (
                                         <div 
                                           key={i} 
@@ -986,6 +986,16 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                     </div>
                                     <span className="text-yellow-400/80">
                                       {meetupResponses['vielleicht'].map(u => u.username).join(', ')}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {/* No - show names without avatars (minimal) */}
+                                {meetupResponses?.['diesmal nicht']?.length > 0 && (
+                                  <div className="flex items-center gap-1 opacity-50">
+                                    <X size={8} className="text-zinc-500 flex-shrink-0" />
+                                    <span className="text-zinc-500">
+                                      {meetupResponses['diesmal nicht'].map(u => u.username).join(', ')}
                                     </span>
                                   </div>
                                 )}
