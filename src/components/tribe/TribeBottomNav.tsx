@@ -16,7 +16,7 @@ export const TribeBottomNav: React.FC<TribeBottomNavProps> = ({ currentView, onV
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-white/10 px-8 py-2 flex justify-around items-end max-w-2xl mx-auto w-full backdrop-blur-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-black/60 border-t border-white/5 px-8 py-2 flex justify-around items-end max-w-2xl mx-auto w-full backdrop-blur-xl">
       {navItems.map(({ view, icon: Icon, label, hasNotification, isCenterButton }) => {
         
         const isActive = currentView === view;
