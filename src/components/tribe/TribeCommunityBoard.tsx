@@ -606,7 +606,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   };
 
     return (
-    <div className="h-full flex flex-col bg-black animate-fadeIn">
+    <div className="h-full flex flex-col bg-black animate-fadeIn overflow-x-hidden">
         
         {/* --- INPUT AREA --- */}
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
@@ -697,7 +697,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         </div>
 
         {/* --- FEED --- */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-32">
             {/* MIA Willkommensnachricht - scrollbar im Feed */}
             {onboardingMiaMessage && (
               <div className="flex items-start gap-2 p-3 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn relative">
