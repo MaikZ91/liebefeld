@@ -893,114 +893,118 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                             </div>
                         )}
 
-                        {/* RSVP Buttons for TribeCalls with integrated avatars and names */}
+                        {/* RSVP - Unified clickable rows with integrated avatars */}
                         {isTribeCall && (
-                          <div className="pl-[52px] mb-3 space-y-2">
-                            {/* Compact RSVP buttons row */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <button
-                                onClick={() => handleRSVP(post.id, 'yes')}
-                                className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
-                                  userRSVP === 'bin dabei' 
-                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                                    : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-green-500/30 hover:text-green-400'
-                                }`}
-                              >
-                                <Check size={10} />
-                                Dabei
-                                {meetupResponses?.['bin dabei']?.length > 0 && (
-                                  <span className="text-[8px] ml-0.5 opacity-80">({meetupResponses['bin dabei'].length})</span>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleRSVP(post.id, 'maybe')}
-                                className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
-                                  userRSVP === 'vielleicht' 
-                                    ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' 
-                                    : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-yellow-500/30 hover:text-yellow-400'
-                                }`}
-                              >
-                                <HelpCircle size={10} />
-                                Vielleicht
-                                {meetupResponses?.['vielleicht']?.length > 0 && (
-                                  <span className="text-[8px] ml-0.5 opacity-80">({meetupResponses['vielleicht'].length})</span>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleRSVP(post.id, 'no')}
-                                className={`flex items-center gap-1 text-[9px] px-2 py-1 rounded transition-all ${
-                                  userRSVP === 'diesmal nicht' 
-                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
-                                    : 'bg-white/5 text-zinc-400 border border-white/10 hover:border-red-500/30 hover:text-red-400'
-                                }`}
-                              >
-                                <X size={10} />
-                                Nein
-                              </button>
-                            </div>
-                            
-                            {/* Compact participants display with avatars + all names */}
-                            {(meetupResponses?.['bin dabei']?.length > 0 || meetupResponses?.['vielleicht']?.length > 0 || meetupResponses?.['diesmal nicht']?.length > 0) && (
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[8px]">
-                                {/* Attending - show all names */}
-                                {meetupResponses?.['bin dabei']?.length > 0 && (
-                                  <div className="flex items-center gap-1.5">
-                                    <Check size={8} className="text-green-500 flex-shrink-0" />
-                                    <div className="flex -space-x-1 flex-shrink-0">
-                                      {meetupResponses['bin dabei'].map((u, i) => (
-                                        <div 
-                                          key={i} 
-                                          className="w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden ring-1 ring-green-500/40"
-                                        >
-                                          {u.avatar ? (
-                                            <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
-                                          ) : (
-                                            <span className="text-[6px] flex items-center justify-center h-full text-green-400">{u.username[0]}</span>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                    <span className="text-green-400/90">
-                                      {meetupResponses['bin dabei'].map(u => u.username).join(', ')}
-                                    </span>
-                                  </div>
-                                )}
-                                
-                                {/* Maybe - show all names */}
-                                {meetupResponses?.['vielleicht']?.length > 0 && (
-                                  <div className="flex items-center gap-1.5 opacity-70">
-                                    <HelpCircle size={8} className="text-yellow-500 flex-shrink-0" />
-                                    <div className="flex -space-x-1 flex-shrink-0">
-                                      {meetupResponses['vielleicht'].map((u, i) => (
-                                        <div 
-                                          key={i} 
-                                          className="w-3.5 h-3.5 rounded-full border border-black bg-zinc-800 overflow-hidden"
-                                        >
-                                          {u.avatar ? (
-                                            <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
-                                          ) : (
-                                            <span className="text-[5px] flex items-center justify-center h-full text-yellow-400">{u.username[0]}</span>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                    <span className="text-yellow-400/80">
-                                      {meetupResponses['vielleicht'].map(u => u.username).join(', ')}
-                                    </span>
-                                  </div>
-                                )}
-                                
-                                {/* No - show names without avatars (minimal) */}
-                                {meetupResponses?.['diesmal nicht']?.length > 0 && (
-                                  <div className="flex items-center gap-1 opacity-50">
-                                    <X size={8} className="text-zinc-500 flex-shrink-0" />
-                                    <span className="text-zinc-500">
-                                      {meetupResponses['diesmal nicht'].map(u => u.username).join(', ')}
-                                    </span>
-                                  </div>
-                                )}
+                          <div className="pl-[52px] mb-3 space-y-1.5">
+                            {/* Dabei Row */}
+                            <button
+                              onClick={() => handleRSVP(post.id, 'yes')}
+                              className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all ${
+                                userRSVP === 'bin dabei' 
+                                  ? 'bg-green-500/15 border border-green-500/30' 
+                                  : 'bg-white/[0.03] border border-white/5 hover:border-green-500/20 hover:bg-green-500/5'
+                              }`}
+                            >
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                userRSVP === 'bin dabei' ? 'bg-green-500 text-black' : 'bg-white/10 text-zinc-400'
+                              }`}>
+                                <Check size={12} />
                               </div>
-                            )}
+                              <span className={`text-[10px] font-medium flex-shrink-0 ${
+                                userRSVP === 'bin dabei' ? 'text-green-400' : 'text-zinc-400'
+                              }`}>
+                                Dabei
+                              </span>
+                              {meetupResponses?.['bin dabei']?.length > 0 && (
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
+                                  <div className="flex -space-x-1.5 flex-shrink-0">
+                                    {meetupResponses['bin dabei'].map((u, i) => (
+                                      <div 
+                                        key={i} 
+                                        className="w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ring-green-500/50"
+                                      >
+                                        {u.avatar ? (
+                                          <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
+                                        ) : (
+                                          <span className="text-[7px] flex items-center justify-center h-full text-green-400 font-bold">{u.username[0]}</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <span className="text-[9px] text-green-400/80 truncate">
+                                    {meetupResponses['bin dabei'].map(u => u.username).join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                            </button>
+                            
+                            {/* Vielleicht Row */}
+                            <button
+                              onClick={() => handleRSVP(post.id, 'maybe')}
+                              className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all ${
+                                userRSVP === 'vielleicht' 
+                                  ? 'bg-yellow-500/15 border border-yellow-500/30' 
+                                  : 'bg-white/[0.03] border border-white/5 hover:border-yellow-500/20 hover:bg-yellow-500/5'
+                              }`}
+                            >
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                userRSVP === 'vielleicht' ? 'bg-yellow-500 text-black' : 'bg-white/10 text-zinc-400'
+                              }`}>
+                                <HelpCircle size={12} />
+                              </div>
+                              <span className={`text-[10px] font-medium flex-shrink-0 ${
+                                userRSVP === 'vielleicht' ? 'text-yellow-400' : 'text-zinc-400'
+                              }`}>
+                                Vielleicht
+                              </span>
+                              {meetupResponses?.['vielleicht']?.length > 0 && (
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
+                                  <div className="flex -space-x-1.5 flex-shrink-0">
+                                    {meetupResponses['vielleicht'].map((u, i) => (
+                                      <div 
+                                        key={i} 
+                                        className="w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ring-yellow-500/40"
+                                      >
+                                        {u.avatar ? (
+                                          <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
+                                        ) : (
+                                          <span className="text-[7px] flex items-center justify-center h-full text-yellow-400 font-bold">{u.username[0]}</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <span className="text-[9px] text-yellow-400/70 truncate">
+                                    {meetupResponses['vielleicht'].map(u => u.username).join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                            </button>
+                            
+                            {/* Nein Row - more subtle */}
+                            <button
+                              onClick={() => handleRSVP(post.id, 'no')}
+                              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 rounded-lg transition-all ${
+                                userRSVP === 'diesmal nicht' 
+                                  ? 'bg-zinc-800/50 border border-zinc-700' 
+                                  : 'bg-transparent border border-transparent hover:bg-white/[0.02] hover:border-white/5'
+                              }`}
+                            >
+                              <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                userRSVP === 'diesmal nicht' ? 'bg-zinc-600 text-zinc-300' : 'bg-white/5 text-zinc-600'
+                              }`}>
+                                <X size={10} />
+                              </div>
+                              <span className={`text-[9px] flex-shrink-0 ${
+                                userRSVP === 'diesmal nicht' ? 'text-zinc-400' : 'text-zinc-600'
+                              }`}>
+                                Diesmal nicht
+                              </span>
+                              {meetupResponses?.['diesmal nicht']?.length > 0 && (
+                                <span className="text-[8px] text-zinc-600 truncate flex-1 min-w-0">
+                                  {meetupResponses['diesmal nicht'].map(u => u.username).join(', ')}
+                                </span>
+                              )}
+                            </button>
                           </div>
                         )}
 
