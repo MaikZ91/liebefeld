@@ -375,8 +375,10 @@ const TribeAppMain: React.FC<{
     if (newView === ViewState.COMMUNITY) {
       markCommunityAsSeen();
     }
-    // Show interests dialog on first visit to Explore page
+    // When navigating to Explore (FEED), permanently dismiss the welcome message
     if (newView === ViewState.FEED) {
+      localStorage.setItem('tribe_welcome_message_dismissed', 'true');
+      
       const hasSeenInterests = localStorage.getItem('tribe_seen_interests_dialog') === 'true';
       const hasPreferredCategories = localStorage.getItem('tribe_preferred_categories');
       if (!hasSeenInterests && !hasPreferredCategories) {
