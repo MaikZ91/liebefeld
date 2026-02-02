@@ -980,29 +980,45 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                               )}
                             </button>
                             
-                            {/* Nein Row - more subtle */}
+                            {/* Nein Row - more subtle but with avatars */}
                             <button
                               onClick={() => handleRSVP(post.id, 'no')}
-                              className={`w-full flex items-center gap-2 text-left px-3 py-1.5 rounded-lg transition-all ${
+                              className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all ${
                                 userRSVP === 'diesmal nicht' 
                                   ? 'bg-zinc-800/50 border border-zinc-700' 
-                                  : 'bg-transparent border border-transparent hover:bg-white/[0.02] hover:border-white/5'
+                                  : 'bg-white/[0.03] border border-white/5 hover:bg-white/[0.02] hover:border-zinc-700'
                               }`}
                             >
-                              <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                userRSVP === 'diesmal nicht' ? 'bg-zinc-600 text-zinc-300' : 'bg-white/5 text-zinc-600'
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                userRSVP === 'diesmal nicht' ? 'bg-zinc-600 text-zinc-300' : 'bg-white/10 text-zinc-500'
                               }`}>
-                                <X size={10} />
+                                <X size={12} />
                               </div>
-                              <span className={`text-[9px] flex-shrink-0 ${
-                                userRSVP === 'diesmal nicht' ? 'text-zinc-400' : 'text-zinc-600'
+                              <span className={`text-[10px] font-medium flex-shrink-0 ${
+                                userRSVP === 'diesmal nicht' ? 'text-zinc-400' : 'text-zinc-500'
                               }`}>
                                 Diesmal nicht
                               </span>
                               {meetupResponses?.['diesmal nicht']?.length > 0 && (
-                                <span className="text-[8px] text-zinc-600 truncate flex-1 min-w-0">
-                                  {meetupResponses['diesmal nicht'].map(u => u.username).join(', ')}
-                                </span>
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
+                                  <div className="flex -space-x-1.5 flex-shrink-0">
+                                    {meetupResponses['diesmal nicht'].map((u, i) => (
+                                      <div 
+                                        key={i} 
+                                        className="w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ring-zinc-600/50"
+                                      >
+                                        {u.avatar ? (
+                                          <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
+                                        ) : (
+                                          <span className="text-[7px] flex items-center justify-center h-full text-zinc-400 font-bold">{u.username[0]}</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <span className="text-[9px] text-zinc-500 truncate">
+                                    {meetupResponses['diesmal nicht'].map(u => u.username).join(', ')}
+                                  </span>
+                                </div>
                               )}
                             </button>
                           </div>
