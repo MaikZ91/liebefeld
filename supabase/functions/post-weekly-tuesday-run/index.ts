@@ -44,7 +44,9 @@ Egal ob Anfänger oder Profi – jeder ist willkommen! Wir laufen gemeinsam eine
 📅 **Wann:** ${formattedDate}, 17:00 Uhr
 📍 **Wo:** Gellershagen Park Teich
 
-Wer ist dabei? Kommentiere unten! 👇`;
+Wer ist dabei? Kommentiere unten! 👇
+
+#tribecall`;
 
     // Bild-URL für Tuesday Run
     const tuesdayRunImageUrl = 'https://liebefeld.lovable.app/images/tribe/tribe-tuesday-run.jpg';
