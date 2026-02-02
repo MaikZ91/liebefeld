@@ -29,6 +29,7 @@ const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
 // LocalStorage keys for dismissed posts and topic preferences
 const DISMISSED_POSTS_KEY = 'tribe_dismissed_posts';
 const TOPIC_DISLIKES_KEY = 'tribe_topic_dislikes';
+const WELCOME_MESSAGE_DISMISSED_KEY = 'tribe_welcome_message_dismissed';
 
 const getCommunityIntroMessage = (username?: string) => ({
   text: `Hey ${username || 'du'}! 👋 Schön, dass du da bist! THE TRIBE ist dein Ort für echte Begegnungen – ob spontane Treffen, coole Events oder einfach neue Leute kennenlernen. Stell dich unten kurz vor und erzähl uns einen Fun Fact über dich! 🎲`,
@@ -91,6 +92,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   const [profileBannerDismissed, setProfileBannerDismissed] = useState(() => 
     localStorage.getItem('tribe_profile_banner_dismissed') === 'true'
   );
+  const [welcomeMessageDismissed, setWelcomeMessageDismissed] = useState(() => 
+    localStorage.getItem(WELCOME_MESSAGE_DISMISSED_KEY) === 'true'
+  );
   const [onboardingMiaMessage, setOnboardingMiaMessage] = useState<string | null>(null);
   const [greetingGenerated, setGreetingGenerated] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -108,9 +112,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     const isCommunityStep = ['community_intro', 'explain_profile', 'waiting_for_avatar_click', 'editing_profile', 'greeting_ready', 'waiting_for_post', 'offer_guidance'].includes(onboardingStep);
     
     if (isCommunityStep) {
-      // Use dynamic message for community_intro (with username), otherwise use static messages
+      // For community_intro, only show if not already dismissed
       if (onboardingStep === 'community_intro') {
-        setOnboardingMiaMessage(getCommunityIntroMessage(userProfile.username).text);
+        if (!welcomeMessageDismissed) {
+          setOnboardingMiaMessage(getCommunityIntroMessage(userProfile.username).text);
+        }
       } else {
         const message = COMMUNITY_ONBOARDING_MESSAGES[onboardingStep];
         if (message?.text) {
@@ -141,7 +147,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     } else {
       setOnboardingMiaMessage(null);
     }
-  }, [onboardingStep, generateGreeting, greetingGenerated, userProfile, onAdvanceOnboarding]);
+  }, [onboardingStep, generateGreeting, greetingGenerated, userProfile, onAdvanceOnboarding, welcomeMessageDismissed]);
 
   // Load posts from database
   useEffect(() => {
@@ -702,7 +708,12 @@ export const TribeCommunityBoard: React.FC<Props> = ({
             {onboardingMiaMessage && (
               <div className="flex items-start gap-2 p-3 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn relative">
                 <button
-                  onClick={() => setOnboardingMiaMessage(null)}
+                  onClick={() => {
+                    // Permanently dismiss the welcome message
+                    localStorage.setItem(WELCOME_MESSAGE_DISMISSED_KEY, 'true');
+                    setWelcomeMessageDismissed(true);
+                    setOnboardingMiaMessage(null);
+                  }}
                   className="absolute top-2 right-2 p-1 text-white/40 hover:text-white/80 transition-colors"
                   aria-label="Schließen"
                 >
