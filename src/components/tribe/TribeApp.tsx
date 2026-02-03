@@ -1648,7 +1648,16 @@ const TribeAppMain: React.FC<{
         />
         {view === ViewState.MAP && (
           <div className="absolute inset-0 pt-16 h-[calc(100vh-80px)]">
-            <TribeMapView events={filteredEvents} posts={posts} selectedCity={selectedCity} />
+            <TribeMapView 
+              events={filteredEvents} 
+              posts={posts} 
+              selectedCity={selectedCity}
+              userProfile={{
+                username: userProfile.username,
+                avatarUrl: userProfile.avatarUrl,
+                interests: userProfile.interests
+              }}
+            />
           </div>
         )}
         {view === ViewState.PROFILE && (

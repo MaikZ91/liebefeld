@@ -1,14 +1,20 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { TribeEvent } from '@/types/tribe';
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Navigation, Radio, Users, ChevronUp, ChevronDown, X, Compass } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { loadLeaflet } from '@/utils/leafletLoader';
+import { cn } from '@/lib/utils';
+import { LocationSharingPanel } from './map/LocationSharingPanel';
+import { PingPanel } from './map/PingPanel';
+import { DiscoveryPanel } from './map/DiscoveryPanel';
+import { useToast } from '@/hooks/use-toast';
 
 interface TribeMapViewProps {
   events: TribeEvent[];
   posts?: any[];
   selectedCity: string;
   onEventClick?: (event: TribeEvent) => void;
+  userProfile?: { username: string; avatarUrl?: string; interests?: string[] };
 }
 
 const CITY_COORDS: Record<string, [number, number]> = {
@@ -23,6 +29,30 @@ const CITY_COORDS: Record<string, [number, number]> = {
   'Münster': [51.9607, 7.6261],
   'Global': [51.1657, 10.4515], 
 };
+
+type ActivePanel = 'none' | 'location' | 'ping' | 'discovery';
+
+interface PingMessage {
+  id: string;
+  sender: string;
+  senderAvatar?: string;
+  message: string;
+  location?: { lat: number; lng: number };
+  locationName?: string;
+  timestamp: Date;
+  respondents: Array<{ username: string; avatar?: string }>;
+}
+
+interface NearbyUser {
+  id: string;
+  username: string;
+  avatar?: string;
+  status?: string;
+  distance?: number;
+  lastSeen: Date;
+  interests?: string[];
+  location?: { lat: number; lng: number };
+}
 
 const getCategoryImage = (category?: string) => {
   const cat = category?.toUpperCase() || '';
@@ -57,13 +87,50 @@ const parseDateString = (dateStr: string): Date | null => {
   }
 };
 
-export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity, onEventClick }) => {
+// Calculate distance between two coordinates in meters
+const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+          Math.cos(φ1) * Math.cos(φ2) *
+          Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
+export const TribeMapView: React.FC<TribeMapViewProps> = ({ 
+  events, 
+  selectedCity, 
+  onEventClick,
+  userProfile 
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const userMarkerRef = useRef<any>(null);
+  const nearbyMarkersRef = useRef<any[]>([]);
+  const { toast } = useToast();
   
   const [filterMode, setFilterMode] = useState<'TODAY' | 'TOMORROW' | 'WEEK'>('TODAY');
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, {lat: number, lng: number}>>(new Map());
   const [leafletReady, setLeafletReady] = useState(typeof (window as any).L !== 'undefined');
+  
+  // Location sharing state
+  const [isSharing, setIsSharing] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | undefined>();
+  const [userStatus, setUserStatus] = useState('');
+  const [shareUntil, setShareUntil] = useState<Date | undefined>();
+  
+  // Panels state
+  const [activePanel, setActivePanel] = useState<ActivePanel>('none');
+  
+  // Pings state
+  const [activePings, setActivePings] = useState<PingMessage[]>([]);
+  
+  // Discovery state
+  const [nearbyUsers, setNearbyUsers] = useState<NearbyUser[]>([]);
 
   // Load Leaflet dynamically when component mounts
   useEffect(() => {
@@ -71,6 +138,201 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
       loadLeaflet().then(() => setLeafletReady(true)).catch(console.error);
     }
   }, [leafletReady]);
+
+  // Get user's current location
+  const getCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Standort nicht verfügbar",
+        description: "Dein Browser unterstützt keine Standortabfrage.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        
+        // Center map on user location
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([latitude, longitude], 15, { duration: 1 });
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        toast({
+          title: "Standort nicht verfügbar",
+          description: "Bitte aktiviere die Standortfreigabe.",
+          variant: "destructive"
+        });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }, [toast]);
+
+  // Handle location sharing toggle
+  const handleToggleSharing = async (share: boolean) => {
+    if (share && !userLocation) {
+      getCurrentLocation();
+    }
+    
+    setIsSharing(share);
+    
+    if (share && userProfile) {
+      // Save location to database
+      try {
+        await supabase
+          .from('user_profiles')
+          .update({
+            current_live_location_lat: userLocation?.lat,
+            current_live_location_lng: userLocation?.lng,
+            current_status_message: userStatus,
+            current_checkin_timestamp: new Date().toISOString()
+          })
+          .eq('username', userProfile.username);
+        
+        toast({
+          title: "Standort wird geteilt",
+          description: "Andere können dich jetzt auf der Map sehen.",
+        });
+      } catch (error) {
+        console.error('Failed to share location:', error);
+      }
+    } else if (!share && userProfile) {
+      // Clear location from database
+      try {
+        await supabase
+          .from('user_profiles')
+          .update({
+            current_live_location_lat: null,
+            current_live_location_lng: null,
+            current_status_message: null,
+            current_checkin_timestamp: null
+          })
+          .eq('username', userProfile.username);
+          
+        toast({
+          title: "Standort versteckt",
+          description: "Du bist jetzt nicht mehr sichtbar.",
+        });
+      } catch (error) {
+        console.error('Failed to hide location:', error);
+      }
+    }
+  };
+
+  // Set share duration
+  const handleSetShareDuration = (hours: number) => {
+    const until = new Date();
+    until.setHours(until.getHours() + hours);
+    setShareUntil(until);
+  };
+
+  // Load nearby users from database
+  useEffect(() => {
+    const loadNearbyUsers = async () => {
+      if (!userLocation) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .not('current_live_location_lat', 'is', null)
+          .not('current_live_location_lng', 'is', null);
+        
+        if (error) throw error;
+        
+        const users: NearbyUser[] = (data || [])
+          .filter(u => u.username !== userProfile?.username)
+          .map(u => ({
+            id: u.id,
+            username: u.username,
+            avatar: u.avatar || undefined,
+            status: u.current_status_message || undefined,
+            distance: userLocation ? calculateDistance(
+              userLocation.lat,
+              userLocation.lng,
+              u.current_live_location_lat!,
+              u.current_live_location_lng!
+            ) : undefined,
+            lastSeen: new Date(u.current_checkin_timestamp || u.last_online || new Date()),
+            interests: u.interests || undefined,
+            location: u.current_live_location_lat && u.current_live_location_lng
+              ? { lat: u.current_live_location_lat, lng: u.current_live_location_lng }
+              : undefined
+          }));
+        
+        setNearbyUsers(users);
+      } catch (error) {
+        console.error('Failed to load nearby users:', error);
+      }
+    };
+    
+    loadNearbyUsers();
+    const interval = setInterval(loadNearbyUsers, 30000); // Refresh every 30s
+    
+    return () => clearInterval(interval);
+  }, [userLocation, userProfile?.username]);
+
+  // Handle sending a ping
+  const handleSendPing = async (message: string, location?: { lat: number; lng: number }) => {
+    if (!userProfile) return;
+    
+    const newPing: PingMessage = {
+      id: Date.now().toString(),
+      sender: userProfile.username,
+      senderAvatar: userProfile.avatarUrl,
+      message,
+      location,
+      timestamp: new Date(),
+      respondents: []
+    };
+    
+    setActivePings(prev => [newPing, ...prev]);
+    
+    // Save ping to chat_messages with special format
+    try {
+      await supabase.from('chat_messages').insert({
+        group_id: 'tribe_pings',
+        sender: userProfile.username,
+        text: `📍 PING: ${message}`,
+        avatar: userProfile.avatarUrl,
+        meetup_responses: {}
+      });
+      
+      toast({
+        title: "Ping gesendet!",
+        description: "Andere in der Nähe können jetzt antworten.",
+      });
+    } catch (error) {
+      console.error('Failed to send ping:', error);
+    }
+  };
+
+  // Handle responding to a ping
+  const handleRespondToPing = (pingId: string) => {
+    if (!userProfile) return;
+    
+    setActivePings(prev => prev.map(ping => {
+      if (ping.id === pingId) {
+        const alreadyResponded = ping.respondents.some(r => r.username === userProfile.username);
+        if (alreadyResponded) {
+          return {
+            ...ping,
+            respondents: ping.respondents.filter(r => r.username !== userProfile.username)
+          };
+        } else {
+          return {
+            ...ping,
+            respondents: [...ping.respondents, { username: userProfile.username, avatar: userProfile.avatarUrl }]
+          };
+        }
+      }
+      return ping;
+    }));
+  };
 
   // Filter events based on date range
   const filteredEvents = useMemo(() => {
@@ -159,9 +421,9 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
 
     const map = mapInstanceRef.current;
 
-    // Clear existing markers
+    // Clear existing markers (except user marker)
     map.eachLayer((layer: any) => {
-      if (layer instanceof L.Marker) {
+      if (layer instanceof L.Marker && layer !== userMarkerRef.current) {
         map.removeLayer(layer);
       }
     });
@@ -222,12 +484,66 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
       }
     });
 
+    // Add nearby user markers
+    nearbyMarkersRef.current.forEach(m => map.removeLayer(m));
+    nearbyMarkersRef.current = [];
+
+    nearbyUsers.forEach(user => {
+      if (!user.location) return;
+      
+      const icon = L.divIcon({
+        className: 'user-marker-icon',
+        html: `
+          <div class="user-map-marker">
+            <div class="user-marker-avatar" style="background-image: url('${user.avatar || ''}')">
+              ${!user.avatar ? `<span>${user.username[0]?.toUpperCase()}</span>` : ''}
+            </div>
+            ${user.status ? `<div class="user-marker-status">${user.status}</div>` : ''}
+          </div>
+        `,
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+      });
+
+      const marker = L.marker([user.location.lat, user.location.lng], { icon }).addTo(map);
+      nearbyMarkersRef.current.push(marker);
+    });
+
+    // Add or update user's own location marker
+    if (isSharing && userLocation) {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+      } else {
+        const userIcon = L.divIcon({
+          className: 'user-self-marker-icon',
+          html: `
+            <div class="user-self-marker">
+              <div class="pulse-ring"></div>
+              <div class="user-self-avatar" style="background-image: url('${userProfile?.avatarUrl || ''}')">
+                ${!userProfile?.avatarUrl ? `<span>${userProfile?.username?.[0]?.toUpperCase() || 'U'}</span>` : ''}
+              </div>
+            </div>
+          `,
+          iconSize: [48, 48],
+          iconAnchor: [24, 24]
+        });
+        userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon }).addTo(map);
+      }
+    } else if (userMarkerRef.current) {
+      map.removeLayer(userMarkerRef.current);
+      userMarkerRef.current = null;
+    }
+
     // Fly to city
     if (selectedCity !== 'All' && CITY_COORDS[selectedCity]) {
       map.flyTo(CITY_COORDS[selectedCity], 13, { duration: 1.5 });
     }
 
-  }, [filteredEvents, eventCoordinates, selectedCity, onEventClick, leafletReady]);
+  }, [filteredEvents, eventCoordinates, selectedCity, onEventClick, leafletReady, isSharing, userLocation, nearbyUsers, userProfile]);
+
+  const togglePanel = (panel: ActivePanel) => {
+    setActivePanel(prev => prev === panel ? 'none' : panel);
+  };
 
   return (
     <div className="h-full w-full relative bg-surface">
@@ -309,13 +625,93 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
           letter-spacing: 0.5px;
           font-weight: 600;
         }
+        
+        /* User markers */
+        .user-map-marker {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .user-marker-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border: 2px solid #22c55e;
+          background-color: #27272a;
+          background-size: cover;
+          background-position: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+        }
+        .user-marker-avatar span {
+          color: #a1a1aa;
+          font-size: 14px;
+          font-weight: 600;
+        }
+        .user-marker-status {
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0,0,0,0.9);
+          color: white;
+          padding: 2px 8px;
+          border-radius: 10px;
+          font-size: 10px;
+          white-space: nowrap;
+          margin-top: 4px;
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        /* User self marker */
+        .user-self-marker {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .pulse-ring {
+          position: absolute;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          border: 2px solid hsl(var(--gold));
+          animation: pulse-ring 2s ease-out infinite;
+        }
+        @keyframes pulse-ring {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.8); opacity: 0; }
+        }
+        .user-self-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          border: 3px solid hsl(var(--gold));
+          background-color: #18181b;
+          background-size: cover;
+          background-position: center;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1;
+        }
+        .user-self-avatar span {
+          color: hsl(var(--gold));
+          font-size: 16px;
+          font-weight: 700;
+        }
       `}</style>
       
       <div id="map" ref={mapRef} className="h-full w-full"></div>
       
-      {/* Simple Date Filter */}
+      {/* Top Left: Date Filter */}
       <div className="absolute top-4 left-4 z-[400] pointer-events-none">
-        <div className="bg-black/90 backdrop-blur-md px-4 py-3 border border-white/10 shadow-xl pointer-events-auto">
+        <div className="bg-black/90 backdrop-blur-md px-4 py-3 border border-white/10 shadow-xl pointer-events-auto rounded-xl">
           <div className="flex items-center gap-2 mb-2">
             <Calendar size={14} className="text-gold" />
             <span className="text-xs font-semibold text-white uppercase tracking-wider">Events</span>
@@ -326,11 +722,12 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
               <button 
                 key={mode}
                 onClick={() => setFilterMode(mode)}
-                className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
+                className={cn(
+                  "px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-lg",
                   filterMode === mode 
                     ? 'bg-gold text-black' 
                     : 'bg-white/5 text-zinc-400 hover:bg-white/10'
-                }`}
+                )}
               >
                 {mode === 'TODAY' ? 'Heute' : mode === 'TOMORROW' ? 'Morgen' : '7 Tage'}
               </button>
@@ -340,9 +737,139 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({ events, selectedCity
           <div className="mt-3 flex items-center gap-2 text-zinc-400">
             <MapPin size={12} />
             <span className="text-xs">{filteredEvents.length} Events</span>
+            {nearbyUsers.length > 0 && (
+              <>
+                <span className="text-zinc-600">•</span>
+                <Users size={12} className="text-green-500" />
+                <span className="text-xs">{nearbyUsers.length} aktiv</span>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Right Side: Action Buttons */}
+      <div className="absolute top-4 right-4 z-[400] flex flex-col gap-2 pointer-events-auto">
+        {/* My Location Button */}
+        <button
+          onClick={getCurrentLocation}
+          className="w-12 h-12 bg-black/90 backdrop-blur-md border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-all"
+        >
+          <Compass size={20} className="text-white" />
+        </button>
+        
+        {/* Location Sharing Button */}
+        <button
+          onClick={() => togglePanel('location')}
+          className={cn(
+            "w-12 h-12 backdrop-blur-md border rounded-xl flex items-center justify-center transition-all relative",
+            activePanel === 'location' 
+              ? "bg-gold border-gold text-black" 
+              : isSharing 
+                ? "bg-green-500/20 border-green-500 text-green-500"
+                : "bg-black/90 border-white/10 text-white hover:bg-white/10"
+          )}
+        >
+          <Navigation size={20} />
+          {isSharing && activePanel !== 'location' && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+          )}
+        </button>
+        
+        {/* Ping Button */}
+        <button
+          onClick={() => togglePanel('ping')}
+          className={cn(
+            "w-12 h-12 backdrop-blur-md border rounded-xl flex items-center justify-center transition-all relative",
+            activePanel === 'ping' 
+              ? "bg-gold border-gold text-black" 
+              : "bg-black/90 border-white/10 text-white hover:bg-white/10"
+          )}
+        >
+          <Radio size={20} />
+          {activePings.length > 0 && activePanel !== 'ping' && (
+            <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-white">{activePings.length}</span>
+            </div>
+          )}
+        </button>
+        
+        {/* Discovery Button */}
+        <button
+          onClick={() => togglePanel('discovery')}
+          className={cn(
+            "w-12 h-12 backdrop-blur-md border rounded-xl flex items-center justify-center transition-all relative",
+            activePanel === 'discovery' 
+              ? "bg-gold border-gold text-black" 
+              : "bg-black/90 border-white/10 text-white hover:bg-white/10"
+          )}
+        >
+          <Users size={20} />
+          {nearbyUsers.length > 0 && activePanel !== 'discovery' && (
+            <div className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-green-500 rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-white">{nearbyUsers.length}</span>
+            </div>
+          )}
+        </button>
+      </div>
+
+      {/* Sliding Panels */}
+      <div className={cn(
+        "absolute top-4 right-20 z-[399] w-80 max-w-[calc(100vw-120px)] transition-all duration-300",
+        activePanel !== 'none' ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4 pointer-events-none"
+      )}>
+        {activePanel === 'location' && (
+          <LocationSharingPanel
+            isSharing={isSharing}
+            onToggleSharing={handleToggleSharing}
+            onUpdateStatus={setUserStatus}
+            currentStatus={userStatus}
+            shareUntil={shareUntil}
+            onSetShareDuration={handleSetShareDuration}
+          />
+        )}
+        
+        {activePanel === 'ping' && userProfile && (
+          <PingPanel
+            userProfile={userProfile}
+            onSendPing={handleSendPing}
+            activePings={activePings}
+            onRespondToPing={handleRespondToPing}
+            userLocation={userLocation}
+          />
+        )}
+        
+        {activePanel === 'discovery' && (
+          <DiscoveryPanel
+            nearbyUsers={nearbyUsers}
+            onUserClick={(id) => console.log('View user:', id)}
+            onMessageUser={(id) => console.log('Message user:', id)}
+            userInterests={userProfile?.interests}
+          />
+        )}
+      </div>
+
+      {/* Bottom Status Bar when sharing */}
+      {isSharing && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[400] pointer-events-auto">
+          <div className="bg-green-500/20 backdrop-blur-md border border-green-500/50 rounded-full px-4 py-2 flex items-center gap-3">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="text-sm text-green-400 font-medium">Location aktiv</span>
+            {userStatus && (
+              <>
+                <span className="text-green-600">•</span>
+                <span className="text-sm text-green-300">{userStatus}</span>
+              </>
+            )}
+            <button
+              onClick={() => handleToggleSharing(false)}
+              className="ml-2 p-1 hover:bg-green-500/30 rounded-full transition-all"
+            >
+              <X size={14} className="text-green-400" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
