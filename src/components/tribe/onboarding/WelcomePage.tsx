@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Users, Calendar, Sparkles } from 'lucide-react';
+import { ArrowRight, Users, MapPin, Sparkles, Heart } from 'lucide-react';
 import welcomeImage from '@/assets/welcome/tribe-stammtisch-welcome.png';
 
 interface WelcomePageProps {
@@ -10,18 +10,28 @@ interface WelcomePageProps {
 export const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onContinue }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [showFeatures, setShowFeatures] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Fade in animation
+    // Staggered fade in animation
     requestAnimationFrame(() => {
       setIsVisible(true);
-      setTimeout(() => setShowContent(true), 150);
+      setTimeout(() => setShowContent(true), 300);
+      setTimeout(() => setShowFeatures(true), 600);
     });
+    
+    // Progress animation
+    const interval = setInterval(() => {
+      setProgress(prev => Math.min(prev + 1.67, 100));
+    }, 100);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleContinue = () => {
     setIsVisible(false);
-    setTimeout(onContinue, 300);
+    setTimeout(onContinue, 400);
   };
 
   // Auto-continue after 6 seconds
@@ -34,114 +44,126 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({ userName, onContinue }
 
   return (
     <div 
-      className={`fixed inset-0 z-[100] bg-black flex flex-col transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-0 z-[100] bg-black transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
     >
-      {/* Hero Image */}
-      <div className="relative flex-1 min-h-0">
+      {/* Full-screen Hero Image with Ken Burns effect */}
+      <div className="absolute inset-0 overflow-hidden">
         <img 
           src={welcomeImage} 
           alt="THE TRIBE Community" 
-          className="absolute inset-0 w-full h-full object-cover"
+          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-[8000ms] ease-out ${isVisible ? 'scale-110' : 'scale-100'}`}
         />
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
-        
-        {/* Skip indicator */}
-        <button 
-          onClick={handleContinue}
-          className="absolute top-6 right-6 text-white/40 text-xs tracking-wider hover:text-white/70 transition-colors"
-        >
-          ÜBERSPRINGEN
-        </button>
+        {/* Multi-layer gradient overlay for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
       </div>
-
-      {/* Content Section */}
-      <div 
-        className={`relative z-10 px-6 pb-10 pt-6 transition-all duration-500 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      
+      {/* Skip button */}
+      <button 
+        onClick={handleContinue}
+        className="absolute top-8 right-6 z-20 text-white/30 text-[10px] font-medium tracking-[0.25em] hover:text-white/60 transition-colors duration-300"
       >
-        {/* Welcome Text */}
-        <div className="text-center mb-6">
-          <p className="text-primary/80 text-xs font-medium tracking-[0.3em] uppercase mb-2">
-            Willkommen in der Community
-          </p>
-          <h1 className="text-3xl font-light text-white tracking-wide mb-3">
-            Hey, <span className="text-primary font-medium">{userName}</span>! 👋
-          </h1>
-          <p className="text-white/60 text-sm leading-relaxed max-w-xs mx-auto">
-            THE TRIBE ist dein Ort für <span className="text-white/90">echte Begegnungen</span> – 
-            ob spontane Treffen, coole Events oder neue Leute kennenlernen.
-          </p>
-        </div>
+        ÜBERSPRINGEN
+      </button>
 
-        {/* Feature Highlight - Kennenlernabend */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 mb-6 border border-white/10">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <Users className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-white font-medium text-sm mb-1">
-                Tribe Kennenlernabend
-              </h3>
-              <p className="text-white/50 text-xs leading-relaxed">
-                Jeden Sonntag treffen wir uns zum Stammtisch – der perfekte Einstieg, 
-                um die Community kennenzulernen! 🍻
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Features */}
-        <div className="flex justify-center gap-6 mb-8">
-          <div className="flex flex-col items-center gap-1">
-            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-              <Calendar className="w-4 h-4 text-white/60" />
-            </div>
-            <span className="text-white/40 text-[10px] tracking-wide">EVENTS</span>
-          </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-              <Users className="w-4 h-4 text-white/60" />
-            </div>
-            <span className="text-white/40 text-[10px] tracking-wide">COMMUNITY</span>
-          </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white/60" />
-            </div>
-            <span className="text-white/40 text-[10px] tracking-wide">MIA AI</span>
-          </div>
-        </div>
-
-        {/* Continue Button */}
-        <button
-          onClick={handleContinue}
-          className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-medium text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+      {/* Main Content */}
+      <div className="relative z-10 h-full flex flex-col justify-end pb-safe">
+        {/* Content Container */}
+        <div 
+          className={`px-6 pb-8 transition-all duration-700 ease-out ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         >
-          Los geht's
-          <ArrowRight className="w-4 h-4" />
-        </button>
+          {/* Brand Tag */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-primary/60" />
+            <span className="text-primary/80 text-[10px] font-medium tracking-[0.4em] uppercase">
+              Welcome to the Community
+            </span>
+          </div>
 
-        {/* Progress indicator */}
-        <div className="flex justify-center mt-4 gap-1">
-          <div className="w-8 h-1 rounded-full bg-primary" />
-          <div className="w-8 h-1 rounded-full bg-white/20 overflow-hidden">
-            <div 
-              className="h-full bg-primary/50 animate-[progress_6s_linear]"
-              style={{ 
-                animation: 'progress 6s linear forwards',
-              }}
-            />
+          {/* Main Heading */}
+          <h1 className="text-4xl font-light text-white tracking-wide mb-2 leading-tight">
+            Hey <span className="text-primary font-normal">{userName}</span>!
+          </h1>
+          <p className="text-white/50 text-sm font-light mb-6 max-w-[280px] leading-relaxed">
+            Schön, dass du da bist. THE TRIBE verbindet Menschen, 
+            die <span className="text-white/80">echte Begegnungen</span> suchen.
+          </p>
+
+          {/* Kennenlernabend Highlight Card */}
+          <div 
+            className={`relative overflow-hidden rounded-2xl mb-6 transition-all duration-700 delay-200 ${showFeatures ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/5 backdrop-blur-xl" />
+            <div className="absolute inset-0 border border-primary/20 rounded-2xl" />
+            
+            <div className="relative p-5">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0 border border-primary/30">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-white font-medium text-base">
+                      Tribe Kennenlernabend
+                    </h3>
+                    <span className="px-2 py-0.5 bg-primary/20 text-primary text-[9px] font-medium tracking-wider rounded-full uppercase">
+                      Sonntags
+                    </span>
+                  </div>
+                  <p className="text-white/50 text-xs leading-relaxed">
+                    Unser wöchentlicher Stammtisch – der perfekte Einstieg, 
+                    um die Community kennenzulernen! 🍻
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature Icons */}
+          <div 
+            className={`flex justify-between items-center px-2 mb-8 transition-all duration-700 delay-300 ${showFeatures ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          >
+            {[
+              { icon: MapPin, label: 'Events entdecken' },
+              { icon: Users, label: 'Leute treffen' },
+              { icon: Heart, label: 'Connections' },
+              { icon: Sparkles, label: 'MIA AI' },
+            ].map((feature, i) => (
+              <div 
+                key={feature.label}
+                className="flex flex-col items-center gap-2"
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                <div className="w-11 h-11 rounded-xl bg-white/5 backdrop-blur-sm flex items-center justify-center border border-white/10">
+                  <feature.icon className="w-5 h-5 text-white/60" />
+                </div>
+                <span className="text-white/40 text-[9px] tracking-wide text-center leading-tight max-w-[60px]">
+                  {feature.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Button */}
+          <button
+            onClick={handleContinue}
+            className="w-full py-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium text-sm flex items-center justify-center gap-3 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-primary/20"
+          >
+            <span>Entdecke THE TRIBE</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+
+          {/* Progress Bar */}
+          <div className="mt-5 flex justify-center">
+            <div className="w-32 h-1 rounded-full bg-white/10 overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-primary/80 to-primary rounded-full transition-all duration-100 ease-linear"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes progress {
-          from { width: 0%; }
-          to { width: 100%; }
-        }
-      `}</style>
     </div>
   );
 };
