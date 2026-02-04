@@ -19,6 +19,7 @@ import { MiaInlineChat } from "./MiaInlineChat";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 import { OnboardingWorkflow } from "./onboarding/OnboardingWorkflow";
+import { WelcomePage } from "./onboarding/WelcomePage";
 
 
 import { dislikeService } from "@/services/dislikeService";
@@ -96,6 +97,10 @@ export const TribeApp: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
     return localStorage.getItem('tribe_onboarding_completed') !== 'true';
   });
+  
+  // Check if welcome page should be shown (after onboarding, before app)
+  const [showWelcome, setShowWelcome] = useState<boolean>(false);
+  const [pendingUserName, setPendingUserName] = useState<string>('');
 
   // Initialize profile from storage or create guest immediately (synchronous!)
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -136,11 +141,22 @@ export const TribeApp: React.FC = () => {
       }, { onConflict: 'username' })
       .then(() => console.log('Profile saved after onboarding'));
     
+    // Show welcome page instead of going directly to app
+    setPendingUserName(data.name);
     setShowOnboarding(false);
+    setShowWelcome(true);
+  };
+
+  const handleWelcomeComplete = () => {
+    setShowWelcome(false);
   };
 
   if (showOnboarding) {
     return <OnboardingWorkflow onComplete={handleOnboardingComplete} />;
+  }
+
+  if (showWelcome) {
+    return <WelcomePage userName={pendingUserName || userProfile.username} onContinue={handleWelcomeComplete} />;
   }
 
   return (
