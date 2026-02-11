@@ -85,7 +85,7 @@
     <!-- Tracking Integration -->
     <script>
     (function() {
-      var TOKEN = "ba2e7568-350e-4c92-b779-016819560f17";
+      var TOKEN = "ac5755fc-3016-444d-b5c6-220e6537a642";
       var API = "https://uamkwgaxhegokdkeogbh.supabase.co/functions/v1";
       var UTM_KEYS = ["utm_source", "utm_campaign", "utm_content"];
       var PREFIX = "trk_";
@@ -131,17 +131,18 @@
 
       document.addEventListener("click", function(e) {
         var el = e.target;
-        while (el && el !== document.body) {
-          if (el.tagName === "A" || el.tagName === "BUTTON" || el.getAttribute && el.getAttribute("role") === "button") {
-            trkEvent("click", {
-              tag: el.tagName,
-              text: (el.innerText || "").slice(0, 80),
-              url: location.href
-            });
-            return;
-          }
-          el = el.parentElement;
+        var tag = el && el.tagName ? el.tagName : "UNKNOWN";
+        var text = "";
+        var walker = el;
+        while (walker && walker !== document.body && !text) {
+          text = (walker.innerText || walker.textContent || "").trim().slice(0, 80);
+          if (!text) walker = walker.parentElement;
         }
+        trkEvent("click", {
+          tag: tag,
+          text: text,
+          url: location.href
+        });
       }, true);
 
       var lastPath = location.pathname;
