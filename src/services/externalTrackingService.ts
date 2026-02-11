@@ -1,5 +1,5 @@
 // External tracking integration
-const TOKEN = "ba2e7568-350e-4c92-b779-016819560f17";
+const TOKEN = "ac5755fc-3016-444d-b5c6-220e6537a642";
 const API = "https://uamkwgaxhegokdkeogbh.supabase.co/functions/v1";
 const UTM_KEYS = ["utm_source", "utm_campaign", "utm_content"];
 const PREFIX = "trk_";
