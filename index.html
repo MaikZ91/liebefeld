@@ -82,6 +82,55 @@
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
     
+    <!-- Tracking Integration -->
+    <script>
+    (function() {
+      var TOKEN = "a8b5be56-cfe5-4488-b28f-f82c612398ac";
+      var API = "https://uamkwgaxhegokdkeogbh.supabase.co/functions/v1";
+      var UTM_KEYS = ["utm_source", "utm_campaign", "utm_content"];
+      var PREFIX = "trk_";
+      var SID_KEY = "trk_session_id";
+
+      function getSession() {
+        var s = sessionStorage.getItem(SID_KEY);
+        if (!s) { s = "sess_" + Math.random().toString(36).slice(2,18); sessionStorage.setItem(SID_KEY, s); }
+        return s;
+      }
+
+      var params = new URLSearchParams(location.search);
+      UTM_KEYS.forEach(function(k) {
+        var v = params.get(k);
+        if (v && !localStorage.getItem(PREFIX + k)) localStorage.setItem(PREFIX + k, v);
+      });
+
+      function getUtm() {
+        var u = {};
+        UTM_KEYS.forEach(function(k) { u[k] = localStorage.getItem(PREFIX + k) || null; });
+        return u;
+      }
+
+      window.trkEvent = function(name, props) {
+        var utm = getUtm();
+        fetch(API + "/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.assign({ token: TOKEN, session_id: getSession(), event_name: name, properties: props || {} }, utm))
+        }).catch(function(){});
+      };
+
+      window.trkLead = function(email, message) {
+        var utm = getUtm();
+        fetch(API + "/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.assign({ token: TOKEN, email: email, message: message || null }, utm))
+        }).catch(function(){});
+      };
+
+      trkEvent("page_view", { url: location.href, title: document.title });
+    })();
+    </script>
+
     <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.svg" />
