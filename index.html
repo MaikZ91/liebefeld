@@ -85,7 +85,7 @@
     <!-- Tracking Integration -->
     <script>
     (function() {
-      var TOKEN = "a8b5be56-cfe5-4488-b28f-f82c612398ac";
+      var TOKEN = "ba2e7568-350e-4c92-b779-016819560f17";
       var API = "https://uamkwgaxhegokdkeogbh.supabase.co/functions/v1";
       var UTM_KEYS = ["utm_source", "utm_campaign", "utm_content"];
       var PREFIX = "trk_";
@@ -128,6 +128,29 @@
       };
 
       trkEvent("page_view", { url: location.href, title: document.title });
+
+      document.addEventListener("click", function(e) {
+        var el = e.target;
+        while (el && el !== document.body) {
+          if (el.tagName === "A" || el.tagName === "BUTTON" || el.getAttribute && el.getAttribute("role") === "button") {
+            trkEvent("click", {
+              tag: el.tagName,
+              text: (el.innerText || "").slice(0, 80),
+              url: location.href
+            });
+            return;
+          }
+          el = el.parentElement;
+        }
+      }, true);
+
+      var lastPath = location.pathname;
+      setInterval(function() {
+        if (location.pathname !== lastPath) {
+          lastPath = location.pathname;
+          trkEvent("page_view", { url: location.href, title: document.title });
+        }
+      }, 1000);
     })();
     </script>
 
