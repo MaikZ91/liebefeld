@@ -128,22 +128,25 @@ export const usePersonalizedSuggestions = (
     return [...new Set(generated)];
   }, [userProfile, city]);
 
-  // Shuffle and rotate a window of suggestions
-  const shuffle = useCallback((arr: string[]) => {
+  // Shuffle helper
+  const shuffle = useCallback((arr: string[]): string[] => {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
-    return copy;
+    return copy.slice(0, 5);
   }, []);
 
-  const [displayed, setDisplayed] = useState<string[]>([]);
+  // Rotating display state — initialize inline to avoid empty flash
+  const [displayed, setDisplayed] = useState<string[]>(() => {
+    return ['Mein perfekter Tag', 'Überrasch mich', 'Was geht heute?', 'Geheimtipps', 'Heute'];
+  });
 
-  // Initial shuffle
+  // Update displayed when pool changes
   useEffect(() => {
     if (pool.length > 0) {
-      setDisplayed(shuffle(pool).slice(0, 5));
+      setDisplayed(shuffle(pool));
     }
   }, [pool, shuffle]);
 
@@ -151,7 +154,7 @@ export const usePersonalizedSuggestions = (
   useEffect(() => {
     if (pool.length <= 5) return;
     const interval = setInterval(() => {
-      setDisplayed(shuffle(pool).slice(0, 5));
+      setDisplayed(shuffle(pool));
     }, 8000);
     return () => clearInterval(interval);
   }, [pool, shuffle]);
