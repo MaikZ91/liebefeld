@@ -1,81 +1,65 @@
 
-# MIA als Community-Matchmakerin (nicht 1:1, sondern Community-basiert)
 
-## Konzept
+# MIA Chat visuell aufwerten -- Event-Cards, Bilder & Rich Content
 
-Statt Leute ueber private Chats zu verbinden, nutzt MIA den bestehenden Community-Chat als Treffpunkt. MIA erkennt, wenn mehrere Leute aehnliche Interessen haben oder sich fuer dasselbe Event interessieren, und macht daraus Community-Notifications wie:
+## Problem
 
-- "5 Leute aus der Community moegen Sport -- beim Tuesday Run koenntet ihr euch treffen! 🏃"
-- "Du und 3 andere interessieren euch fuer Kunst -- der Creative Circle am Freitag waere perfekt fuer euch!"
-- "Beim Kennenlernabend sind schon 4 Leute mit aehnlichen Interessen dabei -- komm dazu!"
+Der MIA-Chat zeigt aktuell nur Text und kleine Event-Chips (Buttons mit abgeschnittenem Titel). Das wirkt langweilig und bietet keinen visuellen Anreiz, Events anzuklicken oder den Chat zu nutzen.
 
-Die Aktion ist immer **"Im Community Chat schreiben"** oder **"Event ansehen"** -- nie ein privater Chat.
+## Loesung
+
+MIA-Antworten werden visuell reich gestaltet mit Event-Cards (inkl. Bild, Datum, Ort, Kategorie-Badge), besserem Layout und interaktiven Elementen.
 
 ## Was sich aendert
 
-### `src/services/miaNotificationService.ts`
-
-- Neuer Notification-Typ: `community_match`
-- Neue Funktion `generateCommunityMatchNotifications()`:
-  1. Lade aktive User-Profile (letzte 7 Tage online, nicht Guest)
-  2. Berechne Match-Scores mit dem aktuellen User (Logik aus TribeUserMatcher extrahiert)
-  3. Gruppiere User nach gemeinsamen Interessen-Kategorien
-  4. Finde passende Events in den naechsten 3 Tagen fuer diese Gruppen
-  5. Generiere Notifications wie "X Leute moegen [Interesse] -- [Event] waere perfekt!"
-- Neue Action-Types: `join_community_chat` (oeffnet Community-Chat) und `view_event`
-- Maximal 2 Match-Notifications pro Refresh
-
-### `src/hooks/useMiaNotifications.ts`
-
-- `generateCommunityMatchNotifications()` in den Fetch-Zyklus integrieren
-- Wird nach den lokalen Notifications aufgerufen und angehaengt
-
 ### `src/components/tribe/MiaNotificationHub.tsx`
 
-- Neues visuelles Design fuer `community_match` Notifications:
-  - Mehrere kleine Avatare nebeneinander (die gematchten Community-Mitglieder)
-  - Match-Info als Badge (z.B. "5 Leute | Sport")
-  - Aktion: "Im Chat vorbeischauen" statt privatem Chat
-- Neue `onJoinCommunityChat` Prop die den Community-Chat oeffnet
+**Event-Chips ersetzen durch Event-Cards:**
 
-### Notification-Beispiele
+Statt der aktuellen kleinen Chips (Zeile 311-322) werden die `relatedEvents` als kompakte, visuelle Mini-Cards dargestellt:
 
 ```text
-+------------------------------------------+
-| [Avatar1] [Avatar2] [Avatar3] +2         |
-| "5 Leute aus der Community moegen Sport  |
-|  -- beim Tuesday Run koenntet ihr euch   |
-|  alle treffen! 🏃"                       |
-|  [Event ansehen] [Community Chat]        |
-+------------------------------------------+
-| [Avatar1] [Avatar2]                      |
-| "Du und 3 andere interessieren euch fuer |
-|  Kunst -- Creative Circle am Fr. waere   |
-|  perfekt! 🎨"                            |
-|  [Event ansehen]                         |
-+------------------------------------------+
++--------------------------------------+
+| [Event-Bild]  Konzert im Ringloksch. |
+|               Fr 14.02 · 20:00       |
+|               Ringlokschuppen        |
+|               [Musik]    [Ansehen >] |
++--------------------------------------+
 ```
 
-### Datenfluss
+Jede Card zeigt:
+- Event-Bild (image_url) links als kleines Thumbnail (48x48, rounded)
+- Titel (max 2 Zeilen)
+- Datum + Uhrzeit
+- Location
+- Kategorie-Badge
+- "Ansehen"-Button der zum Event navigiert
 
-1. Lade alle aktiven User-Profile (last_online innerhalb 7 Tage)
-2. Berechne Match-Scores (Interessen, Hobbies, Lieblingsorte)
-3. Filtere User mit Score >= 40%
-4. Gruppiere nach gemeinsamer Interesse-Kategorie
-5. Finde Events die zur Kategorie passen (naechste 3 Tage)
-6. Generiere Community-Notifications mit Gruppen-Avataren
-7. Aktionen fuehren immer zum Community-Chat oder Event -- nie zu privaten Chats
+**MIA-Avatar fuer Welcome-Message:**
 
-## Technische Details
+Wenn der Chat leer ist, wird MIAs Avatar groesser und zentriert angezeigt mit einer persoenlichen Begruessung.
+
+### `src/components/tribe/MiaEventCard.tsx` (Neue Datei)
+
+Kompakte Event-Card-Komponente fuer den MIA-Chat:
+- Props: `event: TribeEvent`, `onView: (id: string) => void`
+- Zeigt Bild, Titel, Datum, Ort, Kategorie
+- Kompaktes Design passend zum dunklen MIA-Hub-Theme
+- Fallback-Bild wenn kein image_url vorhanden
+
+### Aenderungen im Detail
 
 | Datei | Aenderung |
 |-------|-----------|
-| `src/services/miaNotificationService.ts` | Neuer Typ `community_match`, neue Funktion `generateCommunityMatchNotifications()` mit Match-Score-Logik, neue Felder `matchAvatars` und `matchCount` im Interface |
-| `src/hooks/useMiaNotifications.ts` | Community-Match-Notifications in Fetch-Zyklus einbinden |
-| `src/components/tribe/MiaNotificationHub.tsx` | Avatar-Gruppe rendern, neue `join_community_chat` Aktion, `onJoinCommunityChat` Prop |
+| `src/components/tribe/MiaEventCard.tsx` | Neue kompakte Event-Card mit Bild, Datum, Ort, Kategorie-Badge |
+| `src/components/tribe/MiaNotificationHub.tsx` | Event-Chips (Zeile 311-322) durch MiaEventCard ersetzen, bessere Empty-State mit groesserem MIA-Avatar |
 
-### Performance-Massnahmen
-- Nur User mit `last_online` innerhalb 7 Tagen laden
-- Maximal 20 Profile vergleichen
-- Maximal 2 Community-Match-Notifications pro Refresh
-- Match-Score Minimum: 40%
+### Design-Details
+
+- Event-Bild: 48x48px, rounded-lg, object-cover
+- Fallback wenn kein Bild: Gradient-Hintergrund mit Kategorie-Icon
+- Card-Background: `bg-zinc-800/50` mit `border-white/10`
+- Kategorie-Badge: Farbig je nach Kategorie (Musik=lila, Sport=gruen, Kunst=orange)
+- Maximal 3 Event-Cards pro MIA-Antwort (wie bisher)
+- Cards sind horizontal scrollbar wenn mehr als 2
+
