@@ -145,21 +145,35 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                       key={notification.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`p-3 rounded-xl border transition-colors ${
+                      className={`p-3 rounded-xl border transition-colors flex gap-3 ${
                         notification.seen
                           ? 'bg-zinc-900/50 border-white/5'
                           : 'bg-zinc-900 border-gold/20'
                       }`}
                     >
-                      <p className="text-sm text-white/90 leading-relaxed">{notification.text}</p>
-                      {notification.actionLabel && (
-                        <button
-                          onClick={() => handleAction(notification)}
-                          className="mt-2 text-xs font-medium text-gold hover:text-gold-light transition-colors"
-                        >
-                          {notification.actionLabel} →
-                        </button>
+                      {/* Avatar */}
+                      {notification.avatarUrl ? (
+                        <img
+                          src={notification.avatarUrl}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover border border-white/10 shrink-0 mt-0.5"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-zinc-800 border border-white/10 shrink-0 mt-0.5 flex items-center justify-center">
+                          <Sparkles size={14} className="text-gold" />
+                        </div>
                       )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white/90 leading-relaxed">{notification.text}</p>
+                        {notification.actionLabel && (
+                          <button
+                            onClick={() => handleAction(notification)}
+                            className="mt-2 text-xs font-medium text-gold hover:text-gold-light transition-colors"
+                          >
+                            {notification.actionLabel} →
+                          </button>
+                        )}
+                      </div>
                     </motion.div>
                   ))
                 )}
