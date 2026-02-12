@@ -5,6 +5,7 @@ import { Calendar, MapPin, Music, Dumbbell, Palette, PartyPopper, Users } from '
 interface MiaEventCardProps {
   event: TribeEvent;
   onView: (id: string) => void;
+  showMatchScore?: boolean;
 }
 
 const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
@@ -37,14 +38,20 @@ const formatDate = (dateStr: string) => {
   }
 };
 
-export const MiaEventCard: React.FC<MiaEventCardProps> = ({ event, onView }) => {
+export const MiaEventCard: React.FC<MiaEventCardProps> = ({ event, onView, showMatchScore }) => {
   const catConfig = getCategoryConfig(event.category);
 
   return (
     <button
       onClick={() => onView(event.id)}
-      className="flex gap-3 p-2.5 bg-zinc-800/50 border border-white/10 rounded-xl hover:border-gold/30 transition-colors text-left w-full"
+      className="flex gap-3 p-2.5 bg-zinc-800/50 border border-white/10 rounded-xl hover:border-gold/30 transition-colors text-left w-full relative"
     >
+      {/* Match Score Badge */}
+      {showMatchScore && event.matchScore != null && event.matchScore > 0 && (
+        <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-gold/90 rounded-full text-[9px] font-bold text-zinc-950 shadow-sm">
+          {event.matchScore}% Match
+        </div>
+      )}
       {/* Thumbnail */}
       {event.image_url ? (
         <img
