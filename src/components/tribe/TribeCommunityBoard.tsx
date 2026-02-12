@@ -615,13 +615,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     return (
     <div className="h-full flex flex-col bg-black animate-fadeIn overflow-x-hidden">
         
-        {/* --- SPONTAN BUTTON + INPUT AREA --- */}
+        {/* --- INPUT AREA --- */}
         <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20 space-y-2">
-            
-            {/* Spontan Button */}
-            {!onboardingStep && (
-              <SpontanButton userProfile={userProfile} selectedCity={selectedCity} />
-            )}
             
             <div className={`bg-surface border rounded-lg p-1.5 shadow-lg flex items-end gap-2 ${
               (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
@@ -710,6 +705,10 @@ export const TribeCommunityBoard: React.FC<Props> = ({
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-32">
+            {/* Spontan Button - below chat input */}
+            {!onboardingStep && (
+              <SpontanButton userProfile={userProfile} selectedCity={selectedCity} />
+            )}
             {/* MIA Willkommensnachricht - scrollbar im Feed */}
             {onboardingMiaMessage && (
               <div className="flex items-start gap-2 p-3 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn relative">
