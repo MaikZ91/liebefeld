@@ -441,15 +441,14 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                   <button
                     onClick={() => handleSendMessage()}
                     disabled={!chatInput.trim() || isTyping}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl text-black transition-all disabled:opacity-20"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg transition-all disabled:opacity-30"
                     style={{
-                      background: chatInput.trim() && !isTyping
-                        ? 'linear-gradient(135deg, hsl(40, 45%, 55%), hsl(40, 50%, 65%))'
-                        : 'rgba(255,255,255,0.05)',
-                      color: chatInput.trim() && !isTyping ? 'black' : 'rgba(255,255,255,0.2)',
+                      background: '#FFFFFF',
+                      color: '#000000',
+                      isolation: 'isolate',
                     }}
                   >
-                    <ArrowUp size={16} />
+                    <ArrowUp size={14} strokeWidth={2.5} />
                   </button>
                 </div>
               </div>

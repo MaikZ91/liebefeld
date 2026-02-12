@@ -160,8 +160,9 @@ export const usePersonalizedSuggestions = (
   useEffect(() => {
     const interval = setInterval(() => {
       const currentPool = poolRef.current;
-      if (currentPool.length <= 5) return;
-      setDisplayed(prev => shuffle(currentPool, prev));
+      if (currentPool.length > 5) {
+        setDisplayed(prev => shuffle(currentPool, prev));
+      }
     }, 45000);
     return () => clearInterval(interval);
   }, []);
