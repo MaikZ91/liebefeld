@@ -16,6 +16,7 @@ import { AppDownloadPrompt } from "./AppDownloadPrompt";
 import PeopleList from "./PeopleList";
 import { InterestsDialog } from "./InterestsDialog";
 import { MiaInlineChat } from "./MiaInlineChat";
+import { MiaNotificationHub } from "./MiaNotificationHub";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 import { OnboardingWorkflow } from "./onboarding/OnboardingWorkflow";
@@ -1698,6 +1699,17 @@ const TribeAppMain: React.FC<{
           />
         )}
       </main>
+
+      {/* --- MIA NOTIFICATION HUB --- */}
+      <MiaNotificationHub
+        username={userProfile.username}
+        interests={userProfile.interests}
+        hobbies={userProfile.hobbies}
+        favorite_locations={userProfile.favorite_locations}
+        city={selectedCity}
+        onViewEvent={(eventId) => setSelectedEventId(eventId)}
+        onOpenChat={() => setView(ViewState.COMMUNITY)}
+      />
 
       {/* --- BOTTOM NAVIGATION --- */}
       <TribeBottomNav
