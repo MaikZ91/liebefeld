@@ -151,12 +151,12 @@ export const usePersonalizedSuggestions = (
     }
   }, [pool, shuffle]);
 
-  // Rotate every 20 seconds with different prompts each time
+  // Rotate every 45 seconds with different prompts each time
   useEffect(() => {
     if (pool.length <= 5) return;
     const interval = setInterval(() => {
       setDisplayed(prev => shuffle(pool, prev));
-    }, 20000);
+    }, 45000);
     return () => clearInterval(interval);
   }, [pool, shuffle]);
 

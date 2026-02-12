@@ -55,6 +55,8 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
   const [chatMessages, setChatMessages] = useState<HubChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [typewriterText, setTypewriterText] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -151,6 +153,47 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isTyping]);
+
+  // Typewriter effect for input placeholder
+  useEffect(() => {
+    if (isFocused || chatInput) return; // Stop when user is typing
+    
+    let currentSuggestionIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let pauseTimeout: NodeJS.Timeout;
+    
+    const tick = () => {
+      const currentText = suggestions[currentSuggestionIndex % suggestions.length] || '';
+      
+      if (!isDeleting) {
+        charIndex++;
+        setTypewriterText(currentText.slice(0, charIndex));
+        
+        if (charIndex >= currentText.length) {
+          // Pause 3s before deleting
+          pauseTimeout = setTimeout(() => { isDeleting = true; tick(); }, 3000);
+          return;
+        }
+        pauseTimeout = setTimeout(tick, 60 + Math.random() * 40);
+      } else {
+        charIndex--;
+        setTypewriterText(currentText.slice(0, charIndex));
+        
+        if (charIndex <= 0) {
+          isDeleting = false;
+          currentSuggestionIndex++;
+          // Small pause before next prompt
+          pauseTimeout = setTimeout(tick, 500);
+          return;
+        }
+        pauseTimeout = setTimeout(tick, 30);
+      }
+    };
+    
+    pauseTimeout = setTimeout(tick, 1000);
+    return () => clearTimeout(pauseTimeout);
+  }, [isFocused, chatInput, suggestions]);
 
   return (
     <>
@@ -369,18 +412,32 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                     ))}
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSendMessage();
-                    }}
-                    placeholder="Frag MIA was..."
-                    className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white/90 placeholder-white/25 outline-none focus:border-gold/25 transition-all font-light"
-                  />
+                <div className="flex items-center gap-2 relative">
+                  <div className="flex-1 relative">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSendMessage();
+                      }}
+                      placeholder=""
+                      className="flex-1 w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white/90 outline-none focus:border-gold/25 transition-all font-light"
+                    />
+                    {!chatInput && !isFocused && (
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/25 font-light pointer-events-none">
+                        {typewriterText}<span className="animate-pulse ml-0.5 text-gold/40">|</span>
+                      </span>
+                    )}
+                    {!chatInput && isFocused && (
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/20 font-light pointer-events-none">
+                        Frag MIA was...
+                      </span>
+                    )}
+                  </div>
                   <button
                     onClick={() => handleSendMessage()}
                     disabled={!chatInput.trim() || isTyping}
