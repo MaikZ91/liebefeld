@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePersonalizedSuggestions } from '@/hooks/usePersonalizedSuggestions';
 import { getTribeResponse } from '@/services/tribe/aiHelpers';
 import { TribeEvent } from '@/types/tribe';
+import { MiaEventCard } from './MiaEventCard';
 
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
@@ -277,7 +278,8 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                   <div className="px-4 pb-4 flex flex-col min-h-[300px]">
                     {chatMessages.length === 0 ? (
                       /* Empty state with suggestions */
-                      <div className="space-y-4 py-4">
+                      <div className="space-y-4 py-6 flex flex-col items-center">
+                        <img src={MIA_AVATAR} alt="MIA" className="w-16 h-16 rounded-full border-2 border-gold/40 shadow-lg" />
                         <p className="text-sm text-zinc-400 text-center">
                           Hey {username}! Was möchtest du wissen? 🎯
                         </p>
@@ -307,17 +309,15 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                                 : 'bg-zinc-900 border border-white/5 rounded-2xl rounded-bl-sm px-3 py-2'
                             }`}>
                               <p className="text-sm text-white/90 leading-relaxed">{msg.text}</p>
-                              {/* Event chips */}
+                      {/* Event cards */}
                               {msg.relatedEvents && msg.relatedEvents.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-white/5">
+                                <div className="mt-2 pt-2 border-t border-white/5 space-y-1.5">
                                   {msg.relatedEvents.slice(0, 3).map(event => (
-                                    <button
+                                    <MiaEventCard
                                       key={event.id}
-                                      onClick={() => { onViewEvent?.(event.id); setIsOpen(false); }}
-                                      className="text-[10px] px-2 py-1 bg-gold/10 border border-gold/20 rounded-full text-gold hover:bg-gold/20 transition-colors"
-                                    >
-                                      {event.title?.slice(0, 30)}{(event.title?.length || 0) > 30 ? '…' : ''}
-                                    </button>
+                                      event={event}
+                                      onView={(id) => { onViewEvent?.(id); setIsOpen(false); }}
+                                    />
                                   ))}
                                 </div>
                               )}
