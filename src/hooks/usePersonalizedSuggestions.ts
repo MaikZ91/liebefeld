@@ -156,16 +156,17 @@ export const usePersonalizedSuggestions = (
     }
   }, [pool]);
 
-  // Rotate every 45 seconds
+  // Rotate every 30 seconds — works even with small pools
   useEffect(() => {
+    if (poolRef.current.length < 2) return;
     const interval = setInterval(() => {
       const currentPool = poolRef.current;
-      if (currentPool.length > 5) {
+      if (currentPool.length >= 2) {
         setDisplayed(prev => shuffle(currentPool, prev));
       }
-    }, 45000);
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [pool.length]); // re-setup when pool size changes
 
   return displayed;
 };
