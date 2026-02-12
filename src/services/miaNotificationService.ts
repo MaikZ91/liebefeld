@@ -4,9 +4,10 @@ export interface MiaNotification {
   id: string;
   type: 'new_event' | 'user_activity' | 'new_member' | 'upcoming_tribe' | 'daily_recommendation' | 'event_like' | 'event_reminder';
   text: string;
+  avatarUrl?: string; // User profile picture for people-related notifications
   actionLabel?: string;
   actionType?: 'view_event' | 'view_profile' | 'rsvp' | 'create_event' | 'chat_mia';
-  actionPayload?: string; // eventId, username, etc.
+  actionPayload?: string;
   seen: boolean;
   createdAt: string;
 }
@@ -142,6 +143,7 @@ export const generateLocalNotifications = async (
         id: `new_member_${member.username}`,
         type: 'new_member',
         text: `${member.username} ist neu in der Community!${sharedText} 👋`,
+        avatarUrl: member.avatar || undefined,
         actionLabel: 'Profil checken',
         actionType: 'view_profile',
         actionPayload: member.username,
@@ -172,7 +174,7 @@ export const generateLocalNotifications = async (
       });
     }
 
-    // 4. User activity hints
+    // 4. User activity hints (with avatar lookup)
     const activity = await fetchRecentUserActivity(context.username);
     const eventClicks = activity.filter(a => {
       try {
@@ -184,10 +186,23 @@ export const generateLocalNotifications = async (
     if (eventClicks.length > 0) {
       const click = eventClicks[0];
       const data = typeof click.event_data === 'string' ? JSON.parse(click.event_data) : click.event_data;
+
+      // Fetch avatar for active user
+      let activityAvatar: string | undefined;
+      try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('avatar')
+          .eq('username', click.username)
+          .single();
+        activityAvatar = profile?.avatar || undefined;
+      } catch {}
+
       notifications.push({
         id: `activity_${click.username}_${Date.now()}`,
         type: 'user_activity',
         text: `${click.username} checkt gerade "${data.eventTitle}" – vielleicht auch was für dich? 👀`,
+        avatarUrl: activityAvatar,
         actionLabel: 'Event ansehen',
         actionType: 'view_event',
         actionPayload: data.eventId || '',
