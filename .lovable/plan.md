@@ -1,108 +1,69 @@
 
-# MIA als aktiver Notification Hub & Community Assistentin
 
-## Konzept
+# MIA als proaktive People-Connector & Smart Matchmaker
 
-MIA wird als schwebender FAB-Button (Floating Action Button) unten rechts positioniert. Sie pulsiert/blinkt bei neuen Benachrichtigungen und oeffnet ein Notification-Panel mit personalisierten, KI-generierten Hinweisen. Der Nutzer kann von dort direkt mit MIA chatten oder Aktionen ausfuehren.
+## Die Idee
 
-## Architektur
+MIA wird zur aktiven Vermittlerin: Sie erkennt, wenn Community-Mitglieder gemeinsame Interessen haben UND ein passendes Event ansteht, und schlaegt gezielt vor, sich dort zu treffen. Das verwandelt passive Notifications in echte soziale Verbindungen.
 
-### 1. Neue Komponente: `MiaNotificationHub`
+## Was sich aendert
 
-Ein schwebendes UI-Element bestehend aus:
-- **FAB-Button** (unten rechts, ueber der Bottom-Nav): MIA-Avatar mit Gold-Ring, pulsierender Glow bei neuen Notifications
-- **Notification-Panel** (Sheet/Drawer von unten): Liste der aktuellen MIA-Hinweise mit Aktions-Buttons
-- **Chat-Modus**: Vom Panel aus kann direkt mit MIA gechattet werden
+### Neuer Notification-Typ: `people_match`
 
-### 2. Neuer Service: `miaNotificationService.ts`
+MIA generiert Nachrichten wie:
+- "Du und Lisa (82% Match) moegt beide Fotografie -- beim Creative Circle heute Abend koenntet ihr euch treffen!"
+- "3 Leute mit aehnlichen Interessen gehen zum Kennenlernabend -- du auch?"
+- "Max hat gerade das gleiche Event geliked wie du -- vielleicht wollt ihr zusammen hin?"
 
-Generiert proaktive Benachrichtigungen basierend auf:
-- **Neue Events**: Wenn ein Event in den letzten Stunden hinzugefuegt wurde
-- **User-Aktivitaet**: "Lauren schaut sich gerade Event X an" (via `user_activity_logs`)
-- **Community-Beitritte**: Neue User-Profile erkennen und bei gemeinsamen Interessen hinweisen
-- **Bevorstehende Community-Events**: Tribe Kennenlernabend, Tuesday Run etc.
-- **Tagesempfehlungen**: Basierend auf User-Interessen und heutigem Eventangebot
-- **Event-Likes**: "Laurin hat Event X geliked, vielleicht auch was fuer dich?"
+### Neue Funktion: `generateMatchNotifications`
 
-### 3. Neue Edge Function: `mia-notifications`
+Nutzt die bestehende `calculateMatchScore`-Logik aus `TribeUserMatcher.tsx` und kombiniert sie mit:
+- Aktuelle Event-Daten (wer hat was geliked)
+- User-Profile und Interessen
+- Bevorstehende Events in den naechsten 3 Tagen
 
-Generiert personalisierte Notification-Texte via Lovable AI Gateway:
-- Empfaengt User-Profil, aktuelle Events, Community-Aktivitaet
-- Erstellt 3-5 kontextbezogene, persoenliche Benachrichtigungen
-- Nutzt den lockeren MIA-Ton ("Hey! Schau mal...")
+### Ablauf
 
-### 4. Realtime-Integration
+1. Lade aktive User mit Profilen (nicht Guest)
+2. Berechne Match-Scores zwischen aktuellem User und anderen
+3. Finde Events die beide interessieren koennten (basierend auf Kategorie + Interessen)
+4. Generiere personalisierte "Verbindungs-Notifications"
+5. Zeige Match-Prozent und gemeinsame Interessen direkt in der Notification
 
-- Supabase Realtime-Subscription auf `community_events` (neue Events)
-- Supabase Realtime-Subscription auf `user_profiles` (neue Mitglieder)
-- Supabase Realtime-Subscription auf `chat_messages` (Community-Aktivitaet)
-- Polling fuer `user_activity_logs` (wer schaut sich was an)
-- Badge-Counter am FAB-Button zeigt Anzahl ungelesener Notifications
+### Konkrete Notification-Beispiele
 
-### 5. Aktionen aus dem Hub
+- **Match + Event**: "Du und [Name] ([X]% Match) moegt beide [Interesse] -- '[Event]' am [Datum] waere perfekt fuer euch!"
+- **Gruppen-Match**: "[X] Leute mit aehnlichen Interessen schauen sich '[Event]' an"
+- **Like-Match**: "[Name] hat gerade '[Event]' geliked -- ihr habt [X] gemeinsame Interessen!"
 
-Jede Notification hat kontextbezogene Aktions-Buttons:
-- "Event ansehen" - navigiert zum Event
-- "Profil checken" - oeffnet User-Profil-Dialog
-- "Bin dabei!" - RSVP direkt aus der Notification
-- "Event starten" - oeffnet Event-Erstellung
-- "Mit MIA chatten" - wechselt in den Chat-Modus
+### Neue Aktion: `connect`
 
-## Technische Umsetzung
+Neben "Event ansehen" und "Profil checken" gibt es neu:
+- "Zusammen hin?" -- oeffnet einen Mini-Chat oder Vorschlag zum gemeinsamen Besuch
 
-### Dateien die erstellt werden:
-
-| Datei | Zweck |
-|-------|-------|
-| `src/components/tribe/MiaNotificationHub.tsx` | FAB-Button + Notification-Panel + Mini-Chat |
-| `src/services/miaNotificationService.ts` | Notification-Generierung und -Management |
-| `src/hooks/useMiaNotifications.ts` | Hook fuer Realtime-Subscriptions und Notification-State |
-| `supabase/functions/mia-notifications/index.ts` | Edge Function fuer KI-generierte Benachrichtigungstexte |
+## Technische Details
 
 ### Dateien die geaendert werden:
 
 | Datei | Aenderung |
 |-------|-----------|
-| `src/components/tribe/TribeApp.tsx` | MiaNotificationHub einbinden, State weiterreichen |
-| `supabase/config.toml` | Neue Edge Function registrieren |
+| `src/services/miaNotificationService.ts` | Neue Funktion `generateMatchNotifications()` die Match-Score-Logik aus TribeUserMatcher extrahiert und mit Event-Daten kombiniert. Neuer Typ `people_match` in der Interface. |
+| `src/hooks/useMiaNotifications.ts` | Match-Notifications in den Fetch-Zyklus integrieren |
+| `src/components/tribe/MiaNotificationHub.tsx` | Match-Notifications mit Match-Score-Badge und gemeinsamen Interessen visuell darstellen. Neue `connect`-Aktion. |
 
-### Notification-Typen:
+### Match-Score-Logik (wird aus TribeUserMatcher extrahiert):
 
-```text
-+------------------------------------------+
-| MIA Notification Hub                     |
-|                                          |
-| "Hey! Neues Event: Jazz Night am Fr.    |
-|  Passt zu deinen Interessen!"           |
-|  [Event ansehen]                         |
-|                                          |
-| "Laurin ist vielleicht beim             |
-|  Kennenlernabend dabei - du auch?"      |
-|  [Bin dabei!] [Mehr Info]               |
-|                                          |
-| "Max ist neu in der Community und mag   |
-|  auch Sport & Konzerte!"                |
-|  [Profil checken]                       |
-|                                          |
-| "Dein Tipp fuer heute: Creative Circle  |
-|  heute Abend - perfekt fuer dich!"      |
-|  [Event ansehen]                         |
-+------------------------------------------+
-```
+Die bestehende `calculateMatchScore`-Funktion vergleicht:
+- Gemeinsame Interessen (gewichtet)
+- Gemeinsame Lieblingsorte
+- Gemeinsame Hobbies
+- Ergibt einen Prozent-Score (z.B. 78% Match)
 
-### FAB-Button Design:
+Diese Logik wird in den `miaNotificationService` uebernommen, damit sie sowohl im Matcher als auch in den Notifications genutzt werden kann.
 
-- MIA-Avatar (rund, 56px) mit Gold-Border
-- Bei neuen Notifications: pulsierender Gold-Glow + Badge mit Anzahl
-- Positioniert `bottom-20 right-4` (ueber der Bottom-Nav)
-- Tap oeffnet das Panel als Sheet von unten
+### Performance
 
-### Datenfluss:
+- Match-Berechnung nur fuer aktive User (letzten 7 Tage online)
+- Maximal 2-3 Match-Notifications pro Refresh
+- Gecacht fuer 5 Minuten (wie andere Notifications)
 
-1. `useMiaNotifications` Hook startet Realtime-Subscriptions beim Mount
-2. Bei neuen Events/Usern/Aktivitaeten wird `miaNotificationService` aufgerufen
-3. Service sammelt Kontext und ruft `mia-notifications` Edge Function auf
-4. Edge Function generiert personalisierte Texte via Lovable AI
-5. Notifications werden im State gespeichert und FAB blinkt
-6. User oeffnet Panel, sieht Notifications, fuehrt Aktionen aus
-7. Gelesene Notifications werden als "seen" markiert
