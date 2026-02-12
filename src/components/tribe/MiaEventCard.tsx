@@ -1,6 +1,6 @@
 import React from 'react';
 import { TribeEvent } from '@/types/tribe';
-import { Calendar, MapPin, Music, Dumbbell, Palette, PartyPopper, Users } from 'lucide-react';
+import { Calendar, MapPin, Music, Dumbbell, Palette, PartyPopper, Users, ChevronRight } from 'lucide-react';
 
 interface MiaEventCardProps {
   event: TribeEvent;
@@ -8,22 +8,22 @@ interface MiaEventCardProps {
   showMatchScore?: boolean;
 }
 
-const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
-  musik: { icon: <Music size={10} />, color: 'text-purple-300', bg: 'bg-purple-500/20 border-purple-500/30' },
-  music: { icon: <Music size={10} />, color: 'text-purple-300', bg: 'bg-purple-500/20 border-purple-500/30' },
-  konzert: { icon: <Music size={10} />, color: 'text-purple-300', bg: 'bg-purple-500/20 border-purple-500/30' },
-  sport: { icon: <Dumbbell size={10} />, color: 'text-emerald-300', bg: 'bg-emerald-500/20 border-emerald-500/30' },
-  kunst: { icon: <Palette size={10} />, color: 'text-amber-300', bg: 'bg-amber-500/20 border-amber-500/30' },
-  art: { icon: <Palette size={10} />, color: 'text-amber-300', bg: 'bg-amber-500/20 border-amber-500/30' },
-  party: { icon: <PartyPopper size={10} />, color: 'text-pink-300', bg: 'bg-pink-500/20 border-pink-500/30' },
-  community: { icon: <Users size={10} />, color: 'text-sky-300', bg: 'bg-sky-500/20 border-sky-500/30' },
+const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode; label: string; gradient: string }> = {
+  musik: { icon: <Music size={10} />, label: 'Musik', gradient: 'from-purple-500/30 to-purple-900/20' },
+  music: { icon: <Music size={10} />, label: 'Music', gradient: 'from-purple-500/30 to-purple-900/20' },
+  konzert: { icon: <Music size={10} />, label: 'Konzert', gradient: 'from-purple-500/30 to-purple-900/20' },
+  sport: { icon: <Dumbbell size={10} />, label: 'Sport', gradient: 'from-emerald-500/30 to-emerald-900/20' },
+  kunst: { icon: <Palette size={10} />, label: 'Kunst', gradient: 'from-amber-500/30 to-amber-900/20' },
+  art: { icon: <Palette size={10} />, label: 'Art', gradient: 'from-amber-500/30 to-amber-900/20' },
+  party: { icon: <PartyPopper size={10} />, label: 'Party', gradient: 'from-pink-500/30 to-pink-900/20' },
+  community: { icon: <Users size={10} />, label: 'Community', gradient: 'from-sky-500/30 to-sky-900/20' },
 };
 
 const getCategoryConfig = (category?: string) => {
   if (!category) return null;
   const key = category.toLowerCase();
   for (const [k, v] of Object.entries(CATEGORY_CONFIG)) {
-    if (key.includes(k)) return v;
+    if (key.includes(k)) return { ...v, key: k };
   }
   return null;
 };
@@ -40,57 +40,68 @@ const formatDate = (dateStr: string) => {
 
 export const MiaEventCard: React.FC<MiaEventCardProps> = ({ event, onView, showMatchScore }) => {
   const catConfig = getCategoryConfig(event.category);
+  const isTribe = event.source === 'community';
 
   return (
     <button
       onClick={() => onView(event.id)}
-      className="flex gap-3 p-2.5 bg-zinc-800/50 border border-white/10 rounded-xl hover:border-gold/30 transition-colors text-left w-full relative"
+      className={`group flex gap-3 p-2.5 rounded-xl text-left w-full relative overflow-hidden transition-all duration-200 ${
+        isTribe
+          ? 'bg-gradient-to-r from-gold/10 to-transparent border border-gold/25 hover:border-gold/50'
+          : 'bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/10'
+      }`}
     >
       {/* Match Score Badge */}
       {showMatchScore && event.matchScore != null && event.matchScore > 0 && (
-        <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-gold/90 rounded-full text-[9px] font-bold text-zinc-950 shadow-sm">
-          {event.matchScore}% Match
-        </div>
-      )}
-      {/* Thumbnail */}
-      {event.image_url ? (
-        <img
-          src={event.image_url}
-          alt=""
-          className="w-12 h-12 rounded-lg object-cover shrink-0"
-        />
-      ) : (
-        <div className="w-12 h-12 rounded-lg shrink-0 bg-gradient-to-br from-zinc-700 to-zinc-800 flex items-center justify-center">
-          {catConfig?.icon ? (
-            <span className={catConfig.color}>{catConfig.icon}</span>
-          ) : (
-            <Calendar size={14} className="text-zinc-500" />
-          )}
+        <div className="absolute top-1.5 right-1.5 px-2 py-0.5 bg-gradient-to-r from-gold to-gold-light rounded-full text-[9px] font-bold text-black tracking-wide shadow-lg shadow-gold/20">
+          {event.matchScore}%
         </div>
       )}
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-white/90 line-clamp-2 leading-tight">{event.title}</p>
-        <div className="flex items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
-          <Calendar size={9} className="shrink-0" />
-          <span>{formatDate(event.date)}{event.time ? ` · ${event.time}` : ''}</span>
-        </div>
-        {event.location && (
-          <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-zinc-500">
-            <MapPin size={9} className="shrink-0" />
-            <span className="truncate">{event.location}</span>
+      {/* Thumbnail */}
+      <div className="relative shrink-0">
+        {event.image_url ? (
+          <img
+            src={event.image_url}
+            alt=""
+            className="w-14 h-14 rounded-lg object-cover"
+          />
+        ) : (
+          <div className={`w-14 h-14 rounded-lg bg-gradient-to-br ${catConfig?.gradient || 'from-zinc-700/50 to-zinc-800/50'} flex items-center justify-center`}>
+            {catConfig?.icon ? (
+              <span className="text-white/60 scale-150">{catConfig.icon}</span>
+            ) : (
+              <Calendar size={16} className="text-white/30" />
+            )}
           </div>
         )}
-        <div className="flex items-center gap-2 mt-1.5">
-          {catConfig && (
-            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium border ${catConfig.bg} ${catConfig.color}`}>
-              {catConfig.icon}
-              {event.category}
-            </span>
+        {isTribe && (
+          <div className="absolute -bottom-0.5 -right-0.5 px-1 py-px bg-gold rounded text-[7px] font-bold text-black tracking-wider">
+            TRIBE
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0 py-0.5">
+        <p className="text-[13px] font-medium text-white/90 line-clamp-1 leading-tight tracking-tight">{event.title}</p>
+        <div className="flex items-center gap-3 mt-1.5">
+          <div className="flex items-center gap-1 text-[10px] text-white/40">
+            <Calendar size={9} className="shrink-0" />
+            <span>{formatDate(event.date)}{event.time ? ` · ${event.time}` : ''}</span>
+          </div>
+          {event.location && (
+            <div className="flex items-center gap-1 text-[10px] text-white/30">
+              <MapPin size={9} className="shrink-0" />
+              <span className="truncate max-w-[100px]">{event.location}</span>
+            </div>
           )}
-          <span className="text-[10px] text-gold font-medium ml-auto">Ansehen →</span>
         </div>
+      </div>
+
+      {/* Arrow */}
+      <div className="flex items-center shrink-0 self-center">
+        <ChevronRight size={14} className="text-white/20 group-hover:text-gold transition-colors" />
       </div>
     </button>
   );
