@@ -343,59 +343,51 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                 )}
               </div>
 
-              {/* Chat Input (always visible in chat tab) */}
-              {activeTab === 'chat' && (
-                <div className="p-3 border-t border-white/5">
-                  {/* Quick suggestions when chat has messages */}
-                  {chatMessages.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto scrollbar-none mb-2 pb-1">
-                      {suggestions.slice(0, 3).map((s, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSendMessage(s)}
-                          className="shrink-0 px-2.5 py-1 bg-zinc-900 border border-white/10 rounded-full text-[10px] text-zinc-400 hover:text-white hover:border-gold/30 transition-colors"
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                      placeholder="Frag MIA was..."
-                      className="flex-1 bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-gold/30 transition-colors"
-                    />
-                    <button
-                      onClick={() => handleSendMessage()}
-                      disabled={!chatInput.trim() || isTyping}
-                      className="w-8 h-8 flex items-center justify-center bg-gold/20 border border-gold/30 rounded-lg text-gold hover:bg-gold/30 transition-colors disabled:opacity-30"
-                    >
-                      <ArrowUp size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
 
-              {/* CTA for notifications tab */}
-              {activeTab === 'notifications' && (
-                <div className="p-3 border-t border-white/5">
+              {/* Chat input — visible in BOTH tabs */}
+              <div className="p-3 border-t border-white/5">
+                {/* Quick suggestions */}
+                {(activeTab === 'notifications' || chatMessages.length > 0) && (
+                  <div className="flex gap-1.5 overflow-x-auto scrollbar-none mb-2 pb-1">
+                    {suggestions.slice(0, activeTab === 'notifications' ? 4 : 3).map((s, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setActiveTab('chat'); handleSendMessage(s); }}
+                        className="shrink-0 px-2.5 py-1 bg-zinc-900 border border-white/10 rounded-full text-[10px] text-zinc-400 hover:text-white hover:border-gold/30 transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        if (activeTab === 'notifications') setActiveTab('chat');
+                        handleSendMessage();
+                      }
+                    }}
+                    onFocus={() => { if (activeTab === 'notifications') setActiveTab('chat'); }}
+                    placeholder="Frag MIA was..."
+                    className="flex-1 bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-gold/30 transition-colors"
+                  />
                   <button
                     onClick={() => {
-                      setActiveTab('chat');
-                      setTimeout(() => inputRef.current?.focus(), 100);
+                      if (activeTab === 'notifications') setActiveTab('chat');
+                      handleSendMessage();
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-gold/10 border border-gold/20 rounded-xl text-gold text-sm font-medium hover:bg-gold/20 transition-colors"
+                    disabled={!chatInput.trim() || isTyping}
+                    className="w-8 h-8 flex items-center justify-center bg-gold/20 border border-gold/30 rounded-lg text-gold hover:bg-gold/30 transition-colors disabled:opacity-30"
                   >
-                    <MessageCircle size={14} />
-                    Mit MIA chatten
+                    <ArrowUp size={16} />
                   </button>
                 </div>
-              )}
+              </div>
             </motion.div>
           </>
         )}
