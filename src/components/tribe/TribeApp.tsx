@@ -1288,26 +1288,28 @@ const TribeAppMain: React.FC<{
               )}
             </div>
 
-            {/* MIA Inline Search */}
-            <div className="px-6 mb-4">
-              <MiaInlineChat
-                events={allEvents}
-                userProfile={userProfile ? {
-                  username: userProfile.username,
-                  interests: userProfile.interests,
-                  favorite_locations: userProfile.homebase ? [userProfile.homebase] : [],
-                  hobbies: [],
-                } : undefined}
-                city={selectedCity}
-                onQuery={handleQuery}
-                onEventsFiltered={handleMiaEventsFiltered}
-                onClearFilter={handleMiaClearFilter}
-                onEventClick={(event) => setSelectedEventId(event.id)}
-                onboardingStep={currentStep}
-                onAdvanceOnboarding={advanceStep}
-                onInterestsSelected={handleInterestsSelected}
-              />
-            </div>
+            {/* MIA Inline - only during onboarding */}
+            {isOnboarding && currentStep !== 'completed' && !isCommunityOnboarding && (
+              <div className="px-6 mb-4">
+                <MiaInlineChat
+                  events={allEvents}
+                  userProfile={userProfile ? {
+                    username: userProfile.username,
+                    interests: userProfile.interests,
+                    favorite_locations: userProfile.homebase ? [userProfile.homebase] : [],
+                    hobbies: [],
+                  } : undefined}
+                  city={selectedCity}
+                  onQuery={handleQuery}
+                  onEventsFiltered={handleMiaEventsFiltered}
+                  onClearFilter={handleMiaClearFilter}
+                  onEventClick={(event) => setSelectedEventId(event.id)}
+                  onboardingStep={currentStep}
+                  onAdvanceOnboarding={advanceStep}
+                  onInterestsSelected={handleInterestsSelected}
+                />
+              </div>
+            )}
 
             {/* MIA Recommendations */}
             {spotlightEvents.length > 0 && (
@@ -1709,8 +1711,13 @@ const TribeAppMain: React.FC<{
         city={selectedCity}
         likedEventIds={Array.from(likedEventIds)}
         attendingEventIds={Array.from(attendingEventIds)}
+        events={allEvents}
         onViewEvent={(eventId) => setSelectedEventId(eventId)}
         onOpenChat={() => setView(ViewState.COMMUNITY)}
+        onJoinCommunityChat={() => {
+          setView(ViewState.COMMUNITY);
+          markCommunityAsSeen();
+        }}
       />
 
       {/* --- BOTTOM NAVIGATION --- */}
