@@ -53,13 +53,11 @@ export const useMiaNotifications = (options: UseMiaNotificationsOptions) => {
       );
 
       const seenIds = getSeenIds();
-      const withSeenState = newNotifications.map(n => ({
-        ...n,
-        seen: seenIds.has(n.id),
-      }));
+      // Filter out previously seen notifications entirely
+      const unseenOnly = newNotifications.filter(n => !seenIds.has(n.id));
 
-      setNotifications(withSeenState);
-      setUnreadCount(withSeenState.filter(n => !n.seen).length);
+      setNotifications(unseenOnly);
+      setUnreadCount(unseenOnly.length);
     } catch (error) {
       console.error('Failed to fetch MIA notifications:', error);
     } finally {
