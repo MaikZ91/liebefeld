@@ -18,6 +18,7 @@ interface MiaNotificationHubProps {
   onViewEvent?: (eventId: string) => void;
   onViewProfile?: (username: string) => void;
   onOpenChat?: () => void;
+  onJoinCommunityChat?: () => void;
 }
 
 export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
@@ -31,6 +32,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
   onViewEvent,
   onViewProfile,
   onOpenChat,
+  onJoinCommunityChat,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, unreadCount, markAllSeen, markSeen } = useMiaNotifications({
@@ -55,6 +57,10 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
         break;
       case 'chat_mia':
         onOpenChat?.();
+        setIsOpen(false);
+        break;
+      case 'join_community_chat':
+        onJoinCommunityChat?.();
         setIsOpen(false);
         break;
       default:
@@ -148,11 +154,31 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                       className={`p-3 rounded-xl border transition-colors flex gap-3 ${
                         notification.seen
                           ? 'bg-zinc-900/50 border-white/5'
-                          : 'bg-zinc-900 border-gold/20'
+                          : notification.type === 'community_match'
+                            ? 'bg-zinc-900 border-gold/30'
+                            : 'bg-zinc-900 border-gold/20'
                       }`}
                     >
-                      {/* Avatar */}
-                      {notification.avatarUrl ? (
+                      {/* Avatar(s) */}
+                      {notification.type === 'community_match' && notification.matchAvatars && notification.matchAvatars.length > 0 ? (
+                        <div className="shrink-0 mt-0.5 flex items-center">
+                          <div className="flex -space-x-2">
+                            {notification.matchAvatars.slice(0, 3).map((avatar, i) => (
+                              <img
+                                key={i}
+                                src={avatar}
+                                alt=""
+                                className="w-8 h-8 rounded-full object-cover border-2 border-zinc-950"
+                              />
+                            ))}
+                            {(notification.matchCount || 0) > 3 && (
+                              <div className="w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-950 flex items-center justify-center text-[10px] font-bold text-gold">
+                                +{(notification.matchCount || 0) - 3}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : notification.avatarUrl ? (
                         <img
                           src={notification.avatarUrl}
                           alt=""
@@ -164,15 +190,38 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white/90 leading-relaxed">{notification.text}</p>
-                        {notification.actionLabel && (
-                          <button
-                            onClick={() => handleAction(notification)}
-                            className="mt-2 text-xs font-medium text-gold hover:text-gold-light transition-colors"
-                          >
-                            {notification.actionLabel} →
-                          </button>
+                        {notification.type === 'community_match' && (
+                          <Badge className="bg-gold/20 text-gold border-gold/30 text-[10px] mb-1">
+                            {(notification.matchCount || 0) + 1} Leute · Community Match
+                          </Badge>
                         )}
+                        <p className="text-sm text-white/90 leading-relaxed">{notification.text}</p>
+                        <div className="flex gap-3 mt-2">
+                          {notification.actionLabel && (
+                            <button
+                              onClick={() => handleAction(notification)}
+                              className="text-xs font-medium text-gold hover:text-gold-light transition-colors"
+                            >
+                              {notification.actionLabel} →
+                            </button>
+                          )}
+                          {notification.secondaryActionLabel && (
+                            <button
+                              onClick={() => {
+                                markSeen(notification.id);
+                                if (notification.secondaryActionType === 'join_community_chat') {
+                                  onJoinCommunityChat?.();
+                                } else if (notification.secondaryActionType === 'view_event') {
+                                  onViewEvent?.(notification.secondaryActionPayload || '');
+                                }
+                                setIsOpen(false);
+                              }}
+                              className="text-xs font-medium text-zinc-400 hover:text-white transition-colors"
+                            >
+                              {notification.secondaryActionLabel} →
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </motion.div>
                   ))

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { MiaNotification, generateLocalNotifications } from '@/services/miaNotificationService';
+import { MiaNotification, generateLocalNotifications, generateCommunityMatchNotifications } from '@/services/miaNotificationService';
 
 interface UseMiaNotificationsOptions {
   username: string;
@@ -40,17 +40,21 @@ export const useMiaNotifications = (options: UseMiaNotificationsOptions) => {
     setIsLoading(true);
 
     try {
-      const newNotifications = await generateLocalNotifications(
-        {
-          username: options.username,
-          interests: options.interests,
-          hobbies: options.hobbies,
-          favorite_locations: options.favorite_locations,
-          likedEventIds: options.likedEventIds,
-          attendingEventIds: options.attendingEventIds,
-        },
-        options.city
-      );
+      const contextObj = {
+        username: options.username,
+        interests: options.interests,
+        hobbies: options.hobbies,
+        favorite_locations: options.favorite_locations,
+        likedEventIds: options.likedEventIds,
+        attendingEventIds: options.attendingEventIds,
+      };
+
+      const [localNotifications, communityMatchNotifications] = await Promise.all([
+        generateLocalNotifications(contextObj, options.city),
+        generateCommunityMatchNotifications(contextObj, options.city),
+      ]);
+
+      const newNotifications = [...localNotifications, ...communityMatchNotifications];
 
       const seenIds = getSeenIds();
       // Filter out previously seen notifications entirely

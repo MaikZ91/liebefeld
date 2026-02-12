@@ -2,12 +2,17 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface MiaNotification {
   id: string;
-  type: 'new_event' | 'user_activity' | 'new_member' | 'upcoming_tribe' | 'daily_recommendation' | 'event_like' | 'event_reminder';
+  type: 'new_event' | 'user_activity' | 'new_member' | 'upcoming_tribe' | 'daily_recommendation' | 'event_like' | 'event_reminder' | 'community_match';
   text: string;
-  avatarUrl?: string; // User profile picture for people-related notifications
+  avatarUrl?: string;
+  matchAvatars?: string[]; // Multiple avatars for community match notifications
+  matchCount?: number; // Number of matched community members
   actionLabel?: string;
-  actionType?: 'view_event' | 'view_profile' | 'rsvp' | 'create_event' | 'chat_mia';
+  actionType?: 'view_event' | 'view_profile' | 'rsvp' | 'create_event' | 'chat_mia' | 'join_community_chat';
   actionPayload?: string;
+  secondaryActionLabel?: string;
+  secondaryActionType?: 'view_event' | 'join_community_chat';
+  secondaryActionPayload?: string;
   seen: boolean;
   createdAt: string;
 }
@@ -255,6 +260,167 @@ export const generateLocalNotifications = async (
     }
   } catch (error) {
     console.error('Error generating notifications:', error);
+  }
+
+  return notifications;
+};
+
+/**
+ * Calculate match score between two user profiles
+ */
+const calculateMatchScore = (
+  currentInterests: string[],
+  currentHobbies: string[],
+  currentLocations: string[],
+  other: { interests?: string[] | null; hobbies?: string[] | null; favorite_locations?: string[] | null }
+): { score: number; sharedInterests: string[] } => {
+  let score = 0;
+  let factors = 0;
+  const sharedInterests: string[] = [];
+
+  const otherInterests = other.interests || [];
+  if (currentInterests.length > 0 && otherInterests.length > 0) {
+    const common = currentInterests.filter(i => otherInterests.includes(i));
+    sharedInterests.push(...common);
+    score += (common.length / Math.max(currentInterests.length, otherInterests.length)) * 100;
+    factors++;
+  }
+
+  const otherLocations = other.favorite_locations || [];
+  if (currentLocations.length > 0 && otherLocations.length > 0) {
+    const common = currentLocations.filter(l => otherLocations.includes(l));
+    score += (common.length / Math.max(currentLocations.length, otherLocations.length)) * 100;
+    factors++;
+  }
+
+  const otherHobbies = other.hobbies || [];
+  if (currentHobbies.length > 0 && otherHobbies.length > 0) {
+    const common = currentHobbies.filter(h => otherHobbies.includes(h));
+    score += (common.length / Math.max(currentHobbies.length, otherHobbies.length)) * 100;
+    factors++;
+  }
+
+  return { score: factors > 0 ? Math.round(score / factors) : 0, sharedInterests };
+};
+
+/**
+ * Generate community match notifications - groups users with shared interests and connects them to events
+ */
+export const generateCommunityMatchNotifications = async (
+  context: NotificationContext,
+  city?: string
+): Promise<MiaNotification[]> => {
+  const notifications: MiaNotification[] = [];
+
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    // 1. Load active users (last 7 days, not guest, not self)
+    const { data: activeUsers } = await supabase
+      .from('user_profiles')
+      .select('username, avatar, interests, hobbies, favorite_locations, last_online')
+      .gte('last_online', sevenDaysAgo)
+      .neq('username', context.username)
+      .not('username', 'like', 'Guest_%')
+      .order('last_online', { ascending: false })
+      .limit(20);
+
+    if (!activeUsers || activeUsers.length === 0) return [];
+
+    const currentInterests = context.interests || [];
+    const currentHobbies = context.hobbies || [];
+    const currentLocations = context.favorite_locations || [];
+
+    // 2. Calculate match scores and find users with score >= 40%
+    const matchedUsers = activeUsers
+      .map(user => {
+        const { score, sharedInterests } = calculateMatchScore(
+          currentInterests, currentHobbies, currentLocations, user
+        );
+        return { ...user, matchScore: score, sharedInterests };
+      })
+      .filter(u => u.matchScore >= 40)
+      .sort((a, b) => b.matchScore - a.matchScore);
+
+    if (matchedUsers.length === 0) return [];
+
+    // 3. Group by shared interest categories
+    const interestGroups = new Map<string, typeof matchedUsers>();
+    for (const user of matchedUsers) {
+      for (const interest of user.sharedInterests) {
+        const group = interestGroups.get(interest) || [];
+        group.push(user);
+        interestGroups.set(interest, group);
+      }
+    }
+
+    // 4. Fetch upcoming events (next 3 days)
+    const today = new Date().toISOString().split('T')[0];
+    const threeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    let eventQuery = supabase
+      .from('community_events')
+      .select('id, title, category, date, time, location')
+      .gte('date', today)
+      .lte('date', threeDays)
+      .order('date', { ascending: true })
+      .limit(20);
+
+    if (city && city !== 'Deutschland') {
+      eventQuery = eventQuery.ilike('city', city);
+    }
+
+    const { data: upcomingEvents } = await eventQuery;
+
+    // 5. Generate notifications: match interest groups with events
+    let notificationCount = 0;
+    const now = new Date().toISOString();
+
+    for (const [interest, users] of interestGroups) {
+      if (notificationCount >= 2) break;
+
+      // Find an event that matches this interest category
+      const matchingEvent = (upcomingEvents || []).find(e => {
+        const cat = (e.category || '').toLowerCase();
+        const title = (e.title || '').toLowerCase();
+        return cat.includes(interest.toLowerCase()) || title.includes(interest.toLowerCase());
+      });
+
+      const avatars = users.slice(0, 4).map(u => u.avatar || '').filter(Boolean);
+      const count = users.length;
+
+      if (matchingEvent) {
+        notifications.push({
+          id: `community_match_${interest}_${matchingEvent.id}`,
+          type: 'community_match',
+          text: `${count + 1} Leute aus der Community mögen ${interest} – „${matchingEvent.title}" am ${matchingEvent.date} wäre perfekt für euch! 🎯`,
+          matchAvatars: avatars,
+          matchCount: count,
+          actionLabel: 'Event ansehen',
+          actionType: 'view_event',
+          actionPayload: matchingEvent.id,
+          secondaryActionLabel: 'Community Chat',
+          secondaryActionType: 'join_community_chat',
+          seen: false,
+          createdAt: now,
+        });
+      } else {
+        notifications.push({
+          id: `community_match_${interest}_${Date.now()}`,
+          type: 'community_match',
+          text: `${count + 1} Leute in der Community teilen dein Interesse an ${interest} – tausch dich im Chat aus! 💬`,
+          matchAvatars: avatars,
+          matchCount: count,
+          actionLabel: 'Community Chat',
+          actionType: 'join_community_chat',
+          seen: false,
+          createdAt: now,
+        });
+      }
+      notificationCount++;
+    }
+  } catch (error) {
+    console.error('Error generating community match notifications:', error);
   }
 
   return notifications;
