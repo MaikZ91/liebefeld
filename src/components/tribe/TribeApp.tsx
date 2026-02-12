@@ -17,6 +17,7 @@ import PeopleList from "./PeopleList";
 import { InterestsDialog } from "./InterestsDialog";
 import { MiaInlineChat } from "./MiaInlineChat";
 import { MiaNotificationHub } from "./MiaNotificationHub";
+import { LiveMapWidget } from "./LiveMapWidget";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 import { OnboardingWorkflow } from "./onboarding/OnboardingWorkflow";
@@ -1310,6 +1311,14 @@ const TribeAppMain: React.FC<{
                 />
               </div>
             )}
+
+            {/* LIVE MAP WIDGET */}
+            <LiveMapWidget
+              events={filteredEvents}
+              selectedCity={selectedCity}
+              onEventClick={(event) => setSelectedEventId(event.id)}
+              onExpandMap={() => handleViewChange(ViewState.MAP)}
+            />
 
             {/* MIA Recommendations */}
             {spotlightEvents.length > 0 && (
