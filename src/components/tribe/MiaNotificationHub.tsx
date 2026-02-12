@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, MessageCircle, ArrowUp } from 'lucide-react';
+import { X, Sparkles, MessageCircle, ArrowUp, Star } from 'lucide-react';
 import { useMiaNotifications } from '@/hooks/useMiaNotifications';
 import { MiaNotification } from '@/services/miaNotificationService';
 import { Badge } from '@/components/ui/badge';
@@ -65,6 +65,15 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
     { username, interests, favorite_locations, hobbies },
     city
   );
+
+  // Daily recommendations: today's top matched events
+  const dailyRecommendations = React.useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return events
+      .filter(e => e.date >= today)
+      .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
+      .slice(0, 3);
+  }, [events]);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -245,7 +254,28 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                 {activeTab === 'notifications' ? (
                   /* Notification List */
                   <div className="px-4 pb-4 space-y-3">
-                    {notifications.length === 0 ? (
+                    {/* Daily Recommendations */}
+                    {dailyRecommendations.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 pt-1">
+                          <Star size={13} className="text-gold fill-gold" />
+                          <h4 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Deine Tagesempfehlung</h4>
+                        </div>
+                        <div className="space-y-1.5">
+                          {dailyRecommendations.map(event => (
+                            <MiaEventCard
+                              key={event.id}
+                              event={event}
+                              onView={(id) => { onViewEvent?.(id); setIsOpen(false); }}
+                              showMatchScore
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Notifications */}
+                    {notifications.length === 0 && dailyRecommendations.length === 0 ? (
                       <div className="text-center py-8">
                         <p className="text-zinc-500 text-sm">Alles ruhig gerade 😌</p>
                         <p className="text-zinc-600 text-xs mt-1">Ich melde mich, wenn was los ist!</p>
@@ -259,19 +289,27 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                           Frag mich was! →
                         </button>
                       </div>
-                    ) : (
-                      notifications.map((notification) => (
-                        <NotificationCard
-                          key={notification.id}
-                          notification={notification}
-                          onAction={handleAction}
-                          onMarkSeen={markSeen}
-                          onViewEvent={onViewEvent}
-                          onJoinCommunityChat={onJoinCommunityChat}
-                          onClose={() => setIsOpen(false)}
-                        />
-                      ))
-                    )}
+                    ) : notifications.length > 0 ? (
+                      <>
+                        {dailyRecommendations.length > 0 && (
+                          <div className="flex items-center gap-2 pt-2">
+                            <Sparkles size={13} className="text-zinc-500" />
+                            <h4 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Updates</h4>
+                          </div>
+                        )}
+                        {notifications.map((notification) => (
+                          <NotificationCard
+                            key={notification.id}
+                            notification={notification}
+                            onAction={handleAction}
+                            onMarkSeen={markSeen}
+                            onViewEvent={onViewEvent}
+                            onJoinCommunityChat={onJoinCommunityChat}
+                            onClose={() => setIsOpen(false)}
+                          />
+                        ))}
+                      </>
+                    ) : null}
                   </div>
                 ) : (
                   /* Chat View */
