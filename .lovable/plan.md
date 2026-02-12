@@ -1,69 +1,81 @@
 
+# MIA als Community-Matchmakerin (nicht 1:1, sondern Community-basiert)
 
-# MIA als proaktive People-Connector & Smart Matchmaker
+## Konzept
 
-## Die Idee
+Statt Leute ueber private Chats zu verbinden, nutzt MIA den bestehenden Community-Chat als Treffpunkt. MIA erkennt, wenn mehrere Leute aehnliche Interessen haben oder sich fuer dasselbe Event interessieren, und macht daraus Community-Notifications wie:
 
-MIA wird zur aktiven Vermittlerin: Sie erkennt, wenn Community-Mitglieder gemeinsame Interessen haben UND ein passendes Event ansteht, und schlaegt gezielt vor, sich dort zu treffen. Das verwandelt passive Notifications in echte soziale Verbindungen.
+- "5 Leute aus der Community moegen Sport -- beim Tuesday Run koenntet ihr euch treffen! 🏃"
+- "Du und 3 andere interessieren euch fuer Kunst -- der Creative Circle am Freitag waere perfekt fuer euch!"
+- "Beim Kennenlernabend sind schon 4 Leute mit aehnlichen Interessen dabei -- komm dazu!"
+
+Die Aktion ist immer **"Im Community Chat schreiben"** oder **"Event ansehen"** -- nie ein privater Chat.
 
 ## Was sich aendert
 
-### Neuer Notification-Typ: `people_match`
+### `src/services/miaNotificationService.ts`
 
-MIA generiert Nachrichten wie:
-- "Du und Lisa (82% Match) moegt beide Fotografie -- beim Creative Circle heute Abend koenntet ihr euch treffen!"
-- "3 Leute mit aehnlichen Interessen gehen zum Kennenlernabend -- du auch?"
-- "Max hat gerade das gleiche Event geliked wie du -- vielleicht wollt ihr zusammen hin?"
+- Neuer Notification-Typ: `community_match`
+- Neue Funktion `generateCommunityMatchNotifications()`:
+  1. Lade aktive User-Profile (letzte 7 Tage online, nicht Guest)
+  2. Berechne Match-Scores mit dem aktuellen User (Logik aus TribeUserMatcher extrahiert)
+  3. Gruppiere User nach gemeinsamen Interessen-Kategorien
+  4. Finde passende Events in den naechsten 3 Tagen fuer diese Gruppen
+  5. Generiere Notifications wie "X Leute moegen [Interesse] -- [Event] waere perfekt!"
+- Neue Action-Types: `join_community_chat` (oeffnet Community-Chat) und `view_event`
+- Maximal 2 Match-Notifications pro Refresh
 
-### Neue Funktion: `generateMatchNotifications`
+### `src/hooks/useMiaNotifications.ts`
 
-Nutzt die bestehende `calculateMatchScore`-Logik aus `TribeUserMatcher.tsx` und kombiniert sie mit:
-- Aktuelle Event-Daten (wer hat was geliked)
-- User-Profile und Interessen
-- Bevorstehende Events in den naechsten 3 Tagen
+- `generateCommunityMatchNotifications()` in den Fetch-Zyklus integrieren
+- Wird nach den lokalen Notifications aufgerufen und angehaengt
 
-### Ablauf
+### `src/components/tribe/MiaNotificationHub.tsx`
 
-1. Lade aktive User mit Profilen (nicht Guest)
-2. Berechne Match-Scores zwischen aktuellem User und anderen
-3. Finde Events die beide interessieren koennten (basierend auf Kategorie + Interessen)
-4. Generiere personalisierte "Verbindungs-Notifications"
-5. Zeige Match-Prozent und gemeinsame Interessen direkt in der Notification
+- Neues visuelles Design fuer `community_match` Notifications:
+  - Mehrere kleine Avatare nebeneinander (die gematchten Community-Mitglieder)
+  - Match-Info als Badge (z.B. "5 Leute | Sport")
+  - Aktion: "Im Chat vorbeischauen" statt privatem Chat
+- Neue `onJoinCommunityChat` Prop die den Community-Chat oeffnet
 
-### Konkrete Notification-Beispiele
+### Notification-Beispiele
 
-- **Match + Event**: "Du und [Name] ([X]% Match) moegt beide [Interesse] -- '[Event]' am [Datum] waere perfekt fuer euch!"
-- **Gruppen-Match**: "[X] Leute mit aehnlichen Interessen schauen sich '[Event]' an"
-- **Like-Match**: "[Name] hat gerade '[Event]' geliked -- ihr habt [X] gemeinsame Interessen!"
+```text
++------------------------------------------+
+| [Avatar1] [Avatar2] [Avatar3] +2         |
+| "5 Leute aus der Community moegen Sport  |
+|  -- beim Tuesday Run koenntet ihr euch   |
+|  alle treffen! 🏃"                       |
+|  [Event ansehen] [Community Chat]        |
++------------------------------------------+
+| [Avatar1] [Avatar2]                      |
+| "Du und 3 andere interessieren euch fuer |
+|  Kunst -- Creative Circle am Fr. waere   |
+|  perfekt! 🎨"                            |
+|  [Event ansehen]                         |
++------------------------------------------+
+```
 
-### Neue Aktion: `connect`
+### Datenfluss
 
-Neben "Event ansehen" und "Profil checken" gibt es neu:
-- "Zusammen hin?" -- oeffnet einen Mini-Chat oder Vorschlag zum gemeinsamen Besuch
+1. Lade alle aktiven User-Profile (last_online innerhalb 7 Tage)
+2. Berechne Match-Scores (Interessen, Hobbies, Lieblingsorte)
+3. Filtere User mit Score >= 40%
+4. Gruppiere nach gemeinsamer Interesse-Kategorie
+5. Finde Events die zur Kategorie passen (naechste 3 Tage)
+6. Generiere Community-Notifications mit Gruppen-Avataren
+7. Aktionen fuehren immer zum Community-Chat oder Event -- nie zu privaten Chats
 
 ## Technische Details
 
-### Dateien die geaendert werden:
-
 | Datei | Aenderung |
 |-------|-----------|
-| `src/services/miaNotificationService.ts` | Neue Funktion `generateMatchNotifications()` die Match-Score-Logik aus TribeUserMatcher extrahiert und mit Event-Daten kombiniert. Neuer Typ `people_match` in der Interface. |
-| `src/hooks/useMiaNotifications.ts` | Match-Notifications in den Fetch-Zyklus integrieren |
-| `src/components/tribe/MiaNotificationHub.tsx` | Match-Notifications mit Match-Score-Badge und gemeinsamen Interessen visuell darstellen. Neue `connect`-Aktion. |
+| `src/services/miaNotificationService.ts` | Neuer Typ `community_match`, neue Funktion `generateCommunityMatchNotifications()` mit Match-Score-Logik, neue Felder `matchAvatars` und `matchCount` im Interface |
+| `src/hooks/useMiaNotifications.ts` | Community-Match-Notifications in Fetch-Zyklus einbinden |
+| `src/components/tribe/MiaNotificationHub.tsx` | Avatar-Gruppe rendern, neue `join_community_chat` Aktion, `onJoinCommunityChat` Prop |
 
-### Match-Score-Logik (wird aus TribeUserMatcher extrahiert):
-
-Die bestehende `calculateMatchScore`-Funktion vergleicht:
-- Gemeinsame Interessen (gewichtet)
-- Gemeinsame Lieblingsorte
-- Gemeinsame Hobbies
-- Ergibt einen Prozent-Score (z.B. 78% Match)
-
-Diese Logik wird in den `miaNotificationService` uebernommen, damit sie sowohl im Matcher als auch in den Notifications genutzt werden kann.
-
-### Performance
-
-- Match-Berechnung nur fuer aktive User (letzten 7 Tage online)
-- Maximal 2-3 Match-Notifications pro Refresh
-- Gecacht fuer 5 Minuten (wie andere Notifications)
-
+### Performance-Massnahmen
+- Nur User mit `last_online` innerhalb 7 Tagen laden
+- Maximal 20 Profile vergleichen
+- Maximal 2 Community-Match-Notifications pro Refresh
+- Match-Score Minimum: 40%
