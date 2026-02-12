@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { personalizationService } from '@/services/personalizationService';
 
 interface UserProfileContext {
@@ -12,7 +12,7 @@ export const usePersonalizedSuggestions = (
   userProfile?: UserProfileContext,
   city?: string
 ) => {
-  const suggestions = useMemo(() => {
+  const pool = useMemo(() => {
     const generated: string[] = [];
     const now = new Date();
     const hour = now.getHours();
@@ -121,10 +121,40 @@ export const usePersonalizedSuggestions = (
     // === GENERIC FALLBACKS ===
     generated.push('Mein perfekter Tag');
     generated.push('Überrasch mich');
+    generated.push('Was geht heute?');
+    generated.push('Geheimtipps');
 
-    // Return unique, limited suggestions
-    return [...new Set(generated)].slice(0, 8);
+    // Return unique full pool
+    return [...new Set(generated)];
   }, [userProfile, city]);
 
-  return suggestions;
+  // Shuffle and rotate a window of suggestions
+  const shuffle = useCallback((arr: string[]) => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }, []);
+
+  const [displayed, setDisplayed] = useState<string[]>([]);
+
+  // Initial shuffle
+  useEffect(() => {
+    if (pool.length > 0) {
+      setDisplayed(shuffle(pool).slice(0, 5));
+    }
+  }, [pool, shuffle]);
+
+  // Rotate every 8 seconds
+  useEffect(() => {
+    if (pool.length <= 5) return;
+    const interval = setInterval(() => {
+      setDisplayed(shuffle(pool).slice(0, 5));
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [pool, shuffle]);
+
+  return displayed;
 };
