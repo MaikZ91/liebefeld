@@ -8,6 +8,8 @@ interface UseMiaNotificationsOptions {
   hobbies?: string[];
   favorite_locations?: string[];
   city?: string;
+  likedEventIds?: string[];
+  attendingEventIds?: string[];
 }
 
 export const useMiaNotifications = (options: UseMiaNotificationsOptions) => {
@@ -44,6 +46,8 @@ export const useMiaNotifications = (options: UseMiaNotificationsOptions) => {
           interests: options.interests,
           hobbies: options.hobbies,
           favorite_locations: options.favorite_locations,
+          likedEventIds: options.likedEventIds,
+          attendingEventIds: options.attendingEventIds,
         },
         options.city
       );
@@ -61,7 +65,7 @@ export const useMiaNotifications = (options: UseMiaNotificationsOptions) => {
     } finally {
       setIsLoading(false);
     }
-  }, [options.username, options.interests, options.hobbies, options.favorite_locations, options.city, getSeenIds]);
+  }, [options.username, options.interests, options.hobbies, options.favorite_locations, options.city, options.likedEventIds, options.attendingEventIds, getSeenIds]);
 
   // Mark all as seen
   const markAllSeen = useCallback(() => {

@@ -13,6 +13,8 @@ interface MiaNotificationHubProps {
   hobbies?: string[];
   favorite_locations?: string[];
   city?: string;
+  likedEventIds?: string[];
+  attendingEventIds?: string[];
   onViewEvent?: (eventId: string) => void;
   onViewProfile?: (username: string) => void;
   onOpenChat?: () => void;
@@ -24,13 +26,15 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
   hobbies,
   favorite_locations,
   city,
+  likedEventIds,
+  attendingEventIds,
   onViewEvent,
   onViewProfile,
   onOpenChat,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications, unreadCount, markAllSeen, markSeen } = useMiaNotifications({
-    username, interests, hobbies, favorite_locations, city,
+    username, interests, hobbies, favorite_locations, city, likedEventIds, attendingEventIds,
   });
 
   const handleOpen = () => {
