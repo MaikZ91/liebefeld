@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { personalizationService } from '@/services/personalizationService';
 
 interface UserProfileContext {
@@ -128,8 +128,12 @@ export const usePersonalizedSuggestions = (
     return [...new Set(generated)];
   }, [userProfile, city]);
 
-  // Shuffle helper — ensures no overlap with current displayed set
-  const shuffle = useCallback((arr: string[], exclude: string[] = []): string[] => {
+  // Store pool in ref to avoid re-triggering effects
+  const poolRef = useRef(pool);
+  poolRef.current = pool;
+
+  // Shuffle helper
+  const shuffle = (arr: string[], exclude: string[] = []): string[] => {
     const available = arr.filter(item => !exclude.includes(item));
     const copy = available.length >= 5 ? [...available] : [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -137,28 +141,30 @@ export const usePersonalizedSuggestions = (
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy.slice(0, 5);
-  }, []);
+  };
 
-  // Rotating display state
   const [displayed, setDisplayed] = useState<string[]>(() => {
     return ['Mein perfekter Tag', 'Überrasch mich', 'Was geht heute?', 'Geheimtipps', 'Heute'];
   });
 
-  // Update displayed when pool changes
+  // Set initial suggestions once when pool is first populated
+  const initializedRef = useRef(false);
   useEffect(() => {
-    if (pool.length > 0) {
+    if (!initializedRef.current && pool.length > 0) {
+      initializedRef.current = true;
       setDisplayed(shuffle(pool));
     }
-  }, [pool, shuffle]);
+  }, [pool]);
 
-  // Rotate every 45 seconds with different prompts each time
+  // Rotate every 45 seconds
   useEffect(() => {
-    if (pool.length <= 5) return;
     const interval = setInterval(() => {
-      setDisplayed(prev => shuffle(pool, prev));
+      const currentPool = poolRef.current;
+      if (currentPool.length <= 5) return;
+      setDisplayed(prev => shuffle(currentPool, prev));
     }, 45000);
     return () => clearInterval(interval);
-  }, [pool, shuffle]);
+  }, []);
 
   return displayed;
 };
