@@ -4,6 +4,7 @@ import { ArrowRight, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Use
 import { supabase } from '@/integrations/supabase/client';
 import { chatMediaService } from '@/services/chatMediaService';
 import { NewMembersWidget } from './NewMembersWidget';
+import { SpontanButton } from './SpontanButton';
 import { Badge } from '@/components/ui/badge';
 import { OnboardingStep } from '@/hooks/useOnboardingFlow';
 
@@ -614,8 +615,13 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     return (
     <div className="h-full flex flex-col bg-black animate-fadeIn overflow-x-hidden">
         
-        {/* --- INPUT AREA --- */}
-        <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20">
+        {/* --- SPONTAN BUTTON + INPUT AREA --- */}
+        <div className="px-4 py-1.5 border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur-xl z-20 space-y-2">
+            
+            {/* Spontan Button */}
+            {!onboardingStep && (
+              <SpontanButton userProfile={userProfile} selectedCity={selectedCity} />
+            )}
             
             <div className={`bg-surface border rounded-lg p-1.5 shadow-lg flex items-end gap-2 ${
               (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
