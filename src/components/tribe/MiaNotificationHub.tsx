@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, MessageCircle, ArrowUp, Star } from 'lucide-react';
+import { X, Sparkles, ArrowUp, Star } from 'lucide-react';
 import { useMiaNotifications } from '@/hooks/useMiaNotifications';
 import { MiaNotification } from '@/services/miaNotificationService';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
   onJoinCommunityChat,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'notifications' | 'chat'>('notifications');
+  
   const { notifications, unreadCount, markAllSeen, markSeen } = useMiaNotifications({
     username, interests, hobbies, favorite_locations, city, likedEventIds, attendingEventIds,
   });
@@ -86,13 +86,11 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
 
   const handleOpen = () => {
     setIsOpen(true);
-    if (unreadCount > 0) setActiveTab('notifications');
     markAllSeen();
   };
 
   const handleOpenChat = () => {
     setIsOpen(true);
-    setActiveTab('chat');
     setTimeout(() => inputRef.current?.focus(), 300);
   };
 
@@ -108,7 +106,6 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
         setIsOpen(false);
         break;
       case 'chat_mia':
-        setActiveTab('chat');
         setTimeout(() => inputRef.current?.focus(), 100);
         break;
       case 'join_community_chat':
@@ -233,192 +230,138 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                   </button>
                 </div>
 
-                {/* Tab Switcher */}
-                <div className="flex gap-0.5 bg-white/[0.04] rounded-xl p-0.5">
-                  <button
-                    onClick={() => setActiveTab('notifications')}
-                    className={`flex-1 py-2 rounded-[10px] text-[11px] font-medium tracking-wide transition-all flex items-center justify-center gap-1.5 ${
-                      activeTab === 'notifications'
-                        ? 'bg-white/[0.08] text-white shadow-sm'
-                        : 'text-white/35 hover:text-white/50'
-                    }`}
-                  >
-                    <Sparkles size={11} />
-                    Updates
-                    {unreadCount > 0 && (
-                      <span className="w-4 h-4 bg-gold rounded-full text-[8px] flex items-center justify-center text-black font-bold">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab('chat');
-                      setTimeout(() => inputRef.current?.focus(), 100);
-                    }}
-                    className={`flex-1 py-2 rounded-[10px] text-[11px] font-medium tracking-wide transition-all flex items-center justify-center gap-1.5 ${
-                      activeTab === 'chat'
-                        ? 'bg-white/[0.08] text-white shadow-sm'
-                        : 'text-white/35 hover:text-white/50'
-                    }`}
-                  >
-                    <MessageCircle size={11} />
-                    Chat
-                  </button>
-                </div>
               </div>
 
-              {/* Content */}
+              {/* Unified Content — Updates + Chat in one stream */}
               <div className="flex-1 overflow-y-auto scrollbar-none">
-                {activeTab === 'notifications' ? (
-                  <div className="px-5 pb-4 space-y-3">
-                    {/* Daily Recommendations */}
-                    {dailyRecommendations.length > 0 && (
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Star size={12} className="text-gold fill-gold" />
-                            <h4 className="text-[10px] font-medium text-white/50 uppercase tracking-[0.2em]">Deine Tagesempfehlung</h4>
-                          </div>
-                          <button onClick={dismissDaily} className="text-white/20 hover:text-white/50 transition-colors">
-                            <X size={12} />
-                          </button>
+                <div className="px-5 pb-4 space-y-3">
+                  {/* Daily Recommendations */}
+                  {dailyRecommendations.length > 0 && (
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Star size={12} className="text-gold fill-gold" />
+                          <h4 className="text-[10px] font-medium text-white/50 uppercase tracking-[0.2em]">Deine Tagesempfehlung</h4>
                         </div>
-                        <div className="space-y-1.5">
-                          {dailyRecommendations.map(event => (
-                            <MiaEventCard
-                              key={event.id}
-                              event={event}
-                              onView={(id) => { onViewEvent?.(id); setIsOpen(false); }}
-                              showMatchScore
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Notifications */}
-                    {notifications.length === 0 && dailyRecommendations.length === 0 ? (
-                      <div className="text-center py-10">
-                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white/[0.03] flex items-center justify-center">
-                          <Sparkles size={18} className="text-white/20" />
-                        </div>
-                        <p className="text-white/30 text-sm font-light">Alles ruhig gerade</p>
-                        <p className="text-white/15 text-xs mt-1">Ich melde mich, wenn was los ist</p>
-                        <button
-                          onClick={() => {
-                            setActiveTab('chat');
-                            setTimeout(() => inputRef.current?.focus(), 100);
-                          }}
-                          className="mt-5 text-gold/70 text-xs font-medium hover:text-gold transition-colors tracking-wide"
-                        >
-                          Frag mich was →
+                        <button onClick={dismissDaily} className="text-white/20 hover:text-white/50 transition-colors">
+                          <X size={12} />
                         </button>
                       </div>
-                    ) : notifications.length > 0 ? (
-                      <>
-                        {dailyRecommendations.length > 0 && (
-                          <div className="flex items-center gap-2 pt-3 pb-1">
-                            <div className="flex-1 h-px bg-white/[0.06]" />
-                            <span className="text-[9px] text-white/25 uppercase tracking-[0.2em]">Updates</span>
-                            <div className="flex-1 h-px bg-white/[0.06]" />
-                          </div>
-                        )}
-                        {notifications.map((notification) => (
-                          <NotificationCard
-                            key={notification.id}
-                            notification={notification}
-                            onAction={handleAction}
-                            onMarkSeen={markSeen}
-                            onViewEvent={onViewEvent}
-                            onJoinCommunityChat={onJoinCommunityChat}
-                            onClose={() => setIsOpen(false)}
+                      <div className="space-y-1.5">
+                        {dailyRecommendations.map(event => (
+                          <MiaEventCard
+                            key={event.id}
+                            event={event}
+                            onView={(id) => { onViewEvent?.(id); setIsOpen(false); }}
+                            showMatchScore
                           />
                         ))}
-                      </>
-                    ) : null}
-                  </div>
-                ) : (
-                  /* Chat View */
-                  <div className="px-5 pb-4 flex flex-col min-h-[300px]">
-                    {chatMessages.length === 0 ? (
-                      <div className="space-y-5 py-8 flex flex-col items-center">
-                        <div className="relative">
-                          <img src={MIA_AVATAR} alt="MIA" className="w-20 h-20 rounded-full object-cover" style={{ border: '2px solid hsl(40, 45%, 45%)' }} />
-                          <div className="absolute inset-0 rounded-full" style={{ boxShadow: '0 0 40px rgba(209,176,122,0.15)' }} />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-white/60 font-light">
-                            Hey <span className="text-white/80 font-normal">{username}</span>
-                          </p>
-                          <p className="text-xs text-white/30 mt-1">Was möchtest du wissen?</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2 justify-center max-w-[280px]">
-                          {suggestions.slice(0, 5).map((suggestion, i) => (
-                            <button
-                              key={i}
-                              onClick={() => handleSendMessage(suggestion)}
-                              className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded-full text-[11px] text-white/50 hover:border-gold/30 hover:text-white/80 hover:bg-white/[0.06] transition-all"
-                            >
-                              {suggestion}
-                            </button>
-                          ))}
-                        </div>
                       </div>
-                    ) : (
-                      <div className="space-y-3 py-2">
-                        {chatMessages.map((msg, i) => (
-                          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            {msg.role === 'model' && (
-                              <img src={MIA_AVATAR} alt="MIA" className="w-6 h-6 rounded-full mr-2 mt-1 shrink-0 object-cover" style={{ border: '1px solid hsl(40, 45%, 45%)' }} />
-                            )}
-                            <div className={`max-w-[85%] ${
-                              msg.role === 'user'
-                                ? 'bg-gold/15 border border-gold/20 rounded-2xl rounded-br-sm px-3.5 py-2.5'
-                                : 'bg-white/[0.04] border border-white/[0.05] rounded-2xl rounded-bl-sm px-3.5 py-2.5'
-                            }`}>
-                              <p className="text-[13px] text-white/85 leading-relaxed font-light">{msg.text}</p>
-                              {msg.relatedEvents && msg.relatedEvents.length > 0 && (
-                                <div className="mt-2.5 pt-2.5 border-t border-white/[0.05] space-y-1.5">
-                                  {msg.relatedEvents.slice(0, 3).map(event => (
-                                    <MiaEventCard
-                                      key={event.id}
-                                      event={event}
-                                      onView={(id) => { onViewEvent?.(id); setIsOpen(false); }}
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                    </div>
+                  )}
+
+                  {/* Notifications */}
+                  {notifications.length > 0 && (
+                    <>
+                      {dailyRecommendations.length > 0 && (
+                        <div className="flex items-center gap-2 pt-1 pb-1">
+                          <div className="flex-1 h-px bg-white/[0.06]" />
+                          <span className="text-[9px] text-white/25 uppercase tracking-[0.2em]">Updates</span>
+                          <div className="flex-1 h-px bg-white/[0.06]" />
+                        </div>
+                      )}
+                      {notifications.map((notification) => (
+                        <NotificationCard
+                          key={notification.id}
+                          notification={notification}
+                          onAction={handleAction}
+                          onMarkSeen={markSeen}
+                          onViewEvent={onViewEvent}
+                          onJoinCommunityChat={onJoinCommunityChat}
+                          onClose={() => setIsOpen(false)}
+                        />
+                      ))}
+                    </>
+                  )}
+
+                  {/* Divider before chat */}
+                  {(dailyRecommendations.length > 0 || notifications.length > 0) && (
+                    <div className="flex items-center gap-2 pt-1 pb-1">
+                      <div className="flex-1 h-px bg-white/[0.06]" />
+                      <span className="text-[9px] text-white/25 uppercase tracking-[0.2em]">Chat</span>
+                      <div className="flex-1 h-px bg-white/[0.06]" />
+                    </div>
+                  )}
+
+                  {/* Chat Messages */}
+                  {chatMessages.length === 0 ? (
+                    <div className="space-y-4 py-4 flex flex-col items-center">
+                      <p className="text-xs text-white/30 font-light">Frag mich was du wissen möchtest ↓</p>
+                      <div className="flex flex-wrap gap-2 justify-center max-w-[280px]">
+                        {suggestions.slice(0, 5).map((suggestion, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleSendMessage(suggestion)}
+                            className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded-full text-[11px] text-white/50 hover:border-gold/30 hover:text-white/80 hover:bg-white/[0.06] transition-all"
+                          >
+                            {suggestion}
+                          </button>
                         ))}
-                        {isTyping && (
-                          <div className="flex justify-start">
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 py-2">
+                      {chatMessages.map((msg, i) => (
+                        <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          {msg.role === 'model' && (
                             <img src={MIA_AVATAR} alt="MIA" className="w-6 h-6 rounded-full mr-2 mt-1 shrink-0 object-cover" style={{ border: '1px solid hsl(40, 45%, 45%)' }} />
-                            <div className="bg-white/[0.04] border border-white/[0.05] rounded-2xl rounded-bl-sm px-4 py-3">
-                              <div className="flex gap-1.5">
-                                <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          )}
+                          <div className={`max-w-[85%] ${
+                            msg.role === 'user'
+                              ? 'bg-gold/15 border border-gold/20 rounded-2xl rounded-br-sm px-3.5 py-2.5'
+                              : 'bg-white/[0.04] border border-white/[0.05] rounded-2xl rounded-bl-sm px-3.5 py-2.5'
+                          }`}>
+                            <p className="text-[13px] text-white/85 leading-relaxed font-light">{msg.text}</p>
+                            {msg.relatedEvents && msg.relatedEvents.length > 0 && (
+                              <div className="mt-2.5 pt-2.5 border-t border-white/[0.05] space-y-1.5">
+                                {msg.relatedEvents.slice(0, 3).map(event => (
+                                  <MiaEventCard
+                                    key={event.id}
+                                    event={event}
+                                    onView={(id) => { onViewEvent?.(id); setIsOpen(false); }}
+                                  />
+                                ))}
                               </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {isTyping && (
+                        <div className="flex justify-start">
+                          <img src={MIA_AVATAR} alt="MIA" className="w-6 h-6 rounded-full mr-2 mt-1 shrink-0 object-cover" style={{ border: '1px solid hsl(40, 45%, 45%)' }} />
+                          <div className="bg-white/[0.04] border border-white/[0.05] rounded-2xl rounded-bl-sm px-4 py-3">
+                            <div className="flex gap-1.5">
+                              <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
                           </div>
-                        )}
-                        <div ref={chatEndRef} />
-                      </div>
-                    )}
-                  </div>
-                )}
+                        </div>
+                      )}
+                      <div ref={chatEndRef} />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Chat input */}
               <div className="p-4 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                {(activeTab === 'notifications' || chatMessages.length > 0) && (
+                {chatMessages.length > 0 && (
                   <div className="flex gap-1.5 overflow-x-auto scrollbar-none mb-2.5 pb-0.5">
-                    {suggestions.slice(0, activeTab === 'notifications' ? 4 : 3).map((s, i) => (
+                    {suggestions.slice(0, 3).map((s, i) => (
                       <button
                         key={i}
-                        onClick={() => { setActiveTab('chat'); handleSendMessage(s); }}
+                        onClick={() => handleSendMessage(s)}
                         className="shrink-0 px-2.5 py-1 bg-white/[0.03] border border-white/[0.06] rounded-full text-[10px] text-white/35 hover:text-white/70 hover:border-gold/20 transition-all"
                       >
                         {s}
@@ -433,20 +376,13 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        if (activeTab === 'notifications') setActiveTab('chat');
-                        handleSendMessage();
-                      }
+                      if (e.key === 'Enter') handleSendMessage();
                     }}
-                    onFocus={() => { if (activeTab === 'notifications') setActiveTab('chat'); }}
                     placeholder="Frag MIA was..."
                     className="flex-1 bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white/90 placeholder-white/25 outline-none focus:border-gold/25 transition-all font-light"
                   />
                   <button
-                    onClick={() => {
-                      if (activeTab === 'notifications') setActiveTab('chat');
-                      handleSendMessage();
-                    }}
+                    onClick={() => handleSendMessage()}
                     disabled={!chatInput.trim() || isTyping}
                     className="w-9 h-9 flex items-center justify-center rounded-xl text-black transition-all disabled:opacity-20"
                     style={{
