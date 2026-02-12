@@ -2,7 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface MiaNotification {
   id: string;
-  type: 'new_event' | 'user_activity' | 'new_member' | 'upcoming_tribe' | 'daily_recommendation' | 'event_like';
+  type: 'new_event' | 'user_activity' | 'new_member' | 'upcoming_tribe' | 'daily_recommendation' | 'event_like' | 'event_reminder';
   text: string;
   actionLabel?: string;
   actionType?: 'view_event' | 'view_profile' | 'rsvp' | 'create_event' | 'chat_mia';
@@ -16,6 +16,8 @@ interface NotificationContext {
   interests?: string[];
   hobbies?: string[];
   favorite_locations?: string[];
+  likedEventIds?: string[];
+  attendingEventIds?: string[];
 }
 
 /**
@@ -192,6 +194,49 @@ export const generateLocalNotifications = async (
         seen: false,
         createdAt: now,
       });
+    }
+
+    // 5. Event reminders for liked/RSVP events happening today or tomorrow
+    const savedEventIds = [
+      ...(context.likedEventIds || []),
+      ...(context.attendingEventIds || []),
+    ];
+    const uniqueEventIds = [...new Set(savedEventIds)];
+
+    if (uniqueEventIds.length > 0) {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+      // Fetch events happening today or tomorrow that user liked/RSVP'd
+      const { data: reminderEvents } = await supabase
+        .from('community_events')
+        .select('id, title, date, time, location')
+        .in('id', uniqueEventIds.slice(0, 20))
+        .gte('date', todayStr)
+        .lte('date', tomorrowStr)
+        .order('date', { ascending: true })
+        .limit(3);
+
+      for (const event of (reminderEvents || [])) {
+        const isToday = event.date === todayStr;
+        const timeText = event.time ? ` um ${event.time}` : '';
+        const locationText = event.location ? ` in ${event.location}` : '';
+        notifications.push({
+          id: `reminder_${event.id}_${todayStr}`,
+          type: 'event_reminder',
+          text: isToday
+            ? `⏰ Reminder: "${event.title}" ist HEUTE${timeText}${locationText}! Nicht vergessen 🎶`
+            : `📅 Morgen steht "${event.title}"${timeText}${locationText} an – bist du ready? 🔥`,
+          actionLabel: 'Event ansehen',
+          actionType: 'view_event',
+          actionPayload: event.id,
+          seen: false,
+          createdAt: now,
+        });
+      }
     }
   } catch (error) {
     console.error('Error generating notifications:', error);

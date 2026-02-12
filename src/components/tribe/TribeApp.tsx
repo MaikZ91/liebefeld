@@ -1707,6 +1707,8 @@ const TribeAppMain: React.FC<{
         hobbies={userProfile.hobbies}
         favorite_locations={userProfile.favorite_locations}
         city={selectedCity}
+        likedEventIds={Array.from(likedEventIds)}
+        attendingEventIds={Array.from(attendingEventIds)}
         onViewEvent={(eventId) => setSelectedEventId(eventId)}
         onOpenChat={() => setView(ViewState.COMMUNITY)}
       />
