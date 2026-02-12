@@ -128,9 +128,10 @@ export const usePersonalizedSuggestions = (
     return [...new Set(generated)];
   }, [userProfile, city]);
 
-  // Shuffle helper
-  const shuffle = useCallback((arr: string[]): string[] => {
-    const copy = [...arr];
+  // Shuffle helper — ensures no overlap with current displayed set
+  const shuffle = useCallback((arr: string[], exclude: string[] = []): string[] => {
+    const available = arr.filter(item => !exclude.includes(item));
+    const copy = available.length >= 5 ? [...available] : [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [copy[i], copy[j]] = [copy[j], copy[i]];
@@ -138,7 +139,7 @@ export const usePersonalizedSuggestions = (
     return copy.slice(0, 5);
   }, []);
 
-  // Rotating display state — initialize inline to avoid empty flash
+  // Rotating display state
   const [displayed, setDisplayed] = useState<string[]>(() => {
     return ['Mein perfekter Tag', 'Überrasch mich', 'Was geht heute?', 'Geheimtipps', 'Heute'];
   });
@@ -150,12 +151,12 @@ export const usePersonalizedSuggestions = (
     }
   }, [pool, shuffle]);
 
-  // Rotate every 8 seconds
+  // Rotate every 20 seconds with different prompts each time
   useEffect(() => {
     if (pool.length <= 5) return;
     const interval = setInterval(() => {
-      setDisplayed(shuffle(pool));
-    }, 8000);
+      setDisplayed(prev => shuffle(pool, prev));
+    }, 20000);
     return () => clearInterval(interval);
   }, [pool, shuffle]);
 
