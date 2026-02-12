@@ -66,14 +66,26 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
     city
   );
 
-  // Daily recommendations: today's top matched events
+  // Daily recommendations: today's top matched events (dismissable, once per day)
+  const [dailyDismissed, setDailyDismissed] = useState(() => {
+    const stored = localStorage.getItem('mia_daily_dismissed');
+    return stored === new Date().toISOString().split('T')[0];
+  });
+
   const dailyRecommendations = React.useMemo(() => {
+    if (dailyDismissed) return [];
     const today = new Date().toISOString().split('T')[0];
     return events
       .filter(e => e.date >= today)
       .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
       .slice(0, 3);
-  }, [events]);
+  }, [events, dailyDismissed]);
+
+  const dismissDaily = () => {
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem('mia_daily_dismissed', today);
+    setDailyDismissed(true);
+  };
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -257,9 +269,14 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                     {/* Daily Recommendations */}
                     {dailyRecommendations.length > 0 && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2 pt-1">
-                          <Star size={13} className="text-gold fill-gold" />
-                          <h4 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Deine Tagesempfehlung</h4>
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-2">
+                            <Star size={13} className="text-gold fill-gold" />
+                            <h4 className="text-xs font-semibold text-white/80 uppercase tracking-wider">Deine Tagesempfehlung</h4>
+                          </div>
+                          <button onClick={dismissDaily} className="text-zinc-600 hover:text-zinc-400 transition-colors">
+                            <X size={14} />
+                          </button>
                         </div>
                         <div className="space-y-1.5">
                           {dailyRecommendations.map(event => (
