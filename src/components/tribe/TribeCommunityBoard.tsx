@@ -1136,19 +1136,19 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                 )}
                             </button>
                             
-                            {/* Comment button with who commented */}
+                            {/* Comment button with count */}
                             <button 
                               onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} 
                               className={`flex items-center gap-1.5 transition-colors ${
-                                isNewest ? 'text-gold animate-pulse' : 'text-zinc-500 hover:text-white'
+                                expandedPostId === post.id ? 'text-white' : 'text-zinc-500 hover:text-white'
                               }`}
                             >
-                                <MessageCircle size={14} />
-                                {(post.comments?.length || 0) > 0 && (
-                                  <span className="text-[9px] font-medium text-zinc-400 truncate max-w-[120px]">
-                                    {[...new Set(post.comments?.map(c => c.user) || [])].slice(0, 3).join(', ')}{[...new Set(post.comments?.map(c => c.user) || [])].length > 3 ? ` +${[...new Set(post.comments?.map(c => c.user) || [])].length - 3}` : ''}
-                                  </span>
-                                )}
+                                <div className="relative">
+                                  <MessageCircle size={14} className={`${(post.comments?.length || 0) > 0 && expandedPostId !== post.id ? 'animate-pulse text-gold' : ''}`} />
+                                </div>
+                                <span className={`text-[10px] font-bold ${(post.comments?.length || 0) > 0 ? 'text-white' : 'text-zinc-600'}`}>
+                                  {post.comments?.length || 0}
+                                </span>
                             </button>
                         </div>
 
