@@ -769,79 +769,47 @@ const TribeAppMain: React.FC<{
              title.includes('dienstagslauf');
     };
 
-    // Sort with priority based on featured Tribe events first, then other tribe events, then match scores
+    // Sort: Date first, then match score within each day
     result.sort((a, b) => {
-      // PRIORITY 0: Featured Tribe Community Events ALWAYS come first (regardless of date/likes/score)
+      // PRIORITY 0: Featured Tribe Community Events ALWAYS come first
       const isFeaturedA = isFeaturedTribeEvent(a);
       const isFeaturedB = isFeaturedTribeEvent(b);
       
       if (isFeaturedA && !isFeaturedB) return -1;
       if (!isFeaturedA && isFeaturedB) return 1;
       
-      // If both are featured, sort by date
       if (isFeaturedA && isFeaturedB) {
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       }
 
-      // PRIORITY 1: Other Tribe/Community events per day
-      const isTribeA = a.source === 'community' || a.source === 'tribe';
-      const isTribeB = b.source === 'community' || b.source === 'tribe';
-      
-      // If same date, Tribe events come first
-      if (a.date === b.date) {
-        if (isTribeA && !isTribeB) return -1;
-        if (!isTribeA && isTribeB) return 1;
-      }
-
-      // Priority 2: Match score (higher score = better match)
-      const scoreA = eventMatchScores.get(a.id) || 50;
-      const scoreB = eventMatchScores.get(b.id) || 50;
-      if (scoreB !== scoreA) {
-        return scoreB - scoreA;
-      }
-
-      const isLikedA = likedEventIds.has(a.id);
-      const isLikedB = likedEventIds.has(b.id);
-
-      // Priority 3: Liked events come next
-      if (isLikedA && !isLikedB) return -1;
-      if (!isLikedA && isLikedB) return 1;
-
-      // Check if events have images
-      const hasImageA = !!a.image_url;
-      const hasImageB = !!b.image_url;
-
-      // Priority 4: ALL events with images come before events without images
-      if (hasImageA && !hasImageB) return -1;
-      if (!hasImageA && hasImageB) return 1;
-
-      // Priority 5: Among events with images, sort by category priority
-      const isAusgehenA = isAusgehenEvent(a);
-      const isAusgehenB = isAusgehenEvent(b);
-
-      // Ausgehen events (by category or keywords) come first
-      if (isAusgehenA && !isAusgehenB) return -1;
-      if (!isAusgehenA && isAusgehenB) return 1;
-
-      // Then normal category priority
-      const categoryOrder: Record<string, number> = {
-        kreativität: 2,
-        art: 2,
-        sport: 3,
-      };
-
-      const categoryA = categoryOrder[a.category?.toLowerCase() || ""] || 4;
-      const categoryB = categoryOrder[b.category?.toLowerCase() || ""] || 4;
-
-      if (categoryA !== categoryB) {
-        return categoryA - categoryB;
-      }
-
-      // Priority 6: Within same category, sort by date and time
+      // PRIORITY 1: Sort by date (ascending)
       const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
       if (dateCompare !== 0) return dateCompare;
 
-      // If same date, sort by time
+      // PRIORITY 2 (same day): Tribe/Community events first
+      const isTribeA = a.source === 'community' || a.source === 'tribe';
+      const isTribeB = b.source === 'community' || b.source === 'tribe';
+      if (isTribeA && !isTribeB) return -1;
+      if (!isTribeA && isTribeB) return 1;
+
+      // PRIORITY 3 (same day): Match score (higher = better)
+      const scoreA = eventMatchScores.get(a.id) || a.matchScore || 0;
+      const scoreB = eventMatchScores.get(b.id) || b.matchScore || 0;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+
+      // PRIORITY 4 (same day): Liked events
+      const isLikedA = likedEventIds.has(a.id);
+      const isLikedB = likedEventIds.has(b.id);
+      if (isLikedA && !isLikedB) return -1;
+      if (!isLikedA && isLikedB) return 1;
+
+      // PRIORITY 5 (same day): Events with images first
+      const hasImageA = !!a.image_url;
+      const hasImageB = !!b.image_url;
+      if (hasImageA && !hasImageB) return -1;
+      if (!hasImageA && hasImageB) return 1;
+
+      // PRIORITY 6 (same day): Sort by time
       const timeA = a.time || "00:00";
       const timeB = b.time || "00:00";
       return timeA.localeCompare(timeB);
