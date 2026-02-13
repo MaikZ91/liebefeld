@@ -8,15 +8,15 @@ interface MiaEventCardProps {
   showMatchScore?: boolean;
 }
 
-const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode; label: string; gradient: string }> = {
-  musik: { icon: <Music size={10} />, label: 'Musik', gradient: 'from-purple-500/30 to-purple-900/20' },
-  music: { icon: <Music size={10} />, label: 'Music', gradient: 'from-purple-500/30 to-purple-900/20' },
-  konzert: { icon: <Music size={10} />, label: 'Konzert', gradient: 'from-purple-500/30 to-purple-900/20' },
-  sport: { icon: <Dumbbell size={10} />, label: 'Sport', gradient: 'from-emerald-500/30 to-emerald-900/20' },
-  kunst: { icon: <Palette size={10} />, label: 'Kunst', gradient: 'from-amber-500/30 to-amber-900/20' },
-  art: { icon: <Palette size={10} />, label: 'Art', gradient: 'from-amber-500/30 to-amber-900/20' },
-  party: { icon: <PartyPopper size={10} />, label: 'Party', gradient: 'from-pink-500/30 to-pink-900/20' },
-  community: { icon: <Users size={10} />, label: 'Community', gradient: 'from-sky-500/30 to-sky-900/20' },
+const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode; label: string }> = {
+  musik: { icon: <Music size={10} />, label: 'Musik' },
+  music: { icon: <Music size={10} />, label: 'Music' },
+  konzert: { icon: <Music size={10} />, label: 'Konzert' },
+  sport: { icon: <Dumbbell size={10} />, label: 'Sport' },
+  kunst: { icon: <Palette size={10} />, label: 'Kunst' },
+  art: { icon: <Palette size={10} />, label: 'Art' },
+  party: { icon: <PartyPopper size={10} />, label: 'Party' },
+  community: { icon: <Users size={10} />, label: 'Community' },
 };
 
 const getCategoryConfig = (category?: string) => {
@@ -45,15 +45,11 @@ export const MiaEventCard: React.FC<MiaEventCardProps> = ({ event, onView, showM
   return (
     <button
       onClick={() => onView(event.id)}
-      className={`group flex gap-3 p-2.5 rounded-xl text-left w-full relative overflow-hidden transition-all duration-200 ${
-        isTribe
-          ? 'bg-gradient-to-r from-gold/10 to-transparent border border-gold/25 hover:border-gold/50'
-          : 'bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/10'
-      }`}
+      className="group flex gap-3 p-2.5 rounded-xl text-left w-full relative overflow-hidden transition-all duration-200 bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/10"
     >
       {/* Match Score Badge */}
       {showMatchScore && event.matchScore != null && event.matchScore > 0 && (
-        <div className="absolute top-1.5 right-1.5 px-2 py-0.5 bg-gradient-to-r from-gold to-gold-light rounded-full text-[9px] font-bold text-black tracking-wide shadow-lg shadow-gold/20">
+        <div className="absolute top-1.5 right-1.5 px-2 py-0.5 bg-white/10 border border-white/15 rounded-full text-[9px] font-bold text-white/70 tracking-wide">
           {event.matchScore}%
         </div>
       )}
@@ -67,16 +63,16 @@ export const MiaEventCard: React.FC<MiaEventCardProps> = ({ event, onView, showM
             className="w-14 h-14 rounded-lg object-cover"
           />
         ) : (
-          <div className={`w-14 h-14 rounded-lg bg-gradient-to-br ${catConfig?.gradient || 'from-zinc-700/50 to-zinc-800/50'} flex items-center justify-center`}>
+          <div className="w-14 h-14 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
             {catConfig?.icon ? (
-              <span className="text-white/60 scale-150">{catConfig.icon}</span>
+              <span className="text-white/40 scale-150">{catConfig.icon}</span>
             ) : (
               <Calendar size={16} className="text-white/30" />
             )}
           </div>
         )}
         {isTribe && (
-          <div className="absolute -bottom-0.5 -right-0.5 px-1 py-px bg-gold rounded text-[7px] font-bold text-black tracking-wider">
+          <div className="absolute -bottom-0.5 -right-0.5 px-1 py-px bg-white/80 rounded text-[7px] font-bold text-black tracking-wider">
             TRIBE
           </div>
         )}
@@ -101,7 +97,7 @@ export const MiaEventCard: React.FC<MiaEventCardProps> = ({ event, onView, showM
 
       {/* Arrow */}
       <div className="flex items-center shrink-0 self-center">
-        <ChevronRight size={14} className="text-white/20 group-hover:text-gold transition-colors" />
+        <ChevronRight size={14} className="text-white/20 group-hover:text-white/60 transition-colors" />
       </div>
     </button>
   );
