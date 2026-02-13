@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, TribeEvent } from '@/types/tribe';
 import { TribeEventCard } from './TribeEventCard';
-import { Shield, Sparkles, MapPin, Edit3, X, Save, Upload, Plus, LogOut } from 'lucide-react';
+import { Shield, Sparkles, MapPin, Edit3, X, Save, Upload, Plus, LogOut, Crown, Star } from 'lucide-react';
 import { ShareAppQRCode } from './ShareAppQRCode';
 import { personalizationService } from '@/services/personalizationService';
 import { supabase } from '@/integrations/supabase/client';
@@ -245,6 +245,21 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   return (
     <div className="min-h-screen bg-black text-white pb-24 animate-fadeIn">
+       {/* EARLY ACCESS / FOUNDING MEMBER Banner */}
+       <div className="relative overflow-hidden">
+         <div className="absolute inset-0 bg-gradient-to-r from-gold/10 via-amber-500/5 to-gold/10" />
+         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(234,179,8,0.08)_0%,_transparent_70%)]" />
+         <div className="relative px-6 py-4 flex flex-col items-center gap-1 border-b border-gold/20">
+           <div className="flex items-center gap-2">
+             <Crown size={12} className="text-gold" />
+             <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-gold/80">Early Access</span>
+             <Crown size={12} className="text-gold" />
+           </div>
+           <span className="text-xs font-serif italic text-gold tracking-wide">Founding Member</span>
+           <div className="absolute left-0 right-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+         </div>
+       </div>
+
        {/* MIA Guidance during onboarding */}
        {onboardingStep === 'editing_profile' && (
          <div className="bg-gold/10 border-b border-gold/20 p-4">
@@ -294,33 +309,26 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                    {isSubmitting ? 'Speichern...' : 'Speichern'}
                  </button>
                </>
-              ) : (
-                 <>
-                   <button
-                     onClick={() => setIsEditing(true)}
-                     className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
-                   >
-                     <Edit3 size={14} />
-                     Bearbeiten
-                   </button>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
-                  >
-                    <Edit3 size={14} />
-                    Bearbeiten
-                  </button>
-                  {onSignOut && (
+               ) : (
+                  <>
                     <button
-                      onClick={onSignOut}
-                      className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-500/50 transition-all text-xs uppercase tracking-widest"
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
                     >
-                      <LogOut size={14} />
-                      Abmelden
+                      <Edit3 size={14} />
+                      Bearbeiten
                     </button>
-                  )}
-                </>
-             )}
+                   {onSignOut && (
+                     <button
+                       onClick={onSignOut}
+                       className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-500/50 transition-all text-xs uppercase tracking-widest"
+                     >
+                       <LogOut size={14} />
+                       Abmelden
+                     </button>
+                   )}
+                 </>
+              )}
            </div>
           
           <div className="relative z-10 flex flex-col items-center text-center mt-4">
