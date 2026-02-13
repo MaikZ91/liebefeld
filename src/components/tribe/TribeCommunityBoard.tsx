@@ -933,8 +933,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                             <span className="text-[8px] text-white/70">{card.time} Uhr</span>
                                           )}
                                           {/* CTA Button */}
-                                          <button className="mt-1.5 w-full bg-gold hover:bg-white text-black text-[8px] font-bold uppercase tracking-wider py-1.5 rounded transition-colors">
-                                            Ich gehe hin! 🔥
+                                          <button className="mt-1.5 w-full bg-black hover:bg-zinc-800 text-white text-[7px] font-bold uppercase tracking-widest py-1 rounded border border-white/20 transition-colors">
+                                            I'M IN
                                           </button>
                                         </div>
                                       </div>
