@@ -245,34 +245,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   return (
     <div className="min-h-screen bg-black text-white pb-24 animate-fadeIn">
-       {/* EARLY ACCESS / FOUNDING MEMBER Banner */}
-       <div className="relative overflow-hidden">
-         <div className="absolute inset-0 bg-gradient-to-r from-gold/10 via-amber-500/5 to-gold/10" />
-         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(234,179,8,0.08)_0%,_transparent_70%)]" />
-         <div className="relative px-6 py-4 flex flex-col items-center gap-1 border-b border-gold/20">
-           <div className="flex items-center gap-2">
-             <Crown size={12} className="text-gold" />
-             <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-gold/80">Early Access</span>
-             <Crown size={12} className="text-gold" />
-           </div>
-           <span className="text-xs font-serif italic text-gold tracking-wide">Founding Member</span>
-           <div className="absolute left-0 right-0 bottom-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
-         </div>
-       </div>
-
        {/* MIA Guidance during onboarding */}
        {onboardingStep === 'editing_profile' && (
          <div className="bg-gold/10 border-b border-gold/20 p-4">
            <div className="flex items-start gap-3 max-w-lg mx-auto">
              <div className="relative flex-shrink-0">
-               <img 
-                 src={MIA_AVATAR} 
-                 alt="MIA" 
-                 className="w-10 h-10 rounded-full object-cover border border-gold/50"
-               />
-               <div className="absolute -bottom-1 -right-1 bg-gold text-black text-[6px] font-bold px-1 py-0.5 rounded">
-                 MIA
-               </div>
+               <img src={MIA_AVATAR} alt="MIA" className="w-10 h-10 rounded-full object-cover border border-gold/50" />
+               <div className="absolute -bottom-1 -right-1 bg-gold text-black text-[6px] font-bold px-1 py-0.5 rounded">MIA</div>
              </div>
              <div className="flex-1">
                <p className="text-sm text-white/90 leading-relaxed">
@@ -283,293 +262,256 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
          </div>
        )}
 
-       {/* Identity Card */}
-       <div className="p-6 bg-surface border-b border-white/5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5">
-              <Shield size={120} />
-          </div>
-          
-           {/* Edit/Save/Cancel/SignOut Buttons */}
-           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-             {isEditing ? (
-               <>
-                 <button
-                   onClick={handleCancel}
-                   className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 transition-all text-xs uppercase tracking-widest"
-                 >
-                   <X size={14} />
-                   Abbrechen
+       {/* Hero Profile Section */}
+       <div className="relative">
+         {/* Background gradient */}
+         <div className="absolute inset-0 bg-gradient-to-b from-gold/[0.04] via-transparent to-transparent" />
+         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_center,_rgba(180,140,60,0.06)_0%,_transparent_60%)]" />
+         
+         {/* Action buttons - top right */}
+         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+           {isEditing ? (
+             <>
+               <button onClick={handleCancel} className="px-3 py-1.5 bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-400 hover:text-white transition-all text-[10px] uppercase tracking-[0.15em] rounded-full">
+                 Abbrechen
+               </button>
+               <button onClick={handleSave} disabled={isSubmitting} className="px-3 py-1.5 bg-gold/20 backdrop-blur-sm border border-gold/40 text-gold hover:bg-gold/30 transition-all text-[10px] uppercase tracking-[0.15em] rounded-full disabled:opacity-50">
+                 {isSubmitting ? '...' : 'Speichern'}
+               </button>
+             </>
+           ) : (
+             <>
+               <button onClick={() => setIsEditing(true)} className="p-2 bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all rounded-full">
+                 <Edit3 size={14} />
+               </button>
+               {onSignOut && (
+                 <button onClick={onSignOut} className="p-2 bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-500 hover:text-red-400 hover:border-red-500/30 transition-all rounded-full">
+                   <LogOut size={14} />
                  </button>
-                 <button
-                   onClick={handleSave}
-                   disabled={isSubmitting}
-                   className="flex items-center gap-2 px-3 py-2 bg-gold/20 border border-gold/50 text-gold hover:bg-gold/30 transition-all text-xs uppercase tracking-widest disabled:opacity-50"
-                 >
-                   <Save size={14} />
-                   {isSubmitting ? 'Speichern...' : 'Speichern'}
-                 </button>
-               </>
-               ) : (
-                  <>
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all text-xs uppercase tracking-widest"
-                    >
-                      <Edit3 size={14} />
-                      Bearbeiten
-                    </button>
-                   {onSignOut && (
-                     <button
-                       onClick={onSignOut}
-                       className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-500/50 transition-all text-xs uppercase tracking-widest"
-                     >
-                       <LogOut size={14} />
-                       Abmelden
-                     </button>
-                   )}
-                 </>
-              )}
-           </div>
-          
-          <div className="relative z-10 flex flex-col items-center text-center mt-4">
-              {/* Avatar */}
-              <div className="w-24 h-24 rounded-full border-2 border-gold p-1 mb-4 relative">
-                  <img 
-                    src={isEditing ? editAvatar : userProfile.avatarUrl} 
-                    className="w-full h-full rounded-full object-cover grayscale-[0.2]" 
-                    alt={userProfile.username} 
-                  />
-                  {isEditing && (
-                    <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full cursor-pointer hover:bg-black/70 transition-colors">
-                      <Upload size={20} className="text-gold" />
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        disabled={uploading}
-                      />
-                    </label>
-                  )}
-              </div>
-
-              {/* Username */}
-              {isEditing ? (
-                <Input
-                  value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value)}
-                  className="text-center text-2xl font-serif bg-zinc-900 border-gold/30 text-white max-w-[200px] mb-1"
-                  placeholder="Username"
-                />
-              ) : (
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-2xl font-serif text-white">{userProfile.username}</h2>
-                  <Sparkles size={14} className="text-gold" />
-                </div>
-              )}
-              <p className="text-zinc-500 text-xs font-light uppercase tracking-widest mb-6">{userProfile.bio}</p>
-              
-               <div className="flex gap-12 border-t border-white/5 pt-6 w-full justify-center">
-                   <div className="text-center">
-                       <span className="block text-xl font-bold text-gold">{attendingEvents.length}</span>
-                       <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Going</span>
-                   </div>
-                   <div className="text-center">
-                       <span className="block text-xl font-bold text-gold">{likedEvents.length}</span>
-                       <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Liked</span>
-                   </div>
-               </div>
-               
-               {/* Interests */}
-               <div className="border-t border-white/5 pt-6 mt-6 w-full">
-                 <div className="flex items-center gap-2 mb-3 justify-center">
-                   <Sparkles size={14} className="text-gold" />
-                   <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Interessen</span>
-                 </div>
-                 {isEditing ? (
-                   <div className="space-y-3">
-                     <div className="flex flex-wrap gap-2 justify-center">
-                       {editInterests.map((interest, idx) => (
-                         <Badge 
-                           key={idx}
-                           className="px-3 py-1 bg-zinc-900 border border-gold/20 text-gold text-[10px] font-medium flex items-center gap-1"
-                         >
-                           {interest}
-                           <X 
-                             size={12} 
-                             className="cursor-pointer hover:text-white" 
-                             onClick={() => handleRemoveInterest(interest)}
-                           />
-                         </Badge>
-                       ))}
-                     </div>
-                     <div className="flex gap-2 justify-center max-w-[300px] mx-auto">
-                       <Input
-                         value={newInterest}
-                         onChange={(e) => setNewInterest(e.target.value)}
-                         placeholder="z.B. Sport, Musik"
-                         className="bg-zinc-900 border-white/10 text-white text-sm"
-                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInterest())}
-                       />
-                       <Button 
-                         type="button" 
-                         size="icon" 
-                         onClick={handleAddInterest}
-                         variant="outline"
-                         className="border-gold/30 text-gold hover:bg-gold/20"
-                       >
-                         <Plus size={16} />
-                       </Button>
-                     </div>
-                   </div>
-                 ) : (
-                   <div className="flex flex-wrap gap-2 justify-center">
-                     {(userProfile.interests && userProfile.interests.length > 0) ? (
-                       userProfile.interests.map((interest, idx) => (
-                         <div 
-                           key={idx}
-                           className="px-3 py-1 bg-zinc-900 border border-gold/20 text-gold text-[10px] font-medium"
-                         >
-                           {interest}
-                         </div>
-                       ))
-                     ) : (
-                       <p className="text-zinc-600 text-xs">Keine Interessen hinzugefügt</p>
-                     )}
-                   </div>
-                 )}
-               </div>
-               
-               {/* Favorite Locations */}
-               <div className="border-t border-white/5 pt-6 mt-6 w-full">
-                 <div className="flex items-center gap-2 mb-3 justify-center">
-                   <MapPin size={14} className="text-gold" />
-                   <span className="text-[9px] text-zinc-500 uppercase tracking-widest">Favorit Lokalitäten</span>
-                 </div>
-                 {isEditing ? (
-                   <div className="space-y-3">
-                     <div className="flex flex-wrap gap-2 justify-center">
-                       {editLocations.map((location, idx) => (
-                         <Badge 
-                           key={idx}
-                           className="px-3 py-1 bg-zinc-900 border border-gold/20 text-gold text-[10px] font-medium flex items-center gap-1"
-                         >
-                           {location}
-                           <X 
-                             size={12} 
-                             className="cursor-pointer hover:text-white" 
-                             onClick={() => handleRemoveLocation(location)}
-                           />
-                         </Badge>
-                       ))}
-                     </div>
-                     <div className="relative max-w-[300px] mx-auto">
-                       <Input
-                         value={locationSearch}
-                         onChange={(e) => {
-                           setLocationSearch(e.target.value);
-                           setShowLocationDropdown(true);
-                         }}
-                         onFocus={() => setShowLocationDropdown(true)}
-                         placeholder="Lokation suchen..."
-                         className="bg-zinc-900 border-white/10 text-white text-sm"
-                       />
-                       {showLocationDropdown && filteredLocations.length > 0 && (
-                         <div className="absolute z-50 w-full mt-1 bg-zinc-900 border border-white/10 rounded-md shadow-lg max-h-[200px] overflow-y-auto">
-                           {filteredLocations.slice(0, 10).map((location) => (
-                             <button
-                               key={location}
-                               type="button"
-                               onClick={() => handleAddLocation(location)}
-                               className="w-full px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 flex items-center gap-2"
-                             >
-                               <MapPin size={12} className="text-zinc-500" />
-                               {location}
-                             </button>
-                           ))}
-                         </div>
-                       )}
-                     </div>
-                   </div>
-                 ) : (
-                   <div className="flex flex-wrap gap-2 justify-center">
-                     {favoriteLocations.length > 0 ? (
-                       favoriteLocations.map((location, idx) => (
-                         <div 
-                           key={idx}
-                           className="px-3 py-1 bg-zinc-900 border border-gold/20 text-gold text-[10px] font-medium"
-                         >
-                           {location}
-                         </div>
-                       ))
-                     ) : (
-                       <p className="text-zinc-600 text-xs">Keine Lokalitäten hinzugefügt</p>
-                     )}
-                   </div>
-                 )}
-               </div>
-               
-               {/* Share QR Code - Inline */}
-               {!isEditing && <ShareAppQRCode variant="inline" />}
-            </div>
+               )}
+             </>
+           )}
          </div>
 
-       {/* Tabs */}
-       <div className="flex border-b border-white/10 sticky top-0 bg-black/95 backdrop-blur z-20">
-           <button 
-              onClick={() => setActiveTab('GOING')}
-              className={`flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'GOING' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-white'}`}
-           >
-              My Calendar
-           </button>
-           <button 
-              onClick={() => setActiveTab('LIKED')}
-              className={`flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-colors ${activeTab === 'LIKED' ? 'text-gold border-b-2 border-gold' : 'text-zinc-600 hover:text-white'}`}
-           >
-              Favorites
-           </button>
-           <button 
-              onClick={onOpenMatcher}
-              className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-gold hover:bg-gold/10 transition-colors border-l border-white/10"
-           >
-              Find People
-           </button>
+         <div className="relative z-10 pt-8 pb-6 px-6">
+           {/* Early Access Badge - subtle, inline */}
+           <div className="flex justify-center mb-6">
+             <div className="flex items-center gap-1.5 px-3 py-1 border border-gold/15 rounded-full bg-gold/[0.03]">
+               <span className="w-1 h-1 rounded-full bg-gold/60" />
+               <span className="text-[8px] font-light uppercase tracking-[0.25em] text-gold/50">Early Access</span>
+               <span className="text-[8px] text-gold/30">·</span>
+               <span className="text-[8px] font-light uppercase tracking-[0.25em] text-gold/50">Founding Member</span>
+               <span className="w-1 h-1 rounded-full bg-gold/60" />
+             </div>
+           </div>
+
+           {/* Avatar - larger, more prominent */}
+           <div className="flex justify-center mb-5">
+             <div className="relative">
+               <div className="w-28 h-28 rounded-full p-[2px] bg-gradient-to-br from-gold/40 via-gold/20 to-gold/40">
+                 <div className="w-full h-full rounded-full overflow-hidden bg-black">
+                   <img 
+                     src={isEditing ? editAvatar : userProfile.avatarUrl} 
+                     className="w-full h-full object-cover" 
+                     alt={userProfile.username} 
+                   />
+                 </div>
+               </div>
+               {isEditing && (
+                 <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full cursor-pointer hover:bg-black/60 transition-colors">
+                   <Upload size={22} className="text-gold/80" />
+                   <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                 </label>
+               )}
+               {/* Online indicator */}
+               <div className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-black" />
+             </div>
+           </div>
+
+           {/* Username */}
+           <div className="text-center mb-1">
+             {isEditing ? (
+               <Input
+                 value={editUsername}
+                 onChange={(e) => setEditUsername(e.target.value)}
+                 className="text-center text-xl font-light tracking-wide bg-white/5 border-white/10 text-white max-w-[200px] mx-auto"
+                 placeholder="Username"
+               />
+             ) : (
+               <h2 className="text-xl font-light tracking-wide text-white">{userProfile.username}</h2>
+             )}
+           </div>
+           <p className="text-center text-zinc-600 text-[10px] font-light uppercase tracking-[0.2em] mb-6">{userProfile.bio}</p>
+
+           {/* Stats Row */}
+           <div className="flex justify-center gap-8 mb-6">
+             <div className="text-center">
+               <span className="block text-lg font-light text-white">{attendingEvents.length}</span>
+               <span className="text-[8px] text-zinc-600 uppercase tracking-[0.2em]">Going</span>
+             </div>
+             <div className="w-px h-8 bg-white/5 self-center" />
+             <div className="text-center">
+               <span className="block text-lg font-light text-white">{likedEvents.length}</span>
+               <span className="text-[8px] text-zinc-600 uppercase tracking-[0.2em]">Favorites</span>
+             </div>
+           </div>
+
+           {/* Interests */}
+           <div className="mb-6">
+             <div className="flex items-center gap-2 mb-3 justify-center">
+               <span className="text-[8px] text-zinc-600 uppercase tracking-[0.2em]">Interessen</span>
+             </div>
+             {isEditing ? (
+               <div className="space-y-3">
+                 <div className="flex flex-wrap gap-1.5 justify-center">
+                   {editInterests.map((interest, idx) => (
+                     <Badge 
+                       key={idx}
+                       className="px-2.5 py-1 bg-white/[0.04] border border-white/10 text-white/70 text-[10px] font-light tracking-wide flex items-center gap-1.5 rounded-full hover:border-gold/30 transition-colors"
+                     >
+                       {interest}
+                       <X size={10} className="cursor-pointer text-zinc-500 hover:text-white" onClick={() => handleRemoveInterest(interest)} />
+                     </Badge>
+                   ))}
+                 </div>
+                 <div className="flex gap-2 justify-center max-w-[260px] mx-auto">
+                   <Input
+                     value={newInterest}
+                     onChange={(e) => setNewInterest(e.target.value)}
+                     placeholder="z.B. Sport, Musik"
+                     className="bg-white/5 border-white/10 text-white text-xs rounded-full"
+                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInterest())}
+                   />
+                   <Button type="button" size="icon" onClick={handleAddInterest} variant="outline" className="border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 rounded-full h-9 w-9">
+                     <Plus size={14} />
+                   </Button>
+                 </div>
+               </div>
+             ) : (
+               <div className="flex flex-wrap gap-1.5 justify-center">
+                 {(userProfile.interests && userProfile.interests.length > 0) ? (
+                   userProfile.interests.map((interest, idx) => (
+                     <div key={idx} className="px-3 py-1 bg-white/[0.04] border border-white/[0.06] text-white/60 text-[10px] font-light tracking-wide rounded-full">
+                       {interest}
+                     </div>
+                   ))
+                 ) : (
+                   <p className="text-zinc-700 text-xs font-light">Keine Interessen hinzugefügt</p>
+                 )}
+               </div>
+             )}
+           </div>
+
+           {/* Favorite Locations */}
+           <div className="mb-6">
+             <div className="flex items-center gap-2 mb-3 justify-center">
+               <MapPin size={11} className="text-zinc-600" />
+               <span className="text-[8px] text-zinc-600 uppercase tracking-[0.2em]">Lieblingsorte</span>
+             </div>
+             {isEditing ? (
+               <div className="space-y-3">
+                 <div className="flex flex-wrap gap-1.5 justify-center">
+                   {editLocations.map((location, idx) => (
+                     <Badge 
+                       key={idx}
+                       className="px-2.5 py-1 bg-white/[0.04] border border-white/10 text-white/70 text-[10px] font-light tracking-wide flex items-center gap-1.5 rounded-full hover:border-gold/30 transition-colors"
+                     >
+                       {location}
+                       <X size={10} className="cursor-pointer text-zinc-500 hover:text-white" onClick={() => handleRemoveLocation(location)} />
+                     </Badge>
+                   ))}
+                 </div>
+                 <div className="relative max-w-[260px] mx-auto">
+                   <Input
+                     value={locationSearch}
+                     onChange={(e) => { setLocationSearch(e.target.value); setShowLocationDropdown(true); }}
+                     onFocus={() => setShowLocationDropdown(true)}
+                     placeholder="Lokation suchen..."
+                     className="bg-white/5 border-white/10 text-white text-xs rounded-full"
+                   />
+                   {showLocationDropdown && filteredLocations.length > 0 && (
+                     <div className="absolute z-50 w-full mt-1 bg-zinc-900/95 backdrop-blur border border-white/10 rounded-xl shadow-2xl max-h-[200px] overflow-y-auto">
+                       {filteredLocations.slice(0, 10).map((location) => (
+                         <button key={location} type="button" onClick={() => handleAddLocation(location)} className="w-full px-3 py-2 text-left text-xs text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-2 transition-colors">
+                           <MapPin size={10} className="text-zinc-600" />
+                           {location}
+                         </button>
+                       ))}
+                     </div>
+                   )}
+                 </div>
+               </div>
+             ) : (
+               <div className="flex flex-wrap gap-1.5 justify-center">
+                 {favoriteLocations.length > 0 ? (
+                   favoriteLocations.map((location, idx) => (
+                     <div key={idx} className="px-3 py-1 bg-white/[0.04] border border-white/[0.06] text-white/60 text-[10px] font-light tracking-wide rounded-full">
+                       {location}
+                     </div>
+                   ))
+                 ) : (
+                   <p className="text-zinc-700 text-xs font-light">Keine Lokalitäten hinzugefügt</p>
+                 )}
+               </div>
+             )}
+           </div>
+
+           {/* Share QR Code */}
+           {!isEditing && <ShareAppQRCode variant="inline" />}
+         </div>
+         
+         {/* Subtle divider */}
+         <div className="h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
        </div>
+
+       {/* Tabs */}
+       <div className="flex border-b border-white/[0.06] sticky top-0 bg-black/95 backdrop-blur-xl z-20">
+            <button 
+               onClick={() => setActiveTab('GOING')}
+               className={`flex-1 py-3.5 text-[9px] font-light uppercase tracking-[0.2em] transition-all ${activeTab === 'GOING' ? 'text-white border-b border-white/40' : 'text-zinc-600 hover:text-zinc-400'}`}
+            >
+               Kalender
+            </button>
+            <button 
+               onClick={() => setActiveTab('LIKED')}
+               className={`flex-1 py-3.5 text-[9px] font-light uppercase tracking-[0.2em] transition-all ${activeTab === 'LIKED' ? 'text-white border-b border-white/40' : 'text-zinc-600 hover:text-zinc-400'}`}
+            >
+               Favoriten
+            </button>
+            <button 
+               onClick={onOpenMatcher}
+               className="px-5 py-3.5 text-[9px] font-light uppercase tracking-[0.2em] text-gold/70 hover:text-gold transition-colors border-l border-white/[0.06]"
+            >
+               Leute finden
+            </button>
+        </div>
 
        {/* List */}
-       <div className="p-6 space-y-2">
-           {activeTab === 'GOING' && (
-               attendingEvents.length > 0 ? (
-                   attendingEvents.map(event => (
-                       <TribeEventCard 
-                        key={event.id} 
-                        event={event} 
-                        variant="standard"
-                       />
-                   ))
-               ) : (
-                   <div className="text-center py-10 text-zinc-600 text-xs font-light border border-dashed border-white/10 rounded-lg">
-                       No upcoming plans.
-                   </div>
-               )
-           )}
+       <div className="p-5 space-y-2">
+            {activeTab === 'GOING' && (
+                attendingEvents.length > 0 ? (
+                    attendingEvents.map(event => (
+                        <TribeEventCard key={event.id} event={event} variant="standard" />
+                    ))
+                ) : (
+                    <div className="text-center py-12 text-zinc-700 text-xs font-light">
+                        Noch keine Pläne.
+                    </div>
+                )
+            )}
 
-           {activeTab === 'LIKED' && (
-               likedEvents.length > 0 ? (
-                   likedEvents.map(event => (
-                       <TribeEventCard 
-                        key={event.id} 
-                        event={event} 
-                        variant="standard"
-                       />
-                   ))
-               ) : (
-                   <div className="text-center py-10 text-zinc-600 text-xs font-light border border-dashed border-white/10 rounded-lg">
-                       No favorites saved.
-                   </div>
-               )
-           )}
-       </div>
-    </div>
-  );
+            {activeTab === 'LIKED' && (
+                likedEvents.length > 0 ? (
+                    likedEvents.map(event => (
+                        <TribeEventCard key={event.id} event={event} variant="standard" />
+                    ))
+                ) : (
+                    <div className="text-center py-12 text-zinc-700 text-xs font-light">
+                        Keine Favoriten gespeichert.
+                    </div>
+                )
+            )}
+        </div>
+     </div>
+   );
 };
