@@ -823,8 +823,10 @@ const TribeAppMain: React.FC<{
     // First group similar events to avoid duplicates
     const grouped = groupSimilarEvents(filteredEvents);
     
-    // Sort by match score
+    // Sort by date first, then match score within each day
     const sorted = [...grouped].sort((a, b) => {
+      const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (dateCompare !== 0) return dateCompare;
       const scoreA = eventMatchScores.get(a.id) || 50;
       const scoreB = eventMatchScores.get(b.id) || 50;
       return scoreB - scoreA;
