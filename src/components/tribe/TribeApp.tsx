@@ -473,17 +473,18 @@ const TribeAppMain: React.FC<{
 
         if (weekError) throw weekError;
         
-        // Also fetch featured TRIBE events from the next 30 days to ensure they're always visible
-        const thirtyDaysLater = new Date(today);
-        thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
-        const thirtyDaysStr = thirtyDaysLater.toISOString().split("T")[0];
+        // Only fetch the NEXT upcoming Kennenlernabend and Tuesday Run (not all 30 days)
+        const nextWeekDate = new Date(today);
+        nextWeekDate.setDate(nextWeekDate.getDate() + 10);
+        const nextWeekStr = nextWeekDate.toISOString().split("T")[0];
         
         let tribeQuery = supabase
           .from("community_events")
           .select("*")
           .gte("date", todayStr)
-          .lte("date", thirtyDaysStr)
-          .or("title.ilike.%TRIBE KENNENLERNABEND%,title.ilike.%TRIBE TUESDAY RUN%,title.ilike.%tribe stammtisch%");
+          .lte("date", nextWeekStr)
+          .or("title.ilike.%TRIBE KENNENLERNABEND%,title.ilike.%TRIBE TUESDAY RUN%,title.ilike.%tribe stammtisch%")
+          .limit(2);
 
         if (!isGermanyWide) {
           tribeQuery = tribeQuery.or(`city.is.null,city.ilike.${selectedCity},city.ilike.${cityAbbr}`);
