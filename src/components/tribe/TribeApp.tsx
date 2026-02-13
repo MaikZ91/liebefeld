@@ -769,9 +769,9 @@ const TribeAppMain: React.FC<{
              title.includes('dienstagslauf');
     };
 
-    // Sort primarily by date, with featured Tribe events pinned at the top of each day
+    // Sort with priority based on featured Tribe events first, then other tribe events, then match scores
     result.sort((a, b) => {
-      // PRIORITY 0: Featured Tribe Community Events ALWAYS come first
+      // PRIORITY 0: Featured Tribe Community Events ALWAYS come first (regardless of date/likes/score)
       const isFeaturedA = isFeaturedTribeEvent(a);
       const isFeaturedB = isFeaturedTribeEvent(b);
       
@@ -783,17 +783,65 @@ const TribeAppMain: React.FC<{
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       }
 
-      // PRIORITY 1: Sort by date (earliest first)
+      // PRIORITY 1: Other Tribe/Community events per day
+      const isTribeA = a.source === 'community' || a.source === 'tribe';
+      const isTribeB = b.source === 'community' || b.source === 'tribe';
+      
+      // If same date, Tribe events come first
+      if (a.date === b.date) {
+        if (isTribeA && !isTribeB) return -1;
+        if (!isTribeA && isTribeB) return 1;
+      }
+
+      // Priority 2: Match score (higher score = better match)
+      const scoreA = eventMatchScores.get(a.id) || 50;
+      const scoreB = eventMatchScores.get(b.id) || 50;
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
+
+      const isLikedA = likedEventIds.has(a.id);
+      const isLikedB = likedEventIds.has(b.id);
+
+      // Priority 3: Liked events come next
+      if (isLikedA && !isLikedB) return -1;
+      if (!isLikedA && isLikedB) return 1;
+
+      // Check if events have images
+      const hasImageA = !!a.image_url;
+      const hasImageB = !!b.image_url;
+
+      // Priority 4: ALL events with images come before events without images
+      if (hasImageA && !hasImageB) return -1;
+      if (!hasImageA && hasImageB) return 1;
+
+      // Priority 5: Among events with images, sort by category priority
+      const isAusgehenA = isAusgehenEvent(a);
+      const isAusgehenB = isAusgehenEvent(b);
+
+      // Ausgehen events (by category or keywords) come first
+      if (isAusgehenA && !isAusgehenB) return -1;
+      if (!isAusgehenA && isAusgehenB) return 1;
+
+      // Then normal category priority
+      const categoryOrder: Record<string, number> = {
+        kreativität: 2,
+        art: 2,
+        sport: 3,
+      };
+
+      const categoryA = categoryOrder[a.category?.toLowerCase() || ""] || 4;
+      const categoryB = categoryOrder[b.category?.toLowerCase() || ""] || 4;
+
+      if (categoryA !== categoryB) {
+        return categoryA - categoryB;
+      }
+
+      // Priority 6: Within same category, sort by date and time
       const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
       if (dateCompare !== 0) return dateCompare;
 
-      // PRIORITY 2: Same date – Tribe events come first
-      const isTribeA = a.source === 'community' || a.source === 'tribe';
-      const isTribeB = b.source === 'community' || b.source === 'tribe';
-      if (isTribeA && !isTribeB) return -1;
-      if (!isTribeA && isTribeB) return 1;
-
-      // PRIORITY 3: Same date – sort by time
+      // If same date, sort by time
       const timeA = a.time || "00:00";
       const timeB = b.time || "00:00";
       return timeA.localeCompare(timeB);
