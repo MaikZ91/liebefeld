@@ -593,24 +593,26 @@ const TribeAppMain: React.FC<{
     // Remove blocked locations
     result = result.filter((e) => !e.location || !dislikeService.isLocationBlocked(e.location));
 
-    // Only show events with images
-    result = result.filter((e) => !!e.image_url);
-
-    // Exclude Hochschulsport, VHS, Kino, Sport, Cutie, liv/Hinterzimmer events
+    // Only show events with images (except grouped categories which are handled in render)
     result = result.filter((e) => {
       const title = (e.title || '').toLowerCase();
       const location = (e.location || '').toLowerCase();
       const organizer = (e.organizer || '').toLowerCase();
       const category = (e.category || '').toLowerCase();
       
-      // Hochschulsport
-      if (title.includes('hochschulsport') || organizer.includes('hochschulsport')) return false;
-      // VHS
-      if (title.includes('vhs') || title.includes('volkshochschule') || location.includes('vhs') || location.includes('volkshochschule')) return false;
-      // Kino
-      if (title.includes('kino') || location.includes('kino') || location.includes('lichtwerk') || location.includes('cinemaxx') || location.includes('cinestar') || location.includes('filmhaus')) return false;
-      // Sport
-      if (category === 'sport' || title.includes('hochschulsport')) return false;
+      // These categories will be shown as collapsible groups — keep them regardless of image
+      const isGroupedCategory = 
+        title.includes('hochschulsport') || organizer.includes('hochschulsport') ||
+        title.includes('vhs') || title.includes('volkshochschule') || location.includes('vhs') || location.includes('volkshochschule') ||
+        title.includes('wochenmarkt') ||
+        title.includes('kino') || location.includes('kino') || location.includes('lichtwerk') || location.includes('cinemaxx') || location.includes('cinestar') || location.includes('filmhaus') ||
+        category === 'sport';
+      
+      if (isGroupedCategory) return true; // Keep for collapsible groups
+      
+      // Must have image for regular events
+      if (!e.image_url) return false;
+      
       // Cutie
       if (title.includes('cutie') || organizer.includes('cutie')) return false;
       // liv / Hinterzimmer
@@ -1537,11 +1539,16 @@ const TribeAppMain: React.FC<{
                                 const title = (event.title || '').toLowerCase();
                                 const location = (event.location || '').toLowerCase();
                                 const organizer = (event.organizer || '').toLowerCase();
+                                const category = (event.category || '').toLowerCase();
                                 
                                 // Hochschulsport
                                 if (title.includes('hochschulsport') || organizer.includes('hochschulsport') || 
                                     (title.includes('uni ') && (title.includes('sport') || title.includes('fitness')))) {
                                   return 'hochschulsport';
+                                }
+                                // Sport (general)
+                                if (category === 'sport') {
+                                  return 'sport';
                                 }
                                 // VHS + Wochenmarkt
                                 if (title.includes('vhs') || title.includes('volkshochschule') || 
@@ -1561,6 +1568,7 @@ const TribeAppMain: React.FC<{
 
                               const GROUP_LABELS: Record<string, { label: string; icon: string }> = {
                                 hochschulsport: { label: 'Hochschulsport', icon: '🏋️' },
+                                sport: { label: 'Sport', icon: '⚽' },
                                 vhs: { label: 'VHS & Kurse', icon: '📚' },
                                 kino: { label: 'Kino', icon: '🎬' },
                               };
