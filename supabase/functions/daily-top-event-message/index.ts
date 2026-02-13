@@ -8,24 +8,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface Event {
-  id: string;
-  title: string;
-  description?: string;
-  date: string;
-  time: string;
-  location?: string;
-  category: string;
-  likes: number;
-  liked_by_users: Array<{
-    username: string;
-    avatar_url?: string;
-    timestamp: string;
-  }>;
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -36,159 +19,189 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('🌅 [Daily Top Event] Starting daily top event message generation...');
+    console.log('🌅 [Daily Top Events] Starting daily top events post...');
 
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0];
-    console.log(`🗓️ [Daily Top Event] Looking for events on ${today}`);
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const dayOfWeek = today.getDay(); // 0=Sunday, 2=Tuesday
 
-    // Check if we already sent a message today to prevent duplicates
-    const { data: existingMessages, error: checkError } = await supabaseClient
+    console.log(`🗓️ [Daily Top Events] Date: ${todayStr}, Day: ${dayOfWeek}`);
+
+    // Check duplicate
+    const { data: existingMessages } = await supabaseClient
       .from('chat_messages')
       .select('id')
-      .eq('group_id', 'ausgehen-bielefeld')
-      .eq('sender', 'MIA - Event Assistentin')
-      .gte('created_at', `${today}T00:00:00`)
-      .lt('created_at', `${today}T23:59:59`);
+      .eq('group_id', 'tribe_community_board')
+      .eq('sender', 'MIA')
+      .gte('created_at', `${todayStr}T00:00:00`)
+      .lt('created_at', `${todayStr}T23:59:59`)
+      .ilike('text', '%top events des tages%');
 
-    if (checkError) {
-      console.error('❌ [Daily Top Event] Error checking existing messages:', checkError);
-    } else if (existingMessages && existingMessages.length > 0) {
-      console.log('✅ [Daily Top Event] Message already sent today, skipping...');
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: 'Message already sent today' 
-      }), {
+    if (existingMessages && existingMessages.length > 0) {
+      console.log('✅ [Daily Top Events] Already posted today, skipping.');
+      return new Response(JSON.stringify({ success: true, message: 'Already posted today' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Find today's events with the highest likes
+    // Fetch today's events sorted by likes desc
     const { data: events, error: eventsError } = await supabaseClient
       .from('community_events')
       .select('*')
-      .eq('date', today)
-      .gte('likes', 1) // Only events with at least 1 like
+      .eq('date', todayStr)
       .order('likes', { ascending: false })
-      .limit(1);
+      .limit(20);
 
     if (eventsError) {
-      console.error('❌ [Daily Top Event] Error fetching events:', eventsError);
+      console.error('❌ [Daily Top Events] Error fetching events:', eventsError);
       throw eventsError;
     }
 
-    if (!events || events.length === 0) {
-      console.log('📭 [Daily Top Event] No events with likes found for today');
-      
-      // Post a message that there are no top events today
-      const noEventMessage = `#ausgehen 🌅 **Guten Morgen, Bielefeld!** 
+    const allEvents = events || [];
+    console.log(`📋 [Daily Top Events] Found ${allEvents.length} events for today`);
 
-Heute scheint ein ruhiger Tag zu sein - ich habe kein besonders beliebtes Event für heute gefunden. 
+    // Build top 3 list with fixed Tribe events on specific days
+    const topEvents: any[] = [];
 
-Perfekt, um selbst etwas zu planen oder einfach zu entspannen! ✨
-
-Habt einen wunderschönen Tag! 💙
-
-_- MIA, eure Event-Assistentin_`;
-
-      await supabaseClient
-        .from('chat_messages')
-        .insert({
-          group_id: 'ausgehen-bielefeld',
-          sender: 'MIA - Event Assistentin',
-          text: noEventMessage,
-          avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
-          created_at: new Date().toISOString()
+    // Sunday = Tribe Kennenlernabend always #1
+    if (dayOfWeek === 0) {
+      const kennenlernabend = allEvents.find(e =>
+        e.title?.toLowerCase().includes('kennenlernabend') ||
+        e.title?.toLowerCase().includes('stammtisch')
+      );
+      if (kennenlernabend) {
+        topEvents.push(kennenlernabend);
+      } else {
+        // Create a virtual entry
+        topEvents.push({
+          title: 'TRIBE Kennenlernabend',
+          time: '18:00',
+          location: 'Wird im Chat bekannt gegeben',
+          category: 'ausgehen',
+          image_url: 'https://liebefeld.lovable.app/images/tribe/tribe-kennenlernabend.jpg',
+          likes: 0,
+          description: 'Jeden Sonntag treffen wir uns zum gemütlichen Kennenlernabend. Neue Leute, gute Gespräche!',
         });
+      }
+    }
 
-      return new Response(JSON.stringify({ success: true, message: 'No top events today message sent' }), {
+    // Tuesday = Tuesday Run always #1
+    if (dayOfWeek === 2) {
+      const tuesdayRun = allEvents.find(e =>
+        e.title?.toLowerCase().includes('tuesday run') ||
+        e.title?.toLowerCase().includes('dienstagslauf')
+      );
+      if (tuesdayRun) {
+        topEvents.push(tuesdayRun);
+      } else {
+        topEvents.push({
+          title: 'TRIBE Tuesday Run',
+          time: '17:00',
+          location: 'Gellershagen Park Teich',
+          category: 'sport',
+          image_url: 'https://liebefeld.lovable.app/images/tribe/tribe-tuesday-run.jpg',
+          likes: 0,
+          description: 'Jeden Dienstag laufen wir zusammen – egal ob Anfänger oder Profi!',
+        });
+      }
+    }
+
+    // Fill remaining slots from top liked events (exclude already added)
+    const addedTitles = new Set(topEvents.map(e => e.title?.toLowerCase()));
+    for (const event of allEvents) {
+      if (topEvents.length >= 3) break;
+      if (!addedTitles.has(event.title?.toLowerCase())) {
+        topEvents.push(event);
+        addedTitles.add(event.title?.toLowerCase());
+      }
+    }
+
+    if (topEvents.length === 0) {
+      console.log('📭 [Daily Top Events] No events found for today');
+      
+      const noEventsMsg = `🌅 **Top Events des Tages**
+
+Heute scheint ein ruhiger Tag zu sein – keine Events gefunden.
+
+Perfekt, um selbst etwas zu planen! 💡
+
+_– MIA_`;
+
+      await supabaseClient.from('chat_messages').insert({
+        group_id: 'tribe_community_board',
+        sender: 'MIA',
+        text: noEventsMsg,
+        avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
+        read_by: [],
+      });
+
+      return new Response(JSON.stringify({ success: true, message: 'No events message sent' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const topEvent = events[0] as Event;
-    console.log(`🏆 [Daily Top Event] Top event found: ${topEvent.title} with ${topEvent.likes} likes`);
+    // Format the date nicely
+    const dateFormatted = today.toLocaleDateString('de-DE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
 
-    // Get the users who liked this event
-    const likedByUsers = Array.isArray(topEvent.liked_by_users) ? topEvent.liked_by_users : [];
-    console.log(`👥 [Daily Top Event] Liked by ${likedByUsers.length} users`);
+    // Build message with top events
+    let eventLines = '';
+    const imageUrls: string[] = [];
 
-    // Format the time nicely
-    const formatTime = (timeString: string) => {
-      if (!timeString || timeString === '00:00') return '';
-      const [hours, minutes] = timeString.split(':');
-      return ` um ${hours}:${minutes} Uhr`;
-    };
+    topEvents.slice(0, 3).forEach((event, i) => {
+      const emoji = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+      const timeStr = event.time && event.time !== '00:00' ? ` · ${event.time} Uhr` : '';
+      const locationStr = event.location ? ` · 📍 ${event.location}` : '';
+      const likesStr = event.likes > 0 ? ` · ❤️ ${event.likes}` : '';
 
-    // Create the usernames list
-    let usersText = '';
-    if (likedByUsers.length > 0) {
-      const usernames = likedByUsers.map(user => user.username || 'Anonym').slice(0, 5);
-      if (likedByUsers.length <= 3) {
-        usersText = `\n\n💙 **Interessiert sind:** ${usernames.join(', ')}`;
-      } else if (likedByUsers.length <= 5) {
-        usersText = `\n\n💙 **Interessiert sind:** ${usernames.join(', ')}`;
-      } else {
-        usersText = `\n\n💙 **Interessiert sind:** ${usernames.slice(0, 3).join(', ')} und ${likedByUsers.length - 3} weitere`;
+      eventLines += `\n${emoji} **${event.title}**${timeStr}${locationStr}${likesStr}\n`;
+
+      if (event.image_url) {
+        imageUrls.push(event.image_url);
       }
-    }
+    });
 
-    // Create the message
-    const messageText = `#ausgehen 🌅 **Guten Morgen, Bielefeld!** 
+    const messageText = `🌅 **Top Events des Tages** – ${dateFormatted}
+${eventLines}
+Welches Event ist euer Favorit? Liked & kommentiert! 👇
 
-🏆 **Das Top Event von heute ist:**
+#topevents`;
 
-**${topEvent.title}**${formatTime(topEvent.time)}
-📍 ${topEvent.location || 'Ort wird noch bekannt gegeben'}
-🏷️ ${topEvent.category}
-
-${topEvent.description ? `${topEvent.description.substring(0, 200)}${topEvent.description.length > 200 ? '...' : ''}` : 'Ein spannendes Event wartet auf euch!'}
-
-⭐ **${topEvent.likes} ${topEvent.likes === 1 ? 'Person ist' : 'Personen sind'} interessiert!**${usersText}
-
-Habt einen fantastischen Tag! ✨
-
-_- MIA, eure Event-Assistentin_`;
-
-    // Post the message to the community chat
+    // Post message (use first image as media_url if available)
     const { error: messageError } = await supabaseClient
       .from('chat_messages')
       .insert({
-        group_id: 'ausgehen-bielefeld', // Main community group
-        sender: 'MIA - Event Assistentin',
+        group_id: 'tribe_community_board',
+        sender: 'MIA',
         text: messageText,
         avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
-        event_id: topEvent.id,
-        event_title: topEvent.title,
-        event_date: topEvent.date,
-        event_location: topEvent.location,
-        created_at: new Date().toISOString()
+        media_url: imageUrls[0] || null,
+        read_by: [],
       });
 
     if (messageError) {
-      console.error('❌ [Daily Top Event] Error posting message:', messageError);
+      console.error('❌ [Daily Top Events] Error posting message:', messageError);
       throw messageError;
     }
 
-    console.log('✅ [Daily Top Event] Daily top event message posted successfully!');
+    console.log('✅ [Daily Top Events] Posted successfully with', topEvents.length, 'events');
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: 'Daily top event message sent',
-      event: {
-        title: topEvent.title,
-        likes: topEvent.likes,
-        interestedUsers: likedByUsers.length
-      }
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Daily top events posted',
+      events: topEvents.slice(0, 3).map(e => ({ title: e.title, likes: e.likes })),
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('💥 [Daily Top Event] Unexpected error:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Failed to send daily top event message',
-      details: error.message 
+    console.error('💥 [Daily Top Events] Error:', error);
+    return new Response(JSON.stringify({
+      error: 'Failed to send daily top events',
+      details: error.message,
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
