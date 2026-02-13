@@ -8,6 +8,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
+
 const categoryImages: Record<string, string> = {
   'party': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&h=400&fit=crop',
   'ausgehen': 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=600&h=400&fit=crop',
@@ -16,6 +18,9 @@ const categoryImages: Record<string, string> = {
   'sport': 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&h=400&fit=crop',
   'kino': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&h=400&fit=crop',
 };
+
+// Blocked title keywords – these events should never appear in top highlights
+const BLOCKED_TITLE_KEYWORDS = ['cutie', 'live'];
 
 const categoryPriority: Record<string, number> = {
   'party': 0, 'ausgehen': 1, 'konzert': 2, 'kreativität': 3, 'sport': 4, 'kino': 5,
@@ -94,7 +99,11 @@ serve(async (req) => {
     // Filter out boring categories
     const funEvents = sortedEvents.filter(e => {
       const cat = (e.category || '').toLowerCase();
-      return cat !== 'bildung' && cat !== 'sonstiges';
+      const titleLower = (e.title || '').toLowerCase();
+      // Filter out boring categories and blocked keywords
+      if (cat === 'bildung' || cat === 'sonstiges') return false;
+      if (BLOCKED_TITLE_KEYWORDS.some(kw => titleLower.includes(kw))) return false;
+      return true;
     });
     const topPool = funEvents.length >= 3 ? funEvents : sortedEvents;
 
@@ -124,7 +133,7 @@ serve(async (req) => {
       await supabaseClient.from('chat_messages').insert({
         group_id: 'tribe_community_board', sender: 'MIA',
         text: '🌅 Heute keine Top Events gefunden – perfekt um selbst was zu planen! #topevents',
-        avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png', read_by: [],
+        avatar: MIA_AVATAR, read_by: [],
       });
       return new Response(JSON.stringify({ success: true, message: 'No events' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -154,7 +163,7 @@ serve(async (req) => {
         group_id: 'tribe_community_board',
         sender: 'MIA',
         text: messageText,
-        avatar: '/lovable-uploads/e819d6a5-7715-4cb0-8f30-952438637b87.png',
+        avatar: MIA_AVATAR,
         media_url: null,
         read_by: [],
       });
