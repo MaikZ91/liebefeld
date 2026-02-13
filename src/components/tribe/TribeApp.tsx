@@ -1585,11 +1585,11 @@ const TribeAppMain: React.FC<{
                                 return null;
                               };
 
-                              const GROUP_LABELS: Record<string, { label: string; icon: string }> = {
-                                hochschulsport: { label: 'Hochschulsport', icon: '🏋️' },
-                                sport: { label: 'Sport', icon: '⚽' },
-                                vhs: { label: 'VHS & Kurse', icon: '📚' },
-                                kino: { label: 'Kino', icon: '🎬' },
+                              const GROUP_LABELS: Record<string, { label: string; fallbackImg: string }> = {
+                                hochschulsport: { label: 'HOCHSCHULSPORT', fallbackImg: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=100&h=100&q=60' },
+                                sport: { label: 'SPORT', fallbackImg: 'https://images.unsplash.com/photo-1461896836934-bd45ba24e9c0?auto=format&fit=crop&w=100&h=100&q=60' },
+                                vhs: { label: 'VHS & KURSE', fallbackImg: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&w=100&h=100&q=60' },
+                                kino: { label: 'KINO', fallbackImg: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=100&h=100&q=60' },
                               };
 
                               // Separate regular events and grouped events
@@ -1645,7 +1645,7 @@ const TribeAppMain: React.FC<{
                                   {Object.entries(collapsibleGroups).map(([groupKey, events]) => {
                                     const groupId = `${date}_${groupKey}`;
                                     const isGroupExpanded = expandedGroups.has(groupId);
-                                    const { label, icon } = GROUP_LABELS[groupKey];
+                                    const { label, fallbackImg } = GROUP_LABELS[groupKey];
                                     // Use first event with image as representative, or just first event
                                     const representativeEvent = events.find(e => !!e.image_url) || events[0];
                                     
@@ -1663,19 +1663,19 @@ const TribeAppMain: React.FC<{
                                         >
                                           <div className="flex items-center gap-3 py-2 px-1 group">
                                             {/* Thumbnail */}
-                                            <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-white/[0.05] flex items-center justify-center">
-                                              {representativeEvent.image_url ? (
-                                                <img src={representativeEvent.image_url} alt="" className="w-full h-full object-cover" />
-                                              ) : (
-                                                <span className="text-lg">{icon}</span>
-                                              )}
+                                            <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
+                                              <img 
+                                                src={representativeEvent.image_url || fallbackImg} 
+                                                alt="" 
+                                                className="w-full h-full object-cover" 
+                                              />
                                             </div>
                                             {/* Info */}
                                             <div className="flex-1 min-w-0">
-                                              <p className="text-[13px] font-medium text-white/80 tracking-tight">
-                                                {icon} {label}
+                                              <p className="text-[11px] font-bold text-white/70 tracking-[0.15em] uppercase">
+                                                {label}
                                               </p>
-                                              <p className="text-[10px] text-white/35 mt-0.5">
+                                              <p className="text-[10px] text-white/30 mt-0.5">
                                                 {events.length} Events
                                               </p>
                                             </div>
