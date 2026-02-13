@@ -1074,7 +1074,9 @@ const TribeAppMain: React.FC<{
     setLocationBlockDialog({ open: false, location: null });
   };
 
-  const handleToggleAttendance = (eventId: string) => {
+  const handleToggleAttendance = async (eventId: string) => {
+    const isCurrentlyAttending = attendingEventIds.has(eventId);
+    
     setAttendingEventIds((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(eventId)) {
@@ -1084,6 +1086,43 @@ const TribeAppMain: React.FC<{
       }
       return newSet;
     });
+
+    // Persist to database
+    try {
+      const username = userProfile?.username || 'anonymous';
+      
+      // Fetch current state from DB
+      const { data: currentEvent } = await supabase
+        .from('community_events')
+        .select('rsvp_yes, liked_by_users')
+        .eq('id', eventId)
+        .single();
+      
+      if (currentEvent) {
+        const currentRsvp = currentEvent.rsvp_yes || 0;
+        const newRsvp = isCurrentlyAttending ? Math.max(0, currentRsvp - 1) : currentRsvp + 1;
+        const currentLikedBy = (currentEvent.liked_by_users as string[]) || [];
+        const newLikedBy = isCurrentlyAttending
+          ? currentLikedBy.filter((u: string) => u !== username)
+          : [...currentLikedBy, username];
+        
+        const { error } = await supabase
+          .from('community_events')
+          .update({ 
+            rsvp_yes: newRsvp,
+            liked_by_users: newLikedBy
+          })
+          .eq('id', eventId);
+        
+        if (error) {
+          console.error('Error saving RSVP:', error);
+        } else {
+          console.log(`✅ RSVP ${isCurrentlyAttending ? 'removed' : 'saved'} for event ${eventId}`);
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling attendance:', err);
+    }
   };
 
   const handleTickerEventClick = (eventId: string) => {
