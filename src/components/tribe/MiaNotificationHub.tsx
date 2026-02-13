@@ -357,7 +357,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                       {chatMessages.map((msg, i) => (
                         <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                           {msg.role === 'model' && (
-                            <img src={MIA_AVATAR} alt="MIA" className="w-6 h-6 rounded-full mr-2 mt-1 shrink-0 object-cover" style={{ border: '1px solid hsl(40, 45%, 45%)' }} />
+                            <img src={MIA_AVATAR} alt="MIA" className="w-6 h-6 rounded-full mr-2 mt-1 shrink-0 object-cover" style={{ border: '1px solid rgba(255,255,255,0.15)' }} />
                           )}
                           <div className={`max-w-[85%] ${
                             msg.role === 'user'
