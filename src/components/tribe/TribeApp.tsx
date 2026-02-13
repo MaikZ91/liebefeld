@@ -771,45 +771,42 @@ const TribeAppMain: React.FC<{
 
     // Sort: Date first, then match score within each day
     result.sort((a, b) => {
-      // PRIORITY 0: Featured Tribe Community Events ALWAYS come first
-      const isFeaturedA = isFeaturedTribeEvent(a);
-      const isFeaturedB = isFeaturedTribeEvent(b);
-      
-      if (isFeaturedA && !isFeaturedB) return -1;
-      if (!isFeaturedA && isFeaturedB) return 1;
-      
-      if (isFeaturedA && isFeaturedB) {
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      }
-
-      // PRIORITY 1: Sort by date (ascending)
+      // PRIORITY 1: Sort by date (ascending) — always first
       const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
       if (dateCompare !== 0) return dateCompare;
 
-      // PRIORITY 2 (same day): Tribe/Community events first
+      // --- Within same day ---
+
+      // PRIORITY 2: Featured Tribe Community Events first within their day
+      const isFeaturedA = isFeaturedTribeEvent(a);
+      const isFeaturedB = isFeaturedTribeEvent(b);
+      if (isFeaturedA && !isFeaturedB) return -1;
+      if (!isFeaturedA && isFeaturedB) return 1;
+
+      // PRIORITY 3: Tribe/Community events first
       const isTribeA = a.source === 'community' || a.source === 'tribe';
       const isTribeB = b.source === 'community' || b.source === 'tribe';
       if (isTribeA && !isTribeB) return -1;
       if (!isTribeA && isTribeB) return 1;
 
-      // PRIORITY 3 (same day): Match score (higher = better)
+      // PRIORITY 4: Match score (higher = better)
       const scoreA = eventMatchScores.get(a.id) || a.matchScore || 0;
       const scoreB = eventMatchScores.get(b.id) || b.matchScore || 0;
       if (scoreB !== scoreA) return scoreB - scoreA;
 
-      // PRIORITY 4 (same day): Liked events
+      // PRIORITY 5: Liked events
       const isLikedA = likedEventIds.has(a.id);
       const isLikedB = likedEventIds.has(b.id);
       if (isLikedA && !isLikedB) return -1;
       if (!isLikedA && isLikedB) return 1;
 
-      // PRIORITY 5 (same day): Events with images first
+      // PRIORITY 6: Events with images first
       const hasImageA = !!a.image_url;
       const hasImageB = !!b.image_url;
       if (hasImageA && !hasImageB) return -1;
       if (!hasImageA && hasImageB) return 1;
 
-      // PRIORITY 6 (same day): Sort by time
+      // PRIORITY 7: Sort by time
       const timeA = a.time || "00:00";
       const timeB = b.time || "00:00";
       return timeA.localeCompare(timeB);
