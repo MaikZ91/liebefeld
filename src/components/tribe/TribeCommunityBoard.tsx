@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
-import { ArrowRight, Heart, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2 } from 'lucide-react';
+import { ArrowRight, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2 } from 'lucide-react';
+import { SpontanCard } from './SpontanCard';
 import { supabase } from '@/integrations/supabase/client';
 import { chatMediaService } from '@/services/chatMediaService';
 import { NewMembersWidget } from './NewMembersWidget';
@@ -798,6 +799,19 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                     const relevanceScore = post.relevanceScore || 50;
                     const meetupResponses = post.meetup_responses;
                     const isMIAPost = post.user === 'MIA';
+                    const isSpontanPost = post.text.startsWith('⚡ SPONTAN');
+                    
+                    // Render SpontanCard for spontan posts
+                    if (isSpontanPost) {
+                      return (
+                        <SpontanCard
+                          key={post.id}
+                          post={post}
+                          userProfile={userProfile}
+                          onJoin={(postId) => handleRSVP(postId, 'yes')}
+                        />
+                      );
+                    }
                     
                     return (
                     <div 
@@ -1055,16 +1069,6 @@ export const TribeCommunityBoard: React.FC<Props> = ({
 
                         {/* Actions */}
                         <div className="flex items-center gap-4 pl-[52px]">
-                            <button 
-                              onClick={() => handleLike(post.id)} 
-                              className={`flex items-center gap-1.5 transition-colors group/like ${
-                                isNewest ? 'text-red-400 animate-pulse' : 'text-zinc-500 hover:text-red-500'
-                              }`}
-                            >
-                                <Heart size={14} className={post.likes > 0 ? "fill-red-500 text-red-500" : "group-hover/like:text-red-500"} />
-                                <span className="text-[9px] font-medium">{post.likes || 0}</span>
-                            </button>
-                            
                             <button 
                               onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} 
                               className={`flex items-center gap-1.5 transition-colors ${

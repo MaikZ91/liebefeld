@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, X, MapPin, Clock, Send, ChevronRight } from 'lucide-react';
+import { Zap, X, MapPin, Send, ChevronRight, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/tribe';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Slider } from '@/components/ui/slider';
 
 interface Props {
   userProfile: UserProfile;
@@ -18,26 +19,43 @@ const ACTIVITIES = [
   { emoji: '🍽️', label: 'Essen', color: 'text-orange-400' },
 ];
 
-const TIME_OPTIONS = ['Jetzt', 'In 1h', 'In 2h', 'Heute Abend'];
-
 const SPONTAN_STATUS_KEY = 'tribe_spontan_status';
 
 interface SpontanStatus {
   active: boolean;
   expiresAt: string;
   activity: string;
+  startHour: number;
+  endHour: number;
+}
+
+function formatHour(h: number): string {
+  const hour = Math.floor(h);
+  const min = Math.round((h - hour) * 60);
+  return `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+}
+
+function getCurrentHour(): number {
+  const now = new Date();
+  return now.getHours() + now.getMinutes() / 60;
 }
 
 export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) => {
   const [step, setStep] = useState<'idle' | 'activity' | 'details'>('idle');
   const [selectedActivity, setSelectedActivity] = useState<typeof ACTIVITIES[0] | null>(null);
   const [customText, setCustomText] = useState('');
-  const [selectedTime, setSelectedTime] = useState('Jetzt');
   const [location, setLocation] = useState('');
   const [isPosting, setIsPosting] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [activeLabel, setActiveLabel] = useState('');
   const [activeCount, setActiveCount] = useState(0);
+
+  // Time range slider state (hours as decimals, e.g. 18.5 = 18:30)
+  const currentH = Math.ceil(getCurrentHour() * 2) / 2; // round to nearest 30min
+  const [timeRange, setTimeRange] = useState<number[]>([
+    Math.min(currentH, 23),
+    Math.min(currentH + 2, 24),
+  ]);
 
   // Count currently active users
   useEffect(() => {
@@ -87,18 +105,26 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
 
     try {
       const activityLabel = customText || `${selectedActivity.emoji} ${selectedActivity.label}`;
-      const expiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000); // 3h default
+      const startStr = formatHour(timeRange[0]);
+      const endStr = formatHour(timeRange[1]);
+      
+      // Calculate expiry based on end time
+      const now = new Date();
+      const endDate = new Date(now);
+      const endHour = Math.floor(timeRange[1]);
+      const endMin = Math.round((timeRange[1] - endHour) * 60);
+      endDate.setHours(endHour, endMin, 0, 0);
+      if (endDate <= now) endDate.setDate(endDate.getDate() + 1);
 
       // Update user status
       await supabase
         .from('user_profiles')
-        .update({ current_status_message: `${selectedActivity.emoji} ${activityLabel}` })
+        .update({ current_status_message: `${selectedActivity.emoji} ${activityLabel} ${startStr}-${endStr}` })
         .eq('username', userProfile.username);
 
-      // Build chat message
-      const locationText = location ? ` 📍 ${location}` : '';
-      const timeText = selectedTime !== 'Jetzt' ? ` ⏰ ${selectedTime}` : '';
-      const chatText = `${selectedActivity.emoji} ${userProfile.username} sucht Leute für: **${activityLabel}**${timeText}${locationText}\n\nWer ist dabei? 👇`;
+      // Build chat message with structured data for the SpontanCard
+      const locationText = location ? `\n📍 ${location}` : '';
+      const chatText = `⚡ SPONTAN | ${selectedActivity.emoji} ${activityLabel}\n⏰ ${startStr} – ${endStr}${locationText}`;
 
       await supabase.from('chat_messages').insert({
         group_id: 'tribe_community_board',
@@ -112,7 +138,13 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
       });
 
       // Save local status
-      const status: SpontanStatus = { active: true, expiresAt: expiresAt.toISOString(), activity: activityLabel };
+      const status: SpontanStatus = {
+        active: true,
+        expiresAt: endDate.toISOString(),
+        activity: activityLabel,
+        startHour: timeRange[0],
+        endHour: timeRange[1],
+      };
       localStorage.setItem(SPONTAN_STATUS_KEY, JSON.stringify(status));
       setIsActive(true);
       setActiveLabel(activityLabel);
@@ -120,7 +152,6 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
       setSelectedActivity(null);
       setCustomText('');
       setLocation('');
-      setSelectedTime('Jetzt');
     } catch (error) {
       console.error('Error posting spontan:', error);
     } finally {
@@ -139,7 +170,8 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
     setSelectedActivity(null);
     setCustomText('');
     setLocation('');
-    setSelectedTime('Jetzt');
+    const h = Math.ceil(getCurrentHour() * 2) / 2;
+    setTimeRange([Math.min(h, 23), Math.min(h + 2, 24)]);
   };
 
   // ACTIVE STATE
@@ -232,7 +264,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="rounded-xl bg-zinc-800/80 border border-white/10 p-3 space-y-2.5"
+            className="rounded-xl bg-zinc-800/80 border border-white/10 p-3 space-y-3"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
@@ -253,21 +285,31 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
               className="w-full text-xs bg-zinc-700/40 border border-white/5 rounded-lg px-2.5 py-1.5 text-white/90 placeholder:text-white/25 focus:outline-none focus:border-yellow-500/30"
             />
 
-            {/* Time chips */}
-            <div className="flex gap-1.5 flex-wrap">
-              {TIME_OPTIONS.map(t => (
-                <button
-                  key={t}
-                  onClick={() => setSelectedTime(t)}
-                  className={`px-2 py-1 rounded-full text-[10px] font-medium border transition-all ${
-                    selectedTime === t
-                      ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30'
-                      : 'bg-zinc-700/30 text-white/40 border-transparent hover:text-white/60'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
+            {/* Time range slider */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3 text-yellow-500/60" />
+                  <span className="text-[10px] text-white/50">Zeitraum</span>
+                </div>
+                <span className="text-xs font-mono text-yellow-400">
+                  {formatHour(timeRange[0])} – {formatHour(timeRange[1])}
+                </span>
+              </div>
+              <Slider
+                min={6}
+                max={24}
+                step={0.5}
+                value={timeRange}
+                onValueChange={setTimeRange}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[8px] text-white/20 px-0.5">
+                <span>06:00</span>
+                <span>12:00</span>
+                <span>18:00</span>
+                <span>24:00</span>
+              </div>
             </div>
 
             {/* Optional location */}
