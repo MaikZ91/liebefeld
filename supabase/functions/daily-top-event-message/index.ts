@@ -20,7 +20,7 @@ const categoryImages: Record<string, string> = {
 };
 
 // Blocked title keywords – these events should never appear in top highlights
-const BLOCKED_TITLE_KEYWORDS = ['cutie', 'live'];
+const BLOCKED_TITLE_KEYWORDS = ['cutie', 'live', 'liv', 'hinterzimmer'];
 
 const categoryPriority: Record<string, number> = {
   'party': 0, 'ausgehen': 1, 'konzert': 2, 'kreativität': 3, 'sport': 4, 'kino': 5,
