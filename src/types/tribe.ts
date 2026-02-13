@@ -66,6 +66,7 @@ export interface Post {
   text: string;
   city: string;
   likes: number;
+  likedBy?: string[];
   time: string;
   timestamp: string; // ISO date for sorting
   tags: string[];
