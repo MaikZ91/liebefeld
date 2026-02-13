@@ -1622,14 +1622,17 @@ const TribeAppMain: React.FC<{
                                   {/* Regular events */}
                                   {regularEvents.map(renderEvent)}
                                   
-                                  {/* Collapsible group sections */}
+                                  {/* Collapsible group sections — shown as compact event tiles */}
                                   {Object.entries(collapsibleGroups).map(([groupKey, events]) => {
                                     const groupId = `${date}_${groupKey}`;
                                     const isGroupExpanded = expandedGroups.has(groupId);
                                     const { label, icon } = GROUP_LABELS[groupKey];
+                                    // Use first event with image as representative, or just first event
+                                    const representativeEvent = events.find(e => !!e.image_url) || events[0];
                                     
                                     return (
-                                      <div key={groupKey} className="mt-1">
+                                      <div key={groupKey}>
+                                        {/* Summary tile — looks like a compact event card */}
                                         <button
                                           onClick={() => setExpandedGroups(prev => {
                                             const next = new Set(prev);
@@ -1637,18 +1640,36 @@ const TribeAppMain: React.FC<{
                                             else next.add(groupId);
                                             return next;
                                           })}
-                                          className="w-full flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
+                                          className="w-full text-left"
                                         >
-                                          <span className="text-[11px] text-white/50 font-medium tracking-wide">
-                                            {icon} {label} <span className="text-white/30">({events.length})</span>
-                                          </span>
-                                          <ChevronDown 
-                                            size={12} 
-                                            className={`text-white/30 transition-transform duration-200 ${isGroupExpanded ? 'rotate-180' : ''}`} 
-                                          />
+                                          <div className="flex items-center gap-3 py-2 px-1 group">
+                                            {/* Thumbnail */}
+                                            <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-white/[0.05] flex items-center justify-center">
+                                              {representativeEvent.image_url ? (
+                                                <img src={representativeEvent.image_url} alt="" className="w-full h-full object-cover" />
+                                              ) : (
+                                                <span className="text-lg">{icon}</span>
+                                              )}
+                                            </div>
+                                            {/* Info */}
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-[13px] font-medium text-white/80 tracking-tight">
+                                                {icon} {label}
+                                              </p>
+                                              <p className="text-[10px] text-white/35 mt-0.5">
+                                                {events.length} Events
+                                              </p>
+                                            </div>
+                                            {/* Expand arrow */}
+                                            <ChevronDown 
+                                              size={14} 
+                                              className={`text-white/25 group-hover:text-white/50 transition-all duration-200 shrink-0 ${isGroupExpanded ? 'rotate-180' : ''}`} 
+                                            />
+                                          </div>
                                         </button>
+                                        {/* Expanded events */}
                                         {isGroupExpanded && (
-                                          <div className="mt-1 pl-2 border-l border-white/[0.06]">
+                                          <div className="space-y-0">
                                             {events.map(renderEvent)}
                                           </div>
                                         )}
