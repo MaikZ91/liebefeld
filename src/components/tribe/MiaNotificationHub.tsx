@@ -204,24 +204,24 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
         whileTap={{ scale: 0.9 }}
         style={{
           boxShadow: unreadCount > 0
-            ? '0 0 24px rgba(209,176,122,0.5), 0 0 48px rgba(209,176,122,0.15)'
+            ? '0 0 24px rgba(255,255,255,0.2), 0 0 48px rgba(255,255,255,0.05)'
             : '0 8px 32px rgba(0,0,0,0.6)',
-          border: '2px solid hsl(40, 45%, 55%)',
+          border: '2px solid rgba(255,255,255,0.25)',
         }}
       >
         <img src={MIA_AVATAR} alt="MIA" className="w-full h-full object-cover" />
         {unreadCount > 0 && (
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            style={{ border: '2px solid hsl(40, 45%, 55%)' }}
-            animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
-            transition={{ duration: 2, repeat: Infinity }}
+           <motion.div
+             className="absolute inset-0 rounded-full"
+             style={{ border: '2px solid rgba(255,255,255,0.3)' }}
+             animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
+             transition={{ duration: 2, repeat: Infinity }}
           />
         )}
         {unreadCount > 0 && (
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </div>
+           <div className="absolute -top-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center text-[10px] font-bold text-black shadow-lg">
+             {unreadCount > 9 ? '9+' : unreadCount}
+           </div>
         )}
       </motion.button>
 
@@ -258,8 +258,8 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <img src={MIA_AVATAR} alt="MIA" className="w-9 h-9 rounded-full object-cover" style={{ border: '1.5px solid hsl(40, 45%, 55%)' }} />
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2" style={{ borderColor: 'hsl(0, 0%, 7%)' }} />
+                     <img src={MIA_AVATAR} alt="MIA" className="w-9 h-9 rounded-full object-cover" style={{ border: '1.5px solid rgba(255,255,255,0.2)' }} />
+                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-white border-2" style={{ borderColor: 'hsl(0, 0%, 7%)' }} />
                     </div>
                     <div>
                       <h3 className="text-sm font-light tracking-[0.15em] text-white/90 uppercase" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -283,7 +283,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Star size={12} className="text-gold fill-gold" />
+                          <Star size={12} className="text-white/50" />
                           <h4 className="text-[10px] font-medium text-white/50 uppercase tracking-[0.2em]">Deine Tagesempfehlung</h4>
                         </div>
                         <button onClick={dismissDaily} className="text-white/20 hover:text-white/50 transition-colors">
@@ -345,7 +345,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                           <button
                             key={i}
                             onClick={() => handleSendMessage(suggestion)}
-                            className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded-full text-[11px] text-white/50 hover:border-gold/30 hover:text-white/80 hover:bg-white/[0.06] transition-all"
+                            className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded-full text-[11px] text-white/50 hover:border-white/20 hover:text-white/80 hover:bg-white/[0.06] transition-all"
                           >
                             {suggestion}
                           </button>
@@ -361,7 +361,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                           )}
                           <div className={`max-w-[85%] ${
                             msg.role === 'user'
-                              ? 'bg-gold/15 border border-gold/20 rounded-2xl rounded-br-sm px-3.5 py-2.5'
+                              ? 'bg-white/10 border border-white/15 rounded-2xl rounded-br-sm px-3.5 py-2.5'
                               : 'bg-white/[0.04] border border-white/[0.05] rounded-2xl rounded-bl-sm px-3.5 py-2.5'
                           }`}>
                             <p className="text-[13px] text-white/85 leading-relaxed font-light">{msg.text}</p>
@@ -381,12 +381,12 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                       ))}
                       {isTyping && (
                         <div className="flex justify-start">
-                          <img src={MIA_AVATAR} alt="MIA" className="w-6 h-6 rounded-full mr-2 mt-1 shrink-0 object-cover" style={{ border: '1px solid hsl(40, 45%, 45%)' }} />
+                          <img src={MIA_AVATAR} alt="MIA" className="w-6 h-6 rounded-full mr-2 mt-1 shrink-0 object-cover" style={{ border: '1px solid rgba(255,255,255,0.15)' }} />
                           <div className="bg-white/[0.04] border border-white/[0.05] rounded-2xl rounded-bl-sm px-4 py-3">
                             <div className="flex gap-1.5">
-                              <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                              <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                              <span className="w-1.5 h-1.5 bg-gold/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                              <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <span className="w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
                           </div>
                         </div>
@@ -405,7 +405,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                       <button
                         key={i}
                         onClick={() => handleSendMessage(s)}
-                        className="shrink-0 px-2.5 py-1 bg-white/[0.03] border border-white/[0.06] rounded-full text-[10px] text-white/35 hover:text-white/70 hover:border-gold/20 transition-all"
+                        className="shrink-0 px-2.5 py-1 bg-white/[0.03] border border-white/[0.06] rounded-full text-[10px] text-white/35 hover:text-white/70 hover:border-white/15 transition-all"
                       >
                         {s}
                       </button>
@@ -425,11 +425,11 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                         if (e.key === 'Enter') handleSendMessage();
                       }}
                       placeholder=""
-                      className="flex-1 w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white/90 outline-none focus:border-gold/25 transition-all font-light"
+                      className="flex-1 w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-2.5 text-sm text-white/90 outline-none focus:border-white/20 transition-all font-light"
                     />
                     {!chatInput && !isFocused && (
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/25 font-light pointer-events-none">
-                        {typewriterText}<span className="animate-pulse ml-0.5 text-gold/40">|</span>
+                        {typewriterText}<span className="animate-pulse ml-0.5 text-white/30">|</span>
                       </span>
                     )}
                     {!chatInput && isFocused && (
@@ -476,8 +476,8 @@ const NotificationCard: React.FC<{
       notification.seen
         ? 'bg-white/[0.02] border border-white/[0.04]'
         : notification.type === 'community_match'
-          ? 'bg-gold/[0.06] border border-gold/20'
-          : 'bg-white/[0.04] border border-gold/15'
+          ? 'bg-white/[0.06] border border-white/15'
+          : 'bg-white/[0.04] border border-white/10'
     }`}
   >
     {/* Avatar(s) */}
@@ -488,7 +488,7 @@ const NotificationCard: React.FC<{
             <img key={i} src={avatar} alt="" className="w-8 h-8 rounded-full object-cover" style={{ border: '2px solid hsl(0, 0%, 5%)' }} />
           ))}
           {(notification.matchCount || 0) > 3 && (
-            <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px] font-bold text-gold" style={{ border: '2px solid hsl(0, 0%, 5%)' }}>
+            <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px] font-bold text-white/60" style={{ border: '2px solid hsl(0, 0%, 5%)' }}>
               +{(notification.matchCount || 0) - 3}
             </div>
           )}
@@ -498,12 +498,12 @@ const NotificationCard: React.FC<{
       <img src={notification.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-white/[0.08] shrink-0 mt-0.5" />
     ) : (
       <div className="w-9 h-9 rounded-full bg-white/[0.04] border border-white/[0.06] shrink-0 mt-0.5 flex items-center justify-center">
-        <Sparkles size={13} className="text-gold/60" />
+        <Sparkles size={13} className="text-white/40" />
       </div>
     )}
     <div className="flex-1 min-w-0">
       {notification.type === 'community_match' && (
-        <Badge className="bg-gold/15 text-gold border-gold/25 text-[9px] mb-1.5 font-medium tracking-wide">
+        <Badge className="bg-white/10 text-white/70 border-white/15 text-[9px] mb-1.5 font-medium tracking-wide">
           {(notification.matchCount || 0) + 1} Leute · Match
         </Badge>
       )}
@@ -512,7 +512,7 @@ const NotificationCard: React.FC<{
         {notification.actionLabel && (
           <button
             onClick={() => onAction(notification)}
-            className="text-[11px] font-medium text-gold/80 hover:text-gold transition-colors tracking-wide"
+            className="text-[11px] font-medium text-white/60 hover:text-white transition-colors tracking-wide"
           >
             {notification.actionLabel} →
           </button>
