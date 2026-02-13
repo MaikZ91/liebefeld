@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
-import { ArrowRight, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2 } from 'lucide-react';
+import { ArrowRight, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2, Heart } from 'lucide-react';
 import { SpontanCard } from './SpontanCard';
 import { supabase } from '@/integrations/supabase/client';
 import { chatMediaService } from '@/services/chatMediaService';
@@ -270,7 +270,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
 
   const convertMessageToPost = (msg: any): Post => {
     const reactions = msg.reactions as { emoji: string; users: string[] }[] || [];
-    const likes = reactions.reduce((sum, r) => sum + (r.users?.length || 0), 0);
+    const heartReaction = reactions.find(r => r.emoji === '❤️');
+    const likes = heartReaction?.users?.length || 0;
+    const likedBy = heartReaction?.users || [];
     
     // Extract explicit hashtags from text
     const explicitTags: string[] = [];
@@ -292,8 +294,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
       text: msg.text,
       city: selectedCity,
       likes,
+      likedBy,
       time: formatTime(msg.created_at),
-      timestamp: msg.created_at, // Store raw timestamp for sorting
+      timestamp: msg.created_at,
       tags: allTags,
       userAvatar: msg.avatar,
       comments: [],
@@ -1066,7 +1069,23 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         )}
 
                         {/* Actions */}
-                        <div className="flex items-center gap-4 pl-[52px]">
+                        <div className="flex items-center gap-5 pl-[52px]">
+                            {/* Like button with who liked */}
+                            <button 
+                              onClick={() => handleLike(post.id)} 
+                              className={`flex items-center gap-1.5 transition-colors ${
+                                post.likedBy?.includes(userProfile.username) ? 'text-red-400' : 'text-zinc-500 hover:text-red-400'
+                              }`}
+                            >
+                                <Heart size={14} fill={post.likedBy?.includes(userProfile.username) ? 'currentColor' : 'none'} />
+                                {(post.likes || 0) > 0 && (
+                                  <span className="text-[9px] font-medium text-zinc-400 truncate max-w-[120px]">
+                                    {post.likedBy?.slice(0, 3).join(', ')}{(post.likedBy?.length || 0) > 3 ? ` +${(post.likedBy?.length || 0) - 3}` : ''}
+                                  </span>
+                                )}
+                            </button>
+                            
+                            {/* Comment button with who commented */}
                             <button 
                               onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} 
                               className={`flex items-center gap-1.5 transition-colors ${
@@ -1074,7 +1093,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                               }`}
                             >
                                 <MessageCircle size={14} />
-                                <span className="text-[9px] font-medium">{post.comments?.length || 0}</span>
+                                {(post.comments?.length || 0) > 0 && (
+                                  <span className="text-[9px] font-medium text-zinc-400 truncate max-w-[120px]">
+                                    {[...new Set(post.comments?.map(c => c.user) || [])].slice(0, 3).join(', ')}{[...new Set(post.comments?.map(c => c.user) || [])].length > 3 ? ` +${[...new Set(post.comments?.map(c => c.user) || [])].length - 3}` : ''}
+                                  </span>
+                                )}
                             </button>
                         </div>
 
