@@ -617,6 +617,14 @@ const TribeAppMain: React.FC<{
       if (title.includes('cutie') || organizer.includes('cutie')) return false;
       // liv / Hinterzimmer
       if (title.includes('liv ') || title.includes('liv/') || location.includes('hinterzimmer') || title.includes('hinterzimmer') || organizer.includes('hinterzimmer')) return false;
+      // Salsa
+      if (title.includes('salsa')) return false;
+      // Pub Quiz
+      if (title.includes('pub quiz') || title.includes('pubquiz') || title.includes('quiz night')) return false;
+      // Karaoke
+      if (title.includes('karaoke')) return false;
+      // Afterwork
+      if (title.includes('afterwork') || title.includes('after work') || title.includes('after-work')) return false;
       
       return true;
     });
