@@ -1,0 +1,1 @@
+DELETE FROM chat_messages WHERE group_id = 'tribe_community_board' AND sender = 'MIA' AND text ILIKE '%#topevents%';
