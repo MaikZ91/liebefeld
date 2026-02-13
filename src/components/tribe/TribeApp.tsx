@@ -608,6 +608,7 @@ const TribeAppMain: React.FC<{
       const isGroupedCategory = 
         title.includes('hochschulsport') || organizer.includes('hochschulsport') ||
         title.includes('vhs') || title.includes('volkshochschule') || location.includes('vhs') || location.includes('volkshochschule') ||
+        location.includes('johannesstift') || location.includes('jöllenbeck') ||
         title.includes('wochenmarkt') ||
         title.includes('kino') || location.includes('kino') || location.includes('lichtwerk') || location.includes('cinemaxx') || location.includes('cinestar') || location.includes('filmhaus') ||
         category === 'sport';
@@ -871,7 +872,7 @@ const TribeAppMain: React.FC<{
       const category = (e.category || '').toLowerCase();
       if (title.includes('hochschulsport') || organizer.includes('hochschulsport')) return false;
       if (category === 'sport') return false;
-      if (title.includes('vhs') || title.includes('volkshochschule') || location.includes('vhs') || location.includes('volkshochschule') || title.includes('wochenmarkt')) return false;
+      if (title.includes('vhs') || title.includes('volkshochschule') || location.includes('vhs') || location.includes('volkshochschule') || location.includes('johannesstift') || location.includes('jöllenbeck') || title.includes('wochenmarkt')) return false;
       if (title.includes('kino') || location.includes('kino') || location.includes('lichtwerk') || location.includes('cinemaxx') || location.includes('cinestar') || location.includes('filmhaus')) return false;
       return true;
     });
@@ -907,10 +908,27 @@ const TribeAppMain: React.FC<{
     const thirtyDaysLater = new Date(today);
     thirtyDaysLater.setDate(today.getDate() + 30);
     
-    // Filter events within next 30 days
+    // Filter events within next 30 days, exclude Sport/VHS/Kino
     const next30DaysEvents = allEvents.filter(e => {
       const eventDate = new Date(e.date);
-      return eventDate >= today && eventDate < thirtyDaysLater;
+      if (eventDate < today || eventDate >= thirtyDaysLater) return false;
+      
+      const title = (e.title || '').toLowerCase();
+      const location = (e.location || '').toLowerCase();
+      const organizer = (e.organizer || '').toLowerCase();
+      const category = (e.category || '').toLowerCase();
+      
+      // Exclude Sport
+      if (category === 'sport') return false;
+      if (title.includes('hochschulsport') || organizer.includes('hochschulsport')) return false;
+      
+      // Exclude VHS
+      if (title.includes('vhs') || title.includes('volkshochschule') || location.includes('vhs') || location.includes('volkshochschule') || location.includes('johannesstift') || location.includes('jöllenbeck')) return false;
+      
+      // Exclude Kino
+      if (title.includes('kino') || location.includes('kino') || location.includes('lichtwerk') || location.includes('cinemaxx') || location.includes('cinestar') || location.includes('filmhaus')) return false;
+      
+      return true;
     });
     
     // Sort by match score
