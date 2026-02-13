@@ -898,21 +898,72 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                             </div>
                         </div>
 
-                        {/* Content */}
-                        <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-[52px]">
-                            {post.text}
-                        </p>
-                        
-                        {/* Post Image */}
-                        {post.mediaUrl && (
-                          <div className="pl-[52px] mb-2">
-                            <img 
-                              src={post.mediaUrl} 
-                              alt="Post image" 
-                              className="max-w-full max-h-64 rounded-lg border border-white/10 cursor-pointer hover:opacity-90 transition-opacity"
-                              onClick={() => window.open(post.mediaUrl!, '_blank')}
-                            />
-                          </div>
+                        {/* Content - Special rendering for #topevents */}
+                        {post.text.includes('#topevents') && post.text.includes('<!--topevents:') ? (() => {
+                          // Parse structured event cards from the message
+                          const match = post.text.match(/<!--topevents:(.*?)-->/s);
+                          if (!match) return <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-[52px]">{post.text}</p>;
+                          
+                          try {
+                            const eventCards = JSON.parse(match[1]) as Array<{
+                              id: string; title: string; time: string | null;
+                              location: string | null; category: string; image: string; likes: number;
+                            }>;
+                            const headline = post.text.split('\n')[0];
+                            
+                            return (
+                              <div className="pl-[52px] mb-2">
+                                <p className="text-white text-xs font-bold mb-3">{headline}</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {eventCards.map((card) => (
+                                    <div key={card.id} className="relative group/card rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold/30 transition-all">
+                                      {/* Image */}
+                                      <div className="aspect-[3/4] relative">
+                                        <img src={card.image} alt={card.title} className="w-full h-full object-cover" />
+                                        {/* Gradient overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                                        {/* Category badge */}
+                                        <span className="absolute top-1.5 left-1.5 text-[7px] font-bold uppercase tracking-wider bg-black/60 text-white px-1.5 py-0.5 rounded-sm backdrop-blur-sm">
+                                          {card.category}
+                                        </span>
+                                        {/* Content overlay */}
+                                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                                          <h4 className="text-[9px] font-bold text-white leading-tight line-clamp-2 mb-1">{card.title}</h4>
+                                          {card.time && (
+                                            <span className="text-[8px] text-white/70">{card.time} Uhr</span>
+                                          )}
+                                          {/* CTA Button */}
+                                          <button className="mt-1.5 w-full bg-gold hover:bg-white text-black text-[8px] font-bold uppercase tracking-wider py-1.5 rounded transition-colors">
+                                            Ich gehe hin! 🔥
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          } catch {
+                            return <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-[52px]">{post.text}</p>;
+                          }
+                        })() : (
+                          <>
+                            <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-[52px]">
+                                {post.text}
+                            </p>
+                            
+                            {/* Post Image */}
+                            {post.mediaUrl && (
+                              <div className="pl-[52px] mb-2">
+                                <img 
+                                  src={post.mediaUrl} 
+                                  alt="Post image" 
+                                  className="max-w-full max-h-64 rounded-lg border border-white/10 cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => window.open(post.mediaUrl!, '_blank')}
+                                />
+                              </div>
+                            )}
+                          </>
                         )}
 
                         {/* Tags */}
