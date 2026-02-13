@@ -296,12 +296,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
          <div className="relative z-10 pt-8 pb-6 px-6">
            {/* Early Access Badge - subtle, inline */}
            <div className="flex justify-center mb-6">
-             <div className="flex items-center gap-1.5 px-3 py-1 border border-white/10 rounded-full bg-white/[0.03]">
-               <span className="w-1 h-1 rounded-full bg-white/40" />
-               <span className="text-[8px] font-light uppercase tracking-[0.25em] text-white/50">Early Access</span>
-               <span className="text-[8px] text-white/20">·</span>
-               <span className="text-[8px] font-light uppercase tracking-[0.25em] text-white/50">Founding Member</span>
-               <span className="w-1 h-1 rounded-full bg-white/40" />
+             <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white text-black">
+               <span className="text-[8px] font-light uppercase tracking-[0.25em]">Early Access</span>
+               <span className="text-[8px] text-black/30">·</span>
+               <span className="text-[8px] font-light uppercase tracking-[0.25em]">Founding Member</span>
              </div>
            </div>
 
