@@ -1149,6 +1149,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                 <span className={`text-[10px] font-bold ${(post.comments?.length || 0) > 0 ? 'text-white' : 'text-zinc-600'}`}>
                                   {post.comments?.length || 0}
                                 </span>
+                                {(post.comments?.length || 0) > 0 && (
+                                  <span className="text-[9px] text-zinc-400 truncate max-w-[120px]">
+                                    {[...new Set(post.comments?.map(c => c.user) || [])].slice(0, 3).join(', ')}{[...new Set(post.comments?.map(c => c.user) || [])].length > 3 ? ` +${[...new Set(post.comments?.map(c => c.user) || [])].length - 3}` : ''}
+                                  </span>
+                                )}
                             </button>
                         </div>
 
