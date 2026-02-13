@@ -1262,7 +1262,6 @@ const TribeAppMain: React.FC<{
                       } ${isForMe && !hasPreferences ? "opacity-50" : ""}`}
                       title={isForMe && !hasPreferences ? "Wähle zuerst deine Interessen im Profil" : undefined}
                     >
-                      {isForMe && <span>❤️</span>}
                       {cat}
                     </button>
                   );
@@ -1312,13 +1311,6 @@ const TribeAppMain: React.FC<{
               </div>
             )}
 
-            {/* LIVE MAP WIDGET */}
-            <LiveMapWidget
-              events={filteredEvents}
-              selectedCity={selectedCity}
-              onEventClick={(event) => setSelectedEventId(event.id)}
-              onExpandMap={() => handleViewChange(ViewState.MAP)}
-            />
 
             {/* MIA Recommendations */}
             {spotlightEvents.length > 0 && (
