@@ -8,6 +8,10 @@ import { getCategoryGroup } from "@/utils/eventCategoryGroups";
 import { TribeEventCard } from "./TribeEventCard";
 import { TribeCommunityBoard } from "./TribeCommunityBoard";
 import { TribeMapView } from "./TribeMapView";
+import hochschulsportImg from "@/assets/groups/hochschulsport.jpg";
+import sportImg from "@/assets/groups/sport.jpg";
+import vhsImg from "@/assets/groups/vhs.jpg";
+import kinoImg from "@/assets/groups/kino.jpg";
 import { TribeBottomNav } from "./TribeBottomNav";
 import { ProfileView } from "./ProfileView";
 import { TribeLiveTicker } from "@/components/TribeLiveTicker";
@@ -1585,11 +1589,11 @@ const TribeAppMain: React.FC<{
                                 return null;
                               };
 
-                              const GROUP_LABELS: Record<string, { label: string; fallbackImg: string }> = {
-                                hochschulsport: { label: 'HOCHSCHULSPORT', fallbackImg: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=100&h=100&q=60' },
-                                sport: { label: 'SPORT', fallbackImg: 'https://images.unsplash.com/photo-1461896836934-bd45ba24e9c0?auto=format&fit=crop&w=100&h=100&q=60' },
-                                vhs: { label: 'VHS & KURSE', fallbackImg: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&w=100&h=100&q=60' },
-                                kino: { label: 'KINO', fallbackImg: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=100&h=100&q=60' },
+                              const GROUP_CONFIG: Record<string, { label: string; img: string }> = {
+                                hochschulsport: { label: 'HOCHSCHULSPORT', img: hochschulsportImg },
+                                sport: { label: 'SPORT', img: sportImg },
+                                vhs: { label: 'VHS & KURSE', img: vhsImg },
+                                kino: { label: 'KINO', img: kinoImg },
                               };
 
                               // Separate regular events and grouped events
@@ -1641,54 +1645,44 @@ const TribeAppMain: React.FC<{
                                   {/* Regular events */}
                                   {regularEvents.map(renderEvent)}
                                   
-                                  {/* Collapsible group sections — shown as compact event tiles */}
+                                  {/* Collapsible group sections — rendered as TribeEventCard */}
                                   {Object.entries(collapsibleGroups).map(([groupKey, events]) => {
                                     const groupId = `${date}_${groupKey}`;
                                     const isGroupExpanded = expandedGroups.has(groupId);
-                                    const { label, fallbackImg } = GROUP_LABELS[groupKey];
-                                    // Use first event with image as representative, or just first event
-                                    const representativeEvent = events.find(e => !!e.image_url) || events[0];
+                                    const { label, img } = GROUP_CONFIG[groupKey];
+                                    
+                                    // Create a fake TribeEvent for the group summary card
+                                    const groupEvent: TribeEvent = {
+                                      id: `group_${groupKey}_${date}`,
+                                      date: date,
+                                      time: null,
+                                      title: `${label} — ${events.length} Events`,
+                                      event: label,
+                                      category: groupKey,
+                                      image_url: img,
+                                      link: '',
+                                      description: events.slice(0, 3).map(e => e.title).join(' · '),
+                                    };
                                     
                                     return (
                                       <div key={groupKey}>
-                                        {/* Summary tile — looks like a compact event card */}
-                                        <button
+                                        <div 
                                           onClick={() => setExpandedGroups(prev => {
                                             const next = new Set(prev);
                                             if (next.has(groupId)) next.delete(groupId);
                                             else next.add(groupId);
                                             return next;
                                           })}
-                                          className="w-full text-left"
+                                          className="cursor-pointer"
                                         >
-                                          <div className="flex items-center gap-3 py-2 px-1 group">
-                                            {/* Thumbnail */}
-                                            <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                                              <img 
-                                                src={representativeEvent.image_url || fallbackImg} 
-                                                alt="" 
-                                                className="w-full h-full object-cover" 
-                                              />
-                                            </div>
-                                            {/* Info */}
-                                            <div className="flex-1 min-w-0">
-                                              <p className="text-[11px] font-bold text-white/70 tracking-[0.15em] uppercase">
-                                                {label}
-                                              </p>
-                                              <p className="text-[10px] text-white/30 mt-0.5">
-                                                {events.length} Events
-                                              </p>
-                                            </div>
-                                            {/* Expand arrow */}
-                                            <ChevronDown 
-                                              size={14} 
-                                              className={`text-white/25 group-hover:text-white/50 transition-all duration-200 shrink-0 ${isGroupExpanded ? 'rotate-180' : ''}`} 
-                                            />
-                                          </div>
-                                        </button>
-                                        {/* Expanded events */}
+                                          <TribeEventCard
+                                            event={groupEvent}
+                                            variant="compact"
+                                            onInteraction={() => {}}
+                                          />
+                                        </div>
                                         {isGroupExpanded && (
-                                          <div className="space-y-0">
+                                          <div className="space-y-0 pl-3 border-l border-white/[0.06]">
                                             {events.map(renderEvent)}
                                           </div>
                                         )}
