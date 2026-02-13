@@ -208,6 +208,9 @@ const TribeAppMain: React.FC<{
   const [attendingEventIds, setAttendingEventIds] = useState<Set<string>>(new Set());
   const [eventMatchScores, setEventMatchScores] = useState<Map<string, number>>(new Map());
 
+  // Collapsible category groups (Hochschulsport, VHS, Kino)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
   // Collapsed day sections state (for compact mode after first like)
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [hasLikedFirstEvent, setHasLikedFirstEvent] = useState<boolean>(() => {
@@ -1502,35 +1505,125 @@ const TribeAppMain: React.FC<{
                             {weekday}, {day}. {month}
                           </h3>
                           <div className="space-y-0">
-                            {displayedEvents.map((event) => {
-                              // Check if this event is past (today only)
-                              const isPastEvent = isToday && (() => {
-                                const match = event.time?.match(/^(\d{1,2})/);
-                                const hour = match ? parseInt(match[1], 10) : 23;
-                                return hour < currentHour;
-                              })();
+                            {(() => {
+                              // Categorize events into collapsible groups
+                              const getCollapsibleGroup = (event: GroupedEvent): string | null => {
+                                const title = (event.title || '').toLowerCase();
+                                const location = (event.location || '').toLowerCase();
+                                const organizer = (event.organizer || '').toLowerCase();
+                                
+                                // Hochschulsport
+                                if (title.includes('hochschulsport') || organizer.includes('hochschulsport') || 
+                                    (title.includes('uni ') && (title.includes('sport') || title.includes('fitness')))) {
+                                  return 'hochschulsport';
+                                }
+                                // VHS + Wochenmarkt
+                                if (title.includes('vhs') || title.includes('volkshochschule') || 
+                                    location.includes('vhs') || location.includes('volkshochschule') ||
+                                    title.includes('wochenmarkt')) {
+                                  return 'vhs';
+                                }
+                                // Kino
+                                if (title.includes('kino') || location.includes('kino') || 
+                                    location.includes('lichtwerk') || location.includes('cinemaxx') ||
+                                    location.includes('cinestar') || location.includes('filmhaus') ||
+                                    title.includes('film:') || title.includes('filmstart')) {
+                                  return 'kino';
+                                }
+                                return null;
+                              };
+
+                              const GROUP_LABELS: Record<string, { label: string; icon: string }> = {
+                                hochschulsport: { label: 'Hochschulsport', icon: '🏋️' },
+                                vhs: { label: 'VHS & Kurse', icon: '📚' },
+                                kino: { label: 'Kino', icon: '🎬' },
+                              };
+
+                              // Separate regular events and grouped events
+                              const regularEvents: GroupedEvent[] = [];
+                              const collapsibleGroups: Record<string, GroupedEvent[]> = {};
                               
+                              displayedEvents.forEach(event => {
+                                const group = getCollapsibleGroup(event);
+                                if (group) {
+                                  if (!collapsibleGroups[group]) collapsibleGroups[group] = [];
+                                  collapsibleGroups[group].push(event);
+                                } else {
+                                  regularEvents.push(event);
+                                }
+                              });
+
+                              // Interleave: render regular events, insert group headers at end
+                              const renderEvent = (event: GroupedEvent) => {
+                                const isPastEvent = isToday && (() => {
+                                  const match = event.time?.match(/^(\d{1,2})/);
+                                  const hour = match ? parseInt(match[1], 10) : 23;
+                                  return hour < currentHour;
+                                })();
+                                
+                                return (
+                                  <div 
+                                    key={event.id} 
+                                    className={`animate-fade-in transition-all duration-300 ease-out ${isPastEvent ? 'opacity-40' : ''}`}
+                                  >
+                                    <TribeEventCard
+                                      event={event}
+                                      variant="compact"
+                                      onJoinTribe={handleJoinTribe}
+                                      onInteraction={handleInteraction}
+                                      isLiked={likedEventIds.has(event.id) || event.allTimes?.some(t => likedEventIds.has(t.eventId))}
+                                      isAttending={attendingEventIds.has(event.id) || event.allTimes?.some(t => attendingEventIds.has(t.eventId))}
+                                      onToggleAttendance={handleToggleAttendance}
+                                      matchScore={eventMatchScores.get(event.id)}
+                                      isPast={isPastEvent}
+                                      isTopOfDay={event.id === topEventId && !isPastEvent}
+                                      allTimes={event.allTimes}
+                                    />
+                                  </div>
+                                );
+                              };
+
                               return (
-                                <div 
-                                  key={event.id} 
-                                  className={`animate-fade-in transition-all duration-300 ease-out ${isPastEvent ? 'opacity-40' : ''}`}
-                                >
-                                  <TribeEventCard
-                                    event={event}
-                                    variant="compact"
-                                    onJoinTribe={handleJoinTribe}
-                                    onInteraction={handleInteraction}
-                                    isLiked={likedEventIds.has(event.id) || event.allTimes?.some(t => likedEventIds.has(t.eventId))}
-                                    isAttending={attendingEventIds.has(event.id) || event.allTimes?.some(t => attendingEventIds.has(t.eventId))}
-                                    onToggleAttendance={handleToggleAttendance}
-                                    matchScore={eventMatchScores.get(event.id)}
-                                    isPast={isPastEvent}
-                                    isTopOfDay={event.id === topEventId && !isPastEvent}
-                                    allTimes={event.allTimes}
-                                  />
-                                </div>
+                                <>
+                                  {/* Regular events */}
+                                  {regularEvents.map(renderEvent)}
+                                  
+                                  {/* Collapsible group sections */}
+                                  {Object.entries(collapsibleGroups).map(([groupKey, events]) => {
+                                    const groupId = `${date}_${groupKey}`;
+                                    const isGroupExpanded = expandedGroups.has(groupId);
+                                    const { label, icon } = GROUP_LABELS[groupKey];
+                                    
+                                    return (
+                                      <div key={groupKey} className="mt-1">
+                                        <button
+                                          onClick={() => setExpandedGroups(prev => {
+                                            const next = new Set(prev);
+                                            if (next.has(groupId)) next.delete(groupId);
+                                            else next.add(groupId);
+                                            return next;
+                                          })}
+                                          className="w-full flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
+                                        >
+                                          <span className="text-[11px] text-white/50 font-medium tracking-wide">
+                                            {icon} {label} <span className="text-white/30">({events.length})</span>
+                                          </span>
+                                          <ChevronDown 
+                                            size={12} 
+                                            className={`text-white/30 transition-transform duration-200 ${isGroupExpanded ? 'rotate-180' : ''}`} 
+                                          />
+                                        </button>
+                                        {isGroupExpanded && (
+                                          <div className="mt-1 pl-2 border-l border-white/[0.06]">
+                                            {events.map(renderEvent)}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </>
                               );
-                            })}
+                            })()}
                           </div>
 
                           {/* Expand button for collapsed dates */}
