@@ -851,8 +851,19 @@ const TribeAppMain: React.FC<{
 
   // Get top events sorted by match score for hero section (infinite scroll)
   const spotlightEvents = useMemo(() => {
-    // First group similar events to avoid duplicates
-    const grouped = groupSimilarEvents(filteredEvents);
+    // Exclude collapsible group events from hero
+    const nonGrouped = filteredEvents.filter(e => {
+      const title = (e.title || '').toLowerCase();
+      const location = (e.location || '').toLowerCase();
+      const organizer = (e.organizer || '').toLowerCase();
+      const category = (e.category || '').toLowerCase();
+      if (title.includes('hochschulsport') || organizer.includes('hochschulsport')) return false;
+      if (category === 'sport') return false;
+      if (title.includes('vhs') || title.includes('volkshochschule') || location.includes('vhs') || location.includes('volkshochschule') || title.includes('wochenmarkt')) return false;
+      if (title.includes('kino') || location.includes('kino') || location.includes('lichtwerk') || location.includes('cinemaxx') || location.includes('cinestar') || location.includes('filmhaus')) return false;
+      return true;
+    });
+    const grouped = groupSimilarEvents(nonGrouped);
     
     // Sort by date first, then match score within each day
     const sorted = [...grouped].sort((a, b) => {
