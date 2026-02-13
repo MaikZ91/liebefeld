@@ -106,6 +106,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  
+  // "I'm in" state for top event cards: eventId -> list of usernames
+  const [imInUsers, setImInUsers] = useState<Record<string, string[]>>({});
 
   // Handle community onboarding
   useEffect(() => {
@@ -457,6 +460,44 @@ export const TribeCommunityBoard: React.FC<Props> = ({
       }
     }
     return null;
+  };
+
+  // Handle "I'm in" for top event cards
+  const handleImIn = async (eventId: string) => {
+    const username = userProfile?.username;
+    if (!username) return;
+    
+    setImInUsers(prev => {
+      const current = prev[eventId] || [];
+      if (current.includes(username)) {
+        return { ...prev, [eventId]: current.filter(u => u !== username) };
+      }
+      return { ...prev, [eventId]: [...current, username] };
+    });
+
+    // Also persist as a like on the community_events table
+    try {
+      const { data: event } = await supabase
+        .from('community_events')
+        .select('liked_by_users')
+        .eq('id', eventId)
+        .single();
+      
+      if (event) {
+        const likedBy = (event.liked_by_users as string[]) || [];
+        const alreadyLiked = likedBy.includes(username);
+        const updatedLikes = alreadyLiked 
+          ? likedBy.filter((u: string) => u !== username)
+          : [...likedBy, username];
+        
+        await supabase
+          .from('community_events')
+          .update({ liked_by_users: updatedLikes, likes: updatedLikes.length })
+          .eq('id', eventId);
+      }
+    } catch (err) {
+      console.error('Error toggling I\'m in:', err);
+    }
   };
 
   const filteredPosts = useMemo(() => {
@@ -933,9 +974,21 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                             <span className="text-[8px] text-white/70">{card.time} Uhr</span>
                                           )}
                                           {/* CTA Button */}
-                                          <button className="mt-1.5 w-full bg-black hover:bg-zinc-800 text-white text-[7px] font-bold uppercase tracking-widest py-1 rounded border border-white/20 transition-colors">
+                                          <button 
+                                            onClick={(e) => { e.stopPropagation(); handleImIn(card.id); }}
+                                            className={`mt-1.5 w-full text-[7px] font-bold uppercase tracking-widest py-1 rounded border transition-colors ${
+                                              (imInUsers[card.id] || []).includes(userProfile?.username) 
+                                                ? 'bg-white text-black border-white' 
+                                                : 'bg-black hover:bg-zinc-800 text-white border-white/20'
+                                            }`}
+                                          >
                                             I'M IN
                                           </button>
+                                          {(imInUsers[card.id] || []).length > 0 && (
+                                            <p className="text-[7px] text-white/60 mt-0.5 truncate">
+                                              {(imInUsers[card.id] || []).slice(0, 2).join(', ')}{(imInUsers[card.id] || []).length > 2 ? ` +${(imInUsers[card.id] || []).length - 2}` : ''}
+                                            </p>
+                                          )}
                                         </div>
                                       </div>
                                     </div>
