@@ -593,6 +593,32 @@ const TribeAppMain: React.FC<{
     // Remove blocked locations
     result = result.filter((e) => !e.location || !dislikeService.isLocationBlocked(e.location));
 
+    // Only show events with images
+    result = result.filter((e) => !!e.image_url);
+
+    // Exclude Hochschulsport, VHS, Kino, Sport, Cutie, liv/Hinterzimmer events
+    result = result.filter((e) => {
+      const title = (e.title || '').toLowerCase();
+      const location = (e.location || '').toLowerCase();
+      const organizer = (e.organizer || '').toLowerCase();
+      const category = (e.category || '').toLowerCase();
+      
+      // Hochschulsport
+      if (title.includes('hochschulsport') || organizer.includes('hochschulsport')) return false;
+      // VHS
+      if (title.includes('vhs') || title.includes('volkshochschule') || location.includes('vhs') || location.includes('volkshochschule')) return false;
+      // Kino
+      if (title.includes('kino') || location.includes('kino') || location.includes('lichtwerk') || location.includes('cinemaxx') || location.includes('cinestar') || location.includes('filmhaus')) return false;
+      // Sport
+      if (category === 'sport' || title.includes('hochschulsport')) return false;
+      // Cutie
+      if (title.includes('cutie') || organizer.includes('cutie')) return false;
+      // liv / Hinterzimmer
+      if (title.includes('liv ') || title.includes('liv/') || location.includes('hinterzimmer') || title.includes('hinterzimmer') || organizer.includes('hinterzimmer')) return false;
+      
+      return true;
+    });
+
     // Filter by selected date from calendar picker
     if (selectedDate) {
       const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
