@@ -68,7 +68,6 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
         .from('user_profiles')
         .select('username, avatar', { count: 'exact' })
         .gte('last_online', todayStart.toISOString())
-        .neq('username', userProfile.username || '')
         .order('last_online', { ascending: false })
         .limit(6);
       setActiveCount(count || 0);
