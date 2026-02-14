@@ -1437,10 +1437,11 @@ const TribeAppMain: React.FC<{
                   {/* Map Button */}
                   <button 
                     onClick={() => setView(ViewState.MAP)}
-                    className="text-zinc-500 hover:text-gold transition-colors"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold hover:bg-gold/20 transition-all"
                     title="Social Map"
                   >
-                    <MapIcon size={16} />
+                    <MapIcon size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Map</span>
                   </button>
 
                   {/* Calendar Picker */}

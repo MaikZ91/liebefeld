@@ -132,8 +132,9 @@ export const geocodeLocation = async (location: string, city: string = 'Bielefel
     case 'universität bielefeld':
       hardcodedResult = { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' };
       break;
+    case 'forum':
     case 'forum bielefeld':
-      hardcodedResult = { lat: 52.0163, lng: 8.5298, display_name: 'Forum Bielefeld' };
+      hardcodedResult = { lat: 52.0213, lng: 8.5330, display_name: 'Forum Bielefeld' };
       break;
     case 'nr.z.p':
     case 'kulturzentrum nummer zu platz':
@@ -158,8 +159,10 @@ export const geocodeLocation = async (location: string, city: string = 'Bielefel
     case 'irish pub bielefeld':
       hardcodedResult = { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' }; // Approximate
       break;
+    case 'stereo':
+    case 'stereo bielefeld':
     case 'stereobielefeld':
-     hardcodedResult = { lat: 52.022400, lng: 8.533000, display_name: 'Stereo Bielefeld' }; // Approximate
+      hardcodedResult = { lat: 52.0190, lng: 8.5340, display_name: 'Stereo Bielefeld' };
       break;
     case 'cafe europa':
     case 'cafe_europa_bi':
