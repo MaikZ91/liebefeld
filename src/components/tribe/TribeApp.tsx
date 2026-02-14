@@ -12,7 +12,7 @@ import hochschulsportImg from "@/assets/groups/hochschulsport.jpg";
 import sportImg from "@/assets/groups/sport.jpg";
 import vhsImg from "@/assets/groups/vhs.jpg";
 import kinoImg from "@/assets/groups/kino.jpg";
-import { TribeBottomNav } from "./TribeBottomNav";
+
 import { ProfileView } from "./ProfileView";
 import { TribeLiveTicker } from "@/components/TribeLiveTicker";
 import { LocationBlockDialog } from "./LocationBlockDialog";
@@ -1427,12 +1427,8 @@ const TribeAppMain: React.FC<{
         }}
       />
 
-      {/* --- BOTTOM NAVIGATION --- */}
-      <TribeBottomNav
-        currentView={view}
-        onViewChange={handleViewChange}
-        hasNewCommunityMessages={hasNewCommunityMessages}
-      />
+
+
 
       {/* --- EVENT DETAIL DIALOG --- */}
       {selectedEventId &&
