@@ -15,53 +15,53 @@ export const HARDCODED_COORDINATES: Record<string, GeocodeResult> = {
   // Uni
   'hochschulsport_bielefeld': { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' },
   'universität bielefeld': { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' },
-  // Forum Bielefeld – Herforder Str. 73
-  'forum': { lat: 52.0268, lng: 8.5405, display_name: 'Forum Bielefeld' },
-  'forum bielefeld': { lat: 52.0268, lng: 8.5405, display_name: 'Forum Bielefeld' },
-  'forum_bielefeld': { lat: 52.0268, lng: 8.5405, display_name: 'Forum Bielefeld' },
-  // NR.Z.P
-  'nr.z.p': { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' },
-  'kulturzentrum nummer zu platz': { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' },
+  // Forum Bielefeld – Meller Str. 2
+  'forum': { lat: 52.03082, lng: 8.52991, display_name: 'Forum Bielefeld' },
+  'forum bielefeld': { lat: 52.03082, lng: 8.52991, display_name: 'Forum Bielefeld' },
+  'forum_bielefeld': { lat: 52.03082, lng: 8.52991, display_name: 'Forum Bielefeld' },
+  // NR.Z.P – Große-Kurfürsten-Str. 81
+  'nr.z.p': { lat: 52.02739, lng: 8.52865, display_name: 'NRZP' },
+  'kulturzentrum nummer zu platz': { lat: 52.02739, lng: 8.52865, display_name: 'NRZP' },
   // Bunker Ulmenwall – Kreuzstraße 0
-  'bunker ulmenwall': { lat: 52.0235, lng: 8.5375, display_name: 'Bunker Ulmenwall' },
-  'bunkerulmenwall': { lat: 52.0235, lng: 8.5375, display_name: 'Bunker Ulmenwall' },
+  'bunker ulmenwall': { lat: 52.01617, lng: 8.53192, display_name: 'Bunker Ulmenwall' },
+  'bunkerulmenwall': { lat: 52.01617, lng: 8.53192, display_name: 'Bunker Ulmenwall' },
   // Ringlokschuppen – Stadtheider Str. 11
-  'ringlokschuppen': { lat: 52.0295, lng: 8.5595, display_name: 'Ringlokschuppen Bielefeld' },
-  'ringlokschuppen bielefeld': { lat: 52.0295, lng: 8.5595, display_name: 'Ringlokschuppen Bielefeld' },
+  'ringlokschuppen': { lat: 52.03720, lng: 8.55226, display_name: 'Ringlokschuppen Bielefeld' },
+  'ringlokschuppen bielefeld': { lat: 52.03720, lng: 8.55226, display_name: 'Ringlokschuppen Bielefeld' },
   // Sams
   'sams': { lat: 52.0215, lng: 8.5330, display_name: "Club Sam's" },
   'club sams': { lat: 52.0215, lng: 8.5330, display_name: "Club Sam's" },
-  // Movie – Feilenstraße
-  'movie bielefeld': { lat: 52.0198, lng: 8.5268, display_name: 'Movie Bielefeld' },
-  'movie': { lat: 52.0198, lng: 8.5268, display_name: 'Movie Bielefeld' },
-  // Platzhirsch
-  'platzhirsch': { lat: 52.0212, lng: 8.5335, display_name: 'Platzhirsch Bielefeld' },
-  'platzhirsch bielefeld': { lat: 52.0212, lng: 8.5335, display_name: 'Platzhirsch Bielefeld' },
-  // Irish Pub
-  'irish pub': { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' },
-  'irish pub bielefeld': { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' },
-  // Stereo Bielefeld – Feilenstraße 3
-  'stereo': { lat: 52.0198, lng: 8.5268, display_name: 'Stereo Bielefeld' },
-  'stereo bielefeld': { lat: 52.0198, lng: 8.5268, display_name: 'Stereo Bielefeld' },
-  'stereobielefeld': { lat: 52.0198, lng: 8.5268, display_name: 'Stereo Bielefeld' },
-  // Cafe Europa
-  'cafe europa': { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' },
-  'café europa': { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' },
-  'cafe_europa_bi': { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' },
-  // Arminia / SchücoArena
-  'arminia bielefeld': { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' },
-  'schücoarena': { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' },
-  // Cutie
-  'cutiebielefeld': { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' },
-  'cutie': { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' },
+  // Movie – Am Bahnhof 6
+  'movie bielefeld': { lat: 52.02812, lng: 8.53281, display_name: 'Movie Bielefeld' },
+  'movie': { lat: 52.02812, lng: 8.53281, display_name: 'Movie Bielefeld' },
+  // Platzhirsch – Boulevard 1
+  'platzhirsch': { lat: 52.03001, lng: 8.53131, display_name: 'Platzhirsch Bielefeld' },
+  'platzhirsch bielefeld': { lat: 52.03001, lng: 8.53131, display_name: 'Platzhirsch Bielefeld' },
+  // Irish Pub – Mauerstr. 38
+  'irish pub': { lat: 52.02190, lng: 8.52852, display_name: 'Irish Pub Bielefeld' },
+  'irish pub bielefeld': { lat: 52.02190, lng: 8.52852, display_name: 'Irish Pub Bielefeld' },
+  // Stereo Bielefeld – Ostwestfalen-Platz 3
+  'stereo': { lat: 52.02998, lng: 8.53112, display_name: 'Stereo Bielefeld' },
+  'stereo bielefeld': { lat: 52.02998, lng: 8.53112, display_name: 'Stereo Bielefeld' },
+  'stereobielefeld': { lat: 52.02998, lng: 8.53112, display_name: 'Stereo Bielefeld' },
+  // Cafe Europa – Jahnplatz 4
+  'cafe europa': { lat: 52.02325, lng: 8.53396, display_name: 'Cafe Europa' },
+  'café europa': { lat: 52.02325, lng: 8.53396, display_name: 'Cafe Europa' },
+  'cafe_europa_bi': { lat: 52.02325, lng: 8.53396, display_name: 'Cafe Europa' },
+  // Arminia / SchücoArena – Melanchthonstr. 31a
+  'arminia bielefeld': { lat: 52.03203, lng: 8.51678, display_name: 'SchücoArena (Arminia Bielefeld)' },
+  'schücoarena': { lat: 52.03203, lng: 8.51678, display_name: 'SchücoArena (Arminia Bielefeld)' },
+  // Cutie – Große-Kurfürsten-Str. 81
+  'cutiebielefeld': { lat: 52.02747, lng: 8.52869, display_name: 'Cutie Bielefeld' },
+  'cutie': { lat: 52.02747, lng: 8.52869, display_name: 'Cutie Bielefeld' },
   // Cantine – Bleichstraße 77a
-  'cantine': { lat: 52.024371, lng: 8.550264, display_name: 'Cantine Bielefeld' },
-  // Lokschuppen
-  'lokschuppen': { lat: 52.0295, lng: 8.5595, display_name: 'Lokschuppen Bielefeld' },
-  // Stadttheater / Theater Bielefeld
-  'theater bielefeld': { lat: 52.0228, lng: 8.5295, display_name: 'Theater Bielefeld' },
-  'stadttheater': { lat: 52.0228, lng: 8.5295, display_name: 'Theater Bielefeld' },
-  'stadttheater bielefeld': { lat: 52.0228, lng: 8.5295, display_name: 'Theater Bielefeld' },
+  'cantine': { lat: 52.02437, lng: 8.55026, display_name: 'Cantine Bielefeld' },
+  // Lokschuppen – Stadtheider Str.
+  'lokschuppen': { lat: 52.03720, lng: 8.55226, display_name: 'Lokschuppen Bielefeld' },
+  // Stadttheater / Theater Bielefeld – Niederwall 27
+  'theater bielefeld': { lat: 52.02076, lng: 8.53527, display_name: 'Theater Bielefeld' },
+  'stadttheater': { lat: 52.02076, lng: 8.53527, display_name: 'Theater Bielefeld' },
+  'stadttheater bielefeld': { lat: 52.02076, lng: 8.53527, display_name: 'Theater Bielefeld' },
 };
 
 // Speichere geocodierte Koordinaten für Wiederverwendung
