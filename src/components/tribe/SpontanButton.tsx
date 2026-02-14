@@ -237,8 +237,8 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                     )
                   ))}
                 </div>
-                <span className="text-[9px] text-yellow-500/50">
-                  {activeCount} heute
+                <span className="text-[9px] text-white/40 truncate max-w-[100px]">
+                  {activeUsers.slice(0, 2).map(u => u.username.replace('Guest_', '').slice(0, 6)).join(', ')}{activeCount > 2 ? ` +${activeCount - 2}` : ''}
                 </span>
               </div>
             )}
