@@ -1,48 +1,43 @@
 
-# Fix: Event-Geolocation auf der Map
+
+# Korrektur aller Geocoding-Koordinaten mit verifizierten OpenStreetMap-Daten
 
 ## Problem
-Die Map-Ansicht (`TribeMapView.tsx`) ruft bei **jedem Laden** die KI-basierte `ai-batch-geocode` Edge Function auf, um alle Event-Standorte zu geocodieren. Das hat zwei Probleme:
-1. **Bereits korrekt gecachte Koordinaten** in der `location_coordinates`-Tabelle werden komplett ignoriert
-2. **Hardcoded Mappings** aus `geocodingService.ts` (Forum, Stereo, Bunker Ulmenwall etc.) werden nicht genutzt
-3. Die KI liefert bei jedem Aufruf potenziell **unterschiedliche/falsche Koordinaten**
+Die bisherigen Koordinaten in `HARDCODED_COORDINATES` waren von der KI generiert und teilweise komplett falsch. Zum Beispiel wurde Stereo Bielefeld auf die Feilenstrasse gesetzt, obwohl es am Ostwestfalen-Platz 3 liegt.
 
-## Loesung
+## Verifizierte Koordinaten (Quelle: OpenStreetMap/Nominatim)
 
-### Schritt 1: Map nutzt gecachte Koordinaten zuerst
-Die `TribeMapView.tsx` wird so umgebaut, dass sie:
-1. Zuerst alle Koordinaten aus der `location_coordinates`-Tabelle laedt
-2. Dann die hardcoded Mappings aus `geocodingService.ts` anwendet (diese haben Prioritaet)
-3. Nur fuer **unbekannte Standorte** die KI-Batch-Funktion aufruft
-4. Neue KI-Ergebnisse in die `location_coordinates`-Tabelle cached
+| Location | Echte Adresse | Korrekt (lat, lng) | Bisher im Code |
+|---|---|---|---|
+| Stereo Bielefeld | Ostwestfalen-Platz 3 | 52.02998, 8.53112 | 52.0198, 8.5268 |
+| Forum | Meller Str. 2 | 52.03082, 8.52991 | 52.0268, 8.5405 |
+| Ringlokschuppen | Stadtheider Str. | 52.03720, 8.55226 | 52.0295, 8.5595 |
+| Bunker Ulmenwall | Kreuzstr. 0 | 52.01617, 8.53192 | 52.0235, 8.5375 |
+| Platzhirsch | Boulevard 1 | 52.03001, 8.53131 | 52.0212, 8.5335 |
+| NR.Z.P | Grosse-Kurfuersten-Str. 81 | 52.02739, 8.52865 | 52.027554, 8.528664 |
+| Cafe Europa | Jahnplatz 4 | 52.02325, 8.53396 | 52.022940, 8.532826 |
+| Movie | Am Bahnhof 6 | 52.02812, 8.53281 | 52.0198, 8.5268 |
+| Irish Pub | Mauerstr. 38 | 52.02190, 8.52852 | 52.0217, 8.5332 |
+| Cutie | Grosse-Kurfuersten-Str. 81 | 52.02747, 8.52869 | 52.027474, 8.528685 |
+| Cantine | Bleichstr. 77a | 52.02437, 8.55026 | 52.024371, 8.550264 |
+| Stadttheater | Niederwall 27 | 52.02076, 8.53527 | 52.0228, 8.5295 |
+| SchuecoArena | Melanchthonstr. 31a | 52.03203, 8.51678 | 52.031389, 8.516944 |
 
-### Schritt 2: Gemeinsame Geocoding-Logik
-Statt dass die Map eine eigene Geocoding-Logik hat, wird der bestehende `geocodingService.ts` wiederverwendet. Konkret:
-- Export der hardcoded Mappings als Konstante
-- Neue Hilfsfunktion `getCoordinatesForLocations(locations, city)` die Cache-DB, Hardcoded und KI kombiniert
+## Aenderung
 
-### Schritt 3: KI-Ergebnisse validieren und cachen
-Wenn die KI neue Koordinaten liefert, werden diese in `location_coordinates` gespeichert, damit sie beim naechsten Mal sofort verfuegbar sind.
+Nur eine Datei wird geaendert: `src/services/geocodingService.ts`
 
-## Technische Details
+Alle Eintraege in `HARDCODED_COORDINATES` werden mit den verifizierten OpenStreetMap-Koordinaten aktualisiert. Die groessten Korrekturen betreffen:
 
-### Aenderungen in `src/services/geocodingService.ts`
-- Export der hardcoded Koordinaten-Map als `HARDCODED_COORDINATES`
-- Neue Funktion `batchGeocodeWithCache(locations: string[], city: string)` die:
-  1. `location_coordinates` Tabelle abfragt
-  2. Hardcoded Mappings prueft
-  3. Nur fehlende Locations an `ai-batch-geocode` sendet
-  4. Ergebnisse cached
+- **Stereo**: War komplett falsch (Feilenstrasse statt Ostwestfalen-Platz) -- Abweichung ca. 1km
+- **Forum**: War falsch (Herforder Str. statt Meller Str.) -- Abweichung ca. 1km
+- **Bunker Ulmenwall**: War deutlich verschoben -- Abweichung ca. 800m
+- **Platzhirsch**: War deutlich verschoben -- Abweichung ca. 1km
+- **Movie**: Hatte dieselben falschen Koordinaten wie Stereo -- Abweichung ca. 1km
+- **Irish Pub**: War an falscher Stelle -- Abweichung ca. 500m
+- **Stadttheater**: War verschoben -- Abweichung ca. 500m
 
-### Aenderungen in `src/components/tribe/TribeMapView.tsx`
-- Batch-Geocoding useEffect ersetzt: statt direkt `ai-batch-geocode` aufzurufen, wird die neue `batchGeocodeWithCache` Funktion aus dem geocodingService verwendet
-- Fallback auf `getJitteredCoords` nur wenn wirklich keine Koordinaten gefunden wurden
+Einige Locations waren schon fast korrekt (NR.Z.P, Cutie, Cantine, SchuecoArena, Cafe Europa) und bekommen nur minimale Feinkorrekturen.
 
-### Keine Aenderungen an Edge Functions
-Die `ai-batch-geocode` und `ai-geocode-location` Functions bleiben unveraendert - sie werden nur seltener aufgerufen.
+Zusaetzlich werden auch die falschen Eintraege in der `location_coordinates`-Datenbanktabelle automatisch ueberschrieben, da die `batchGeocodeWithCache`-Funktion bei Hardcoded-Treffern die DB aktualisiert.
 
-## Erwartetes Ergebnis
-- Forum, Stereo und andere hardcoded Locations werden **sofort korrekt** angezeigt
-- Bereits gecachte Locations aus der DB werden ohne KI-Aufruf geladen
-- Nur wirklich neue/unbekannte Locations loesen einen KI-Aufruf aus
-- Ergebnisse werden persistent gecacht fuer zukuenftige Aufrufe
