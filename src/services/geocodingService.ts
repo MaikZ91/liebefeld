@@ -12,30 +12,56 @@ const coordinateCache = new Map<string, GeocodeResult>();
 
 // === EXPORTED HARDCODED COORDINATES ===
 export const HARDCODED_COORDINATES: Record<string, GeocodeResult> = {
+  // Uni
   'hochschulsport_bielefeld': { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' },
   'universität bielefeld': { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' },
-  'forum': { lat: 52.0213, lng: 8.5330, display_name: 'Forum Bielefeld' },
-  'forum bielefeld': { lat: 52.0213, lng: 8.5330, display_name: 'Forum Bielefeld' },
+  // Forum Bielefeld – Herforder Str. 73
+  'forum': { lat: 52.0268, lng: 8.5405, display_name: 'Forum Bielefeld' },
+  'forum bielefeld': { lat: 52.0268, lng: 8.5405, display_name: 'Forum Bielefeld' },
+  'forum_bielefeld': { lat: 52.0268, lng: 8.5405, display_name: 'Forum Bielefeld' },
+  // NR.Z.P
   'nr.z.p': { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' },
   'kulturzentrum nummer zu platz': { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' },
-  'bunker ulmenwall': { lat: 52.016027, lng: 8.531694, display_name: 'Bunker Ulmenwall' },
-  'sams': { lat: 52.021111, lng: 8.534722, display_name: "Club Sam's" },
-  'club sams': { lat: 52.021111, lng: 8.534722, display_name: "Club Sam's" },
-  'movie bielefeld': { lat: 52.021305, lng: 8.532611, display_name: 'Movie Bielefeld' },
-  'movie': { lat: 52.021305, lng: 8.532611, display_name: 'Movie Bielefeld' },
-  'platzhirsch': { lat: 52.021111, lng: 8.534722, display_name: 'Platzhirsch Bielefeld' },
-  'platzhirsch bielefeld': { lat: 52.021111, lng: 8.534722, display_name: 'Platzhirsch Bielefeld' },
+  // Bunker Ulmenwall – Kreuzstraße 0
+  'bunker ulmenwall': { lat: 52.0235, lng: 8.5375, display_name: 'Bunker Ulmenwall' },
+  'bunkerulmenwall': { lat: 52.0235, lng: 8.5375, display_name: 'Bunker Ulmenwall' },
+  // Ringlokschuppen – Stadtheider Str. 11
+  'ringlokschuppen': { lat: 52.0295, lng: 8.5595, display_name: 'Ringlokschuppen Bielefeld' },
+  'ringlokschuppen bielefeld': { lat: 52.0295, lng: 8.5595, display_name: 'Ringlokschuppen Bielefeld' },
+  // Sams
+  'sams': { lat: 52.0215, lng: 8.5330, display_name: "Club Sam's" },
+  'club sams': { lat: 52.0215, lng: 8.5330, display_name: "Club Sam's" },
+  // Movie – Feilenstraße
+  'movie bielefeld': { lat: 52.0198, lng: 8.5268, display_name: 'Movie Bielefeld' },
+  'movie': { lat: 52.0198, lng: 8.5268, display_name: 'Movie Bielefeld' },
+  // Platzhirsch
+  'platzhirsch': { lat: 52.0212, lng: 8.5335, display_name: 'Platzhirsch Bielefeld' },
+  'platzhirsch bielefeld': { lat: 52.0212, lng: 8.5335, display_name: 'Platzhirsch Bielefeld' },
+  // Irish Pub
   'irish pub': { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' },
   'irish pub bielefeld': { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' },
-  'stereo': { lat: 52.0190, lng: 8.5340, display_name: 'Stereo Bielefeld' },
-  'stereo bielefeld': { lat: 52.0190, lng: 8.5340, display_name: 'Stereo Bielefeld' },
-  'stereobielefeld': { lat: 52.0190, lng: 8.5340, display_name: 'Stereo Bielefeld' },
+  // Stereo Bielefeld – Feilenstraße 3
+  'stereo': { lat: 52.0198, lng: 8.5268, display_name: 'Stereo Bielefeld' },
+  'stereo bielefeld': { lat: 52.0198, lng: 8.5268, display_name: 'Stereo Bielefeld' },
+  'stereobielefeld': { lat: 52.0198, lng: 8.5268, display_name: 'Stereo Bielefeld' },
+  // Cafe Europa
   'cafe europa': { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' },
+  'café europa': { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' },
   'cafe_europa_bi': { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' },
+  // Arminia / SchücoArena
   'arminia bielefeld': { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' },
   'schücoarena': { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' },
+  // Cutie
   'cutiebielefeld': { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' },
   'cutie': { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' },
+  // Cantine – Bleichstraße 77a
+  'cantine': { lat: 52.024371, lng: 8.550264, display_name: 'Cantine Bielefeld' },
+  // Lokschuppen
+  'lokschuppen': { lat: 52.0295, lng: 8.5595, display_name: 'Lokschuppen Bielefeld' },
+  // Stadttheater / Theater Bielefeld
+  'theater bielefeld': { lat: 52.0228, lng: 8.5295, display_name: 'Theater Bielefeld' },
+  'stadttheater': { lat: 52.0228, lng: 8.5295, display_name: 'Theater Bielefeld' },
+  'stadttheater bielefeld': { lat: 52.0228, lng: 8.5295, display_name: 'Theater Bielefeld' },
 };
 
 // Speichere geocodierte Koordinaten für Wiederverwendung
@@ -109,11 +135,13 @@ export const batchGeocodeWithCache = async (
   for (const loc of locations) {
     const key = loc.toLowerCase();
 
-    // Step 2a: Check hardcoded
+    // Step 2a: Check hardcoded (highest priority, also updates DB cache)
     if (HARDCODED_COORDINATES[key]) {
       const hc = HARDCODED_COORDINATES[key];
       if (hc.lat !== null && hc.lng !== null) {
         results.set(key, { lat: hc.lat, lng: hc.lng });
+        // Update DB cache in background so stale AI entries get corrected
+        cacheCoordinatesInDB(loc, city, hc);
         continue;
       }
     }
