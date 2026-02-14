@@ -271,8 +271,8 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
               transition={{ type: 'spring', damping: 28, stiffness: 320 }}
               className="fixed inset-x-0 bottom-0 z-[80] max-h-[85vh] rounded-t-3xl overflow-hidden flex flex-col"
               style={{
-                background: 'linear-gradient(180deg, hsl(0 0% 7%) 0%, hsl(0 0% 4%) 100%)',
-                borderTop: '1px solid rgba(255,255,255,0.08)',
+                background: '#000',
+                borderTop: '1px solid rgba(255,255,255,0.1)',
               }}
             >
               {/* Handle */}
@@ -286,7 +286,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                   <div className="flex items-center gap-3">
                     <div className="relative">
                      <img src={MIA_AVATAR} alt="MIA" className="w-9 h-9 rounded-full object-cover" style={{ border: '1.5px solid rgba(255,255,255,0.2)' }} />
-                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-white border-2" style={{ borderColor: 'hsl(0, 0%, 7%)' }} />
+                     <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-white border-2 border-black" />
                     </div>
                     <div>
                       <h3 className="text-sm font-light tracking-[0.15em] text-white/90 uppercase" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -319,16 +319,16 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                             title={user.username}
                           >
                             {user.avatar ? (
-                              <img src={user.avatar} alt={user.username} className="w-7 h-7 rounded-full object-cover border-2 hover:scale-110 transition-transform" style={{ borderColor: 'hsl(0,0%,7%)' }} />
+                              <img src={user.avatar} alt={user.username} className="w-7 h-7 rounded-full object-cover border-2 border-black hover:scale-110 transition-transform" />
                             ) : (
-                              <div className="w-7 h-7 rounded-full bg-white/10 border-2 flex items-center justify-center text-[9px] font-bold text-white/60 hover:scale-110 transition-transform" style={{ borderColor: 'hsl(0,0%,7%)' }}>
+                              <div className="w-7 h-7 rounded-full bg-white/10 border-2 border-black flex items-center justify-center text-[9px] font-bold text-white/60 hover:scale-110 transition-transform">
                                 {user.username[0]?.toUpperCase()}
                               </div>
                             )}
                           </div>
                         ))}
                         {activeUsers.length > 5 && (
-                          <div className="w-7 h-7 rounded-full bg-white/[0.06] border-2 flex items-center justify-center text-[8px] font-bold text-white/40" style={{ borderColor: 'hsl(0,0%,7%)' }}>
+                          <div className="w-7 h-7 rounded-full bg-white/[0.06] border-2 border-black flex items-center justify-center text-[8px] font-bold text-white/40">
                             +{activeUsers.length - 5}
                           </div>
                         )}
@@ -555,10 +555,10 @@ const NotificationCard: React.FC<{
       <div className="shrink-0 mt-0.5 flex items-center">
         <div className="flex -space-x-2">
           {notification.matchAvatars.slice(0, 3).map((avatar, i) => (
-            <img key={i} src={avatar} alt="" className="w-8 h-8 rounded-full object-cover" style={{ border: '2px solid hsl(0, 0%, 5%)' }} />
+            <img key={i} src={avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-black" />
           ))}
           {(notification.matchCount || 0) > 3 && (
-            <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px] font-bold text-white/60" style={{ border: '2px solid hsl(0, 0%, 5%)' }}>
+            <div className="w-8 h-8 rounded-full bg-white/[0.06] border-2 border-black flex items-center justify-center text-[10px] font-bold text-white/60">
               +{(notification.matchCount || 0) - 3}
             </div>
           )}

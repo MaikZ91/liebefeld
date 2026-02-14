@@ -265,43 +265,41 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
        {/* Hero Profile Section */}
        <div className="relative">
          {/* Background gradient */}
-         <div className="absolute inset-0 bg-gradient-to-b from-gold/[0.04] via-transparent to-transparent" />
-         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_center,_rgba(180,140,60,0.06)_0%,_transparent_60%)]" />
-         
-         {/* Action buttons - top right */}
-         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-           {isEditing ? (
-             <>
-               <button onClick={handleCancel} className="px-3 py-1.5 bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-400 hover:text-white transition-all text-[10px] uppercase tracking-[0.15em] rounded-full">
-                 Abbrechen
-               </button>
-               <button onClick={handleSave} disabled={isSubmitting} className="px-3 py-1.5 bg-gold/20 backdrop-blur-sm border border-gold/40 text-gold hover:bg-gold/30 transition-all text-[10px] uppercase tracking-[0.15em] rounded-full disabled:opacity-50">
-                 {isSubmitting ? '...' : 'Speichern'}
-               </button>
-             </>
-           ) : (
-             <>
-               <button onClick={() => setIsEditing(true)} className="p-2 bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-400 hover:text-gold hover:border-gold/30 transition-all rounded-full">
-                 <Edit3 size={14} />
-               </button>
-               {onSignOut && (
-                 <button onClick={onSignOut} className="p-2 bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-500 hover:text-red-400 hover:border-red-500/30 transition-all rounded-full">
-                   <LogOut size={14} />
-                 </button>
-               )}
-             </>
-           )}
-         </div>
-
-         <div className="relative z-10 pt-8 pb-6 px-6">
-           {/* Early Access Badge - subtle, inline */}
-           <div className="flex justify-center mb-6">
-             <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white text-black">
-               <span className="text-[8px] font-light uppercase tracking-[0.25em]">Early Access</span>
-               <span className="text-[8px] text-black/30">·</span>
-               <span className="text-[8px] font-light uppercase tracking-[0.25em]">Founding Member</span>
-             </div>
-           </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_center,_rgba(255,255,255,0.03)_0%,_transparent_60%)] pointer-events-none" />
+          
+          <div className="relative z-10 pt-8 pb-6 px-6">
+            {/* Early Access Badge + Action Buttons */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-1.5 px-4 py-1.5 bg-white text-black">
+                <span className="text-[8px] font-light uppercase tracking-[0.25em]">Early Access</span>
+                <span className="text-[8px] text-black/30">·</span>
+                <span className="text-[8px] font-light uppercase tracking-[0.25em]">Founding Member</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <>
+                    <button onClick={handleCancel} className="px-3 py-1.5 bg-white/5 border border-white/10 text-white/50 hover:text-white transition-all text-[10px] uppercase tracking-[0.15em] rounded-full">
+                      Abbrechen
+                    </button>
+                    <button onClick={handleSave} disabled={isSubmitting} className="px-3 py-1.5 bg-white/20 border border-white/30 text-white hover:bg-white/30 transition-all text-[10px] uppercase tracking-[0.15em] rounded-full disabled:opacity-50">
+                      {isSubmitting ? '...' : 'Speichern'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => setIsEditing(true)} className="p-2.5 bg-white/10 border border-white/20 text-white/70 hover:text-white transition-all rounded-full">
+                      <Edit3 size={15} />
+                    </button>
+                    {onSignOut && (
+                      <button onClick={onSignOut} className="p-2.5 bg-white/10 border border-white/20 text-white/50 hover:text-red-400 transition-all rounded-full">
+                        <LogOut size={15} />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
 
            {/* Avatar - larger, more prominent */}
            <div className="flex justify-center mb-5">
