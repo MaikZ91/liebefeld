@@ -22,6 +22,7 @@ import { InterestsDialog } from "./InterestsDialog";
 import { MiaInlineChat } from "./MiaInlineChat";
 import { MiaNotificationHub } from "./MiaNotificationHub";
 import { LiveMapWidget } from "./LiveMapWidget";
+import { ExploreSectionCompact } from "./ExploreSectionCompact";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 import { OnboardingWorkflow } from "./onboarding/OnboardingWorkflow";
@@ -1820,31 +1821,46 @@ const TribeAppMain: React.FC<{
 
         {/* MIA is now integrated directly into the Explore page - no separate view needed */}
         {view === ViewState.COMMUNITY && (
-          <TribeCommunityBoard
-            selectedCity={selectedCity}
-            userProfile={userProfile}
-            onEditProfile={() => setView(ViewState.PROFILE)}
-            onboardingStep={isCommunityOnboarding ? currentStep : undefined}
-            onAdvanceOnboarding={advanceStep}
-            onMarkProfileComplete={markProfileComplete}
-            onMarkGreetingPosted={markGreetingPosted}
-            generateGreeting={generateGreeting}
-            onProfileClick={async (username) => {
-              setProfileDialog({ open: true, profile: null, loading: true });
-              try {
-                const { data, error } = await supabase
-                  .from("user_profiles")
-                  .select("*")
-                  .eq("username", username)
-                  .maybeSingle();
-                if (error) throw error;
-                setProfileDialog({ open: true, profile: data, loading: false });
-              } catch (err) {
-                console.error("Error fetching profile:", err);
-                setProfileDialog({ open: false, profile: null, loading: false });
-              }
-            }}
-          />
+          <>
+            {/* Explore Section - compact hero + collapsible feed above community */}
+            <ExploreSectionCompact
+              spotlightEvents={spotlightEvents}
+              feedEvents={groupSimilarEvents(feedEvents).slice(0, 30)}
+              likedEventIds={likedEventIds}
+              attendingEventIds={attendingEventIds}
+              eventMatchScores={eventMatchScores}
+              onInteraction={handleInteraction}
+              onToggleAttendance={handleToggleAttendance}
+              onHeroScroll={handleHeroScroll}
+              heroLoadedCount={heroLoadedCount}
+              totalFilteredCount={filteredEvents.length}
+            />
+            <TribeCommunityBoard
+              selectedCity={selectedCity}
+              userProfile={userProfile}
+              onEditProfile={() => setView(ViewState.PROFILE)}
+              onboardingStep={isCommunityOnboarding ? currentStep : undefined}
+              onAdvanceOnboarding={advanceStep}
+              onMarkProfileComplete={markProfileComplete}
+              onMarkGreetingPosted={markGreetingPosted}
+              generateGreeting={generateGreeting}
+              onProfileClick={async (username) => {
+                setProfileDialog({ open: true, profile: null, loading: true });
+                try {
+                  const { data, error } = await supabase
+                    .from("user_profiles")
+                    .select("*")
+                    .eq("username", username)
+                    .maybeSingle();
+                  if (error) throw error;
+                  setProfileDialog({ open: true, profile: data, loading: false });
+                } catch (err) {
+                  console.error("Error fetching profile:", err);
+                  setProfileDialog({ open: false, profile: null, loading: false });
+                }
+              }}
+            />
+          </>
         )}
 
         {/* User Profile Dialog */}
