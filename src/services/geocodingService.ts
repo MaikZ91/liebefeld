@@ -10,10 +10,38 @@ interface GeocodeResult {
 // Cache für bereits aufgelöste Koordinaten
 const coordinateCache = new Map<string, GeocodeResult>();
 
+// === EXPORTED HARDCODED COORDINATES ===
+export const HARDCODED_COORDINATES: Record<string, GeocodeResult> = {
+  'hochschulsport_bielefeld': { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' },
+  'universität bielefeld': { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' },
+  'forum': { lat: 52.0213, lng: 8.5330, display_name: 'Forum Bielefeld' },
+  'forum bielefeld': { lat: 52.0213, lng: 8.5330, display_name: 'Forum Bielefeld' },
+  'nr.z.p': { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' },
+  'kulturzentrum nummer zu platz': { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' },
+  'bunker ulmenwall': { lat: 52.016027, lng: 8.531694, display_name: 'Bunker Ulmenwall' },
+  'sams': { lat: 52.021111, lng: 8.534722, display_name: "Club Sam's" },
+  'club sams': { lat: 52.021111, lng: 8.534722, display_name: "Club Sam's" },
+  'movie bielefeld': { lat: 52.021305, lng: 8.532611, display_name: 'Movie Bielefeld' },
+  'movie': { lat: 52.021305, lng: 8.532611, display_name: 'Movie Bielefeld' },
+  'platzhirsch': { lat: 52.021111, lng: 8.534722, display_name: 'Platzhirsch Bielefeld' },
+  'platzhirsch bielefeld': { lat: 52.021111, lng: 8.534722, display_name: 'Platzhirsch Bielefeld' },
+  'irish pub': { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' },
+  'irish pub bielefeld': { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' },
+  'stereo': { lat: 52.0190, lng: 8.5340, display_name: 'Stereo Bielefeld' },
+  'stereo bielefeld': { lat: 52.0190, lng: 8.5340, display_name: 'Stereo Bielefeld' },
+  'stereobielefeld': { lat: 52.0190, lng: 8.5340, display_name: 'Stereo Bielefeld' },
+  'cafe europa': { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' },
+  'cafe_europa_bi': { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' },
+  'arminia bielefeld': { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' },
+  'schücoarena': { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' },
+  'cutiebielefeld': { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' },
+  'cutie': { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' },
+};
+
 // Speichere geocodierte Koordinaten für Wiederverwendung
 const cacheCoordinatesInDB = async (location: string, city: string, coordinates: GeocodeResult) => {
   try {
-    // Use type assertion to work with the new table
+    if (coordinates.lat === null || coordinates.lng === null) return;
     const { error } = await (supabase as any)
       .from('location_coordinates')
       .upsert({
@@ -23,13 +51,8 @@ const cacheCoordinatesInDB = async (location: string, city: string, coordinates:
         lng: coordinates.lng,
         display_name: coordinates.display_name,
         updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'location,city'
-      });
-
-    if (error) {
-      console.warn('[Geocoding] Could not cache coordinates in DB:', error);
-    }
+      }, { onConflict: 'location,city' });
+    if (error) console.warn('[Geocoding] Could not cache coordinates in DB:', error);
   } catch (error) {
     console.warn('[Geocoding] Could not cache coordinates in DB:', error);
   }
@@ -38,24 +61,14 @@ const cacheCoordinatesInDB = async (location: string, city: string, coordinates:
 // Lade gecachte Koordinaten aus der Datenbank
 export const loadCachedCoordinates = async (): Promise<void> => {
   try {
-    // Use type assertion to work with the new table
     const { data, error } = await (supabase as any)
       .from('location_coordinates')
       .select('*');
-    
-    if (error) {
-      console.warn('[Geocoding] Could not load cached coordinates:', error);
-      return;
-    }
-    
+    if (error) { console.warn('[Geocoding] Could not load cached coordinates:', error); return; }
     if (data) {
       data.forEach((coord: any) => {
         const cacheKey = `${coord.location}_${coord.city}`;
-        coordinateCache.set(cacheKey, {
-          lat: coord.lat,
-          lng: coord.lng,
-          display_name: coord.display_name
-        });
+        coordinateCache.set(cacheKey, { lat: coord.lat, lng: coord.lng, display_name: coord.display_name });
       });
       console.log(`[Geocoding] Loaded ${data.length} cached coordinates`);
     }
@@ -77,15 +90,90 @@ const getCityFallbackCoordinates = (city: string): GeocodeResult => {
     'münster': { lat: 51.9607, lng: 7.6261 },
     'paris': { lat: 48.8566, lng: 2.3522 }
   };
-  
   const cityKey = city.toLowerCase();
-  if (cityCoordinates[cityKey]) {
-    return cityCoordinates[cityKey];
+  return cityCoordinates[cityKey] || cityCoordinates['bielefeld'];
+};
+
+// === BATCH GEOCODE WITH CACHE (new!) ===
+// Used by TribeMapView to geocode all event locations efficiently
+export const batchGeocodeWithCache = async (
+  locations: string[],
+  city: string
+): Promise<Map<string, { lat: number; lng: number }>> => {
+  const results = new Map<string, { lat: number; lng: number }>();
+  const missing: string[] = [];
+
+  // Step 1: Load DB cache into memory (if not already)
+  await loadCachedCoordinatesForLocations(locations, city);
+
+  for (const loc of locations) {
+    const key = loc.toLowerCase();
+
+    // Step 2a: Check hardcoded
+    if (HARDCODED_COORDINATES[key]) {
+      const hc = HARDCODED_COORDINATES[key];
+      if (hc.lat !== null && hc.lng !== null) {
+        results.set(key, { lat: hc.lat, lng: hc.lng });
+        continue;
+      }
+    }
+
+    // Step 2b: Check in-memory cache (populated from DB)
+    const cacheKey = `${key}_${city.toLowerCase()}`;
+    const cached = coordinateCache.get(cacheKey);
+    if (cached && cached.lat !== null && cached.lng !== null) {
+      results.set(key, { lat: cached.lat, lng: cached.lng });
+      continue;
+    }
+
+    // Step 2c: Unknown → needs AI
+    missing.push(loc);
   }
-  
-  // Default fallback to Bielefeld
-  console.warn(`[Geocoding] No fallback coordinates for city: ${city}, using Bielefeld`);
-  return cityCoordinates['bielefeld'];
+
+  console.log(`[Geocoding] Batch: ${results.size} cached/hardcoded, ${missing.length} need AI`);
+
+  // Step 3: Call AI only for missing locations
+  if (missing.length > 0) {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-batch-geocode', {
+        body: { locations: missing, cityContext: city }
+      });
+
+      if (!error && data?.coordinates) {
+        for (const c of data.coordinates) {
+          if (c.lat && c.lng && c.location) {
+            const locKey = c.location.toLowerCase();
+            results.set(locKey, { lat: c.lat, lng: c.lng });
+            // Cache in DB for next time
+            await cacheCoordinatesInDB(c.location, city, { lat: c.lat, lng: c.lng, display_name: c.location });
+          }
+        }
+      }
+    } catch (err) {
+      console.error('[Geocoding] AI batch geocode failed:', err);
+    }
+  }
+
+  return results;
+};
+
+// Helper: load cached coordinates from DB for specific locations
+const loadCachedCoordinatesForLocations = async (locations: string[], city: string): Promise<void> => {
+  try {
+    const lowerLocations = locations.map(l => l.toLowerCase());
+    const { data, error } = await (supabase as any)
+      .from('location_coordinates')
+      .select('*')
+      .eq('city', city.toLowerCase())
+      .in('location', lowerLocations);
+    if (error) return;
+    if (data) {
+      data.forEach((coord: any) => {
+        const cacheKey = `${coord.location}_${coord.city}`;
+        coordinateCache.set(cacheKey, { lat: coord.lat, lng: coord.lng, display_name: coord.display_name });
+      });
+    }
+  } catch { /* ignore */ }
 };
 
 // Batch-Geocoding für mehrere Events
@@ -93,131 +181,49 @@ export const geocodeMultipleLocations = async (
   locations: Array<{ location: string; city?: string }>
 ): Promise<Map<string, GeocodeResult>> => {
   const results = new Map<string, GeocodeResult>();
-  
-  // Verarbeite in kleineren Batches um Rate Limits zu vermeiden
   const batchSize = 5;
   for (let i = 0; i < locations.length; i += batchSize) {
     const batch = locations.slice(i, i + batchSize);
-    
     const batchPromises = batch.map(async ({ location, city = 'Bielefeld' }) => {
       const key = `${location}_${city}`;
       const coordinates = await geocodeLocation(location, city);
       results.set(key, coordinates);
-      
-      // Kurze Pause zwischen Anfragen um Rate Limits zu respektieren
       await new Promise(resolve => setTimeout(resolve, 200));
     });
-    
     await Promise.all(batchPromises);
   }
-  
   return results;
 };
 
-
 export const geocodeLocation = async (location: string, city: string = 'Bielefeld'): Promise<GeocodeResult> => {
   const cacheKey = `${location}_${city}`.toLowerCase();
-  
-  // Prüfe Cache zuerst
-  if (coordinateCache.has(cacheKey)) {
-    return coordinateCache.get(cacheKey)!;
-  }
+  if (coordinateCache.has(cacheKey)) return coordinateCache.get(cacheKey)!;
 
-  // --- HARDCODED MAPPINGS für spezifische Orte ---
+  // Check hardcoded
   const lowerCaseLocation = location.toLowerCase();
-  let hardcodedResult: GeocodeResult | null = null;
-
-  switch (lowerCaseLocation) {
-    case 'hochschulsport_bielefeld':
-    case 'universität bielefeld':
-      hardcodedResult = { lat: 52.0357, lng: 8.5042, display_name: 'Universität Bielefeld' };
-      break;
-    case 'forum':
-    case 'forum bielefeld':
-      hardcodedResult = { lat: 52.0213, lng: 8.5330, display_name: 'Forum Bielefeld' };
-      break;
-    case 'nr.z.p':
-    case 'kulturzentrum nummer zu platz':
-      hardcodedResult = { lat: 52.027554, lng: 8.528664, display_name: 'NRZP' };
-      break;
-    case 'bunker ulmenwall':
-      hardcodedResult = { lat: 52.016027, lng: 8.531694, display_name: 'Bunker Ulmenwall' };
-      break;
-    case 'sams':
-    case 'club sams':
-      hardcodedResult = { lat: 52.021111, lng: 8.534722, display_name: 'Club Sam\'s' };
-      break;
-    case 'movie bielefeld':
-    case 'movie':
-      hardcodedResult = { lat: 52.021305, lng: 8.532611, display_name: 'Movie Bielefeld' };
-      break;
-    case 'platzhirsch':
-    case 'platzhirsch bielefeld':
-      hardcodedResult = { lat: 52.021111, lng: 8.534722, display_name: 'Platzhirsch Bielefeld' }; // Approximate, same as Sams
-      break;
-    case 'irish pub':
-    case 'irish pub bielefeld':
-      hardcodedResult = { lat: 52.0217, lng: 8.5332, display_name: 'Irish Pub Bielefeld' }; // Approximate
-      break;
-    case 'stereo':
-    case 'stereo bielefeld':
-    case 'stereobielefeld':
-      hardcodedResult = { lat: 52.0190, lng: 8.5340, display_name: 'Stereo Bielefeld' };
-      break;
-    case 'cafe europa':
-    case 'cafe_europa_bi':
-      hardcodedResult = { lat: 52.022940, lng: 8.532826, display_name: 'Cafe Europa' };
-      break;
-    case 'arminia bielefeld':
-    case 'schücoarena':
-      hardcodedResult = { lat: 52.031389, lng: 8.516944, display_name: 'SchücoArena (Arminia Bielefeld)' };
-      break;
-    case 'cutiebielefeld':
-    case 'cutie':
-      hardcodedResult = { lat: 52.027474, lng: 8.528685, display_name: 'Cutie Bielefeld' };
-      break;
+  if (HARDCODED_COORDINATES[lowerCaseLocation]) {
+    const result = HARDCODED_COORDINATES[lowerCaseLocation];
+    coordinateCache.set(cacheKey, result);
+    await cacheCoordinatesInDB(location, city, result);
+    return result;
   }
 
-  if (hardcodedResult) {
-    console.log(`[Geocoding] Hardcoded match for ${location}, returning ${hardcodedResult.display_name} coordinates.`);
-    coordinateCache.set(cacheKey, hardcodedResult);
-    await cacheCoordinatesInDB(location, city, hardcodedResult);
-    return hardcodedResult;
-  }
-
-  // --- AUSSCHLIESSLICH KI-Geocoding-Funktion aufrufen (wenn nicht hartkodiert) ---
+  // AI geocoding
   try {
     console.log(`[Geocoding] Calling AI Edge function for "${location}" with city context "${city}"`);
-    
-    // Aufruf Ihrer bereitgestellten Edge Function
     const { data, error: aiError } = await supabase.functions.invoke('ai-geocode-location', {
       body: { locationString: location, cityContext: city }
     });
+    if (aiError) return getCityFallbackCoordinates(city);
 
-    if (aiError) {
-      console.error('[Geocoding] AI Edge function invocation error:', aiError);
-      // Wenn die KI-Funktion selbst einen Fehler wirft, fällt die Funktion direkt auf den letzten Fallback zurück
-      return getCityFallbackCoordinates(city);
-    }
-
-    const aiResult: GeocodeResult = {
-      lat: data?.lat || null,
-      lng: data?.lng || null,
-      display_name: location // KI liefert keinen Displaynamen, hier Originalstring verwenden
-    };
-
+    const aiResult: GeocodeResult = { lat: data?.lat || null, lng: data?.lng || null, display_name: location };
     if (aiResult.lat !== null && aiResult.lng !== null) {
-      console.log(`[Geocoding] AI successfully found coordinates for ${location}: ${aiResult.lat}, ${aiResult.lng}`);
       coordinateCache.set(cacheKey, aiResult);
       await cacheCoordinatesInDB(location, city, aiResult);
-      return aiResult; // Erfolg, Ergebnis zurückgeben
-    } else {
-      console.warn(`[Geocoding] AI found no valid coordinates for: ${location}. Using city fallback.`);
-      return getCityFallbackCoordinates(city); // KI konnte keine gültigen Koordinaten finden
+      return aiResult;
     }
-
-  } catch (aiCallException) {
-    console.error(`[Geocoding] Exception during AI geocoding call for ${location}:`, aiCallException);
-    return getCityFallbackCoordinates(city); // Unvorhergesehener Fehler beim KI-Aufruf
+    return getCityFallbackCoordinates(city);
+  } catch {
+    return getCityFallbackCoordinates(city);
   }
 };
