@@ -9,10 +9,8 @@ interface TribeBottomNavProps {
 }
 
 export const TribeBottomNav: React.FC<TribeBottomNavProps> = ({ currentView, onViewChange, hasNewCommunityMessages }) => {
-  // Community is now the main page (left), Explore on right
   const navItems = [
     { view: ViewState.COMMUNITY, icon: Users, label: 'Community', hasNotification: hasNewCommunityMessages, isCenterButton: true },
-    { view: ViewState.FEED, icon: Home, label: 'Explore' },
   ];
 
   return (
