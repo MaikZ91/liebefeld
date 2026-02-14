@@ -381,15 +381,12 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
               <button 
                 onClick={handleGetSummary}
                 disabled={loadingSummary}
-                className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 transition-all ${
-                  summary 
-                    ? 'bg-gold text-black' 
-                    : 'bg-gradient-to-r from-gold/20 to-amber-500/20 text-gold border border-gold/40 hover:bg-gold hover:text-black'
-                }`}
+                className="px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 transition-all isolate"
+                style={{ backgroundColor: '#FFFFFF', color: '#000000' }}
                 title="Vybe anzeigen"
               >
                 {loadingSummary ? (
-                  <div className="w-3 h-3 border border-gold border-t-black rounded-full animate-spin" />
+                  <div className="w-3 h-3 border border-black border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Sparkles size={10} fill={summary ? "currentColor" : "none"} />
                 )}
