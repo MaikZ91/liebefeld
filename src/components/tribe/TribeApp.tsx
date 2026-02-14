@@ -1437,7 +1437,8 @@ const TribeAppMain: React.FC<{
                   {/* Map Button */}
                   <button 
                     onClick={() => setView(ViewState.MAP)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gold/10 border border-gold/30 text-gold hover:bg-gold/20 transition-all"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded transition-all isolate"
+                    style={{ backgroundColor: '#FFFFFF', color: '#000000' }}
                     title="Social Map"
                   >
                     <MapIcon size={14} />
