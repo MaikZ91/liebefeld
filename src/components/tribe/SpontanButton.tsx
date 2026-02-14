@@ -72,7 +72,9 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
         .limit(6);
       setActiveCount(count || 0);
       if (data) {
-        setActiveUsers(data);
+        const real = data.filter(u => !u.username.startsWith('Guest_'));
+        setActiveUsers(real);
+        setActiveCount(real.length);
       }
     };
     fetchActiveUsers();
