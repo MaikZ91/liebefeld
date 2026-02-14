@@ -280,7 +280,7 @@ export const LiveMapWidget: React.FC<LiveMapWidgetProps> = ({
             </span>
             <Slider
               value={timeWindow}
-              min={0}
+              min={currentHour}
               max={28}
               step={1}
               onValueChange={(val) => setTimeWindow(val)}

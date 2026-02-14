@@ -713,7 +713,7 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({
             </span>
             <Slider
               value={timeWindow}
-              min={0}
+              min={currentHour}
               max={28}
               step={1}
               onValueChange={(val) => setTimeWindow(val)}
