@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, ArrowUp, Star } from 'lucide-react';
+import { X, Sparkles, ArrowUp, Star, Users } from 'lucide-react';
 import { useMiaNotifications } from '@/hooks/useMiaNotifications';
 import { MiaNotification } from '@/services/miaNotificationService';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { usePersonalizedSuggestions } from '@/hooks/usePersonalizedSuggestions';
 import { getTribeResponse } from '@/services/tribe/aiHelpers';
 import { TribeEvent } from '@/types/tribe';
 import { MiaEventCard } from './MiaEventCard';
+import { supabase } from '@/integrations/supabase/client';
 
 const MIA_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150";
 
@@ -59,6 +60,30 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Active users (recently online)
+  const [activeUsers, setActiveUsers] = useState<Array<{ username: string; avatar: string | null }>>([]);
+  
+  useEffect(() => {
+    if (!isOpen) return;
+    const loadActiveUsers = async () => {
+      try {
+        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const { data } = await supabase
+          .from('user_profiles')
+          .select('username, avatar')
+          .gte('last_online', fiveMinAgo)
+          .neq('username', username)
+          .limit(8);
+        if (data) {
+          setActiveUsers(data.filter(u => !u.username.startsWith('Guest_')));
+        }
+      } catch (err) {
+        console.error('Error loading active users:', err);
+      }
+    };
+    loadActiveUsers();
+  }, [isOpen, username]);
 
   const suggestions = usePersonalizedSuggestions(
     { username, interests, favorite_locations, hobbies },
@@ -272,6 +297,48 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                     <X size={14} />
                   </button>
                 </div>
+
+                {/* Active Users Widget */}
+                {activeUsers.length > 0 && (
+                  <div className="mt-1 p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <Users size={10} className="text-white/40" />
+                        <span className="text-[9px] text-white/40 uppercase tracking-[0.15em] font-medium">Gerade aktiv</span>
+                      </div>
+                      <span className="text-[9px] text-white/25">{activeUsers.length} online</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex -space-x-2">
+                        {activeUsers.slice(0, 5).map((user, i) => (
+                          <button
+                            key={user.username}
+                            onClick={() => { onViewProfile?.(user.username); setIsOpen(false); }}
+                            className="relative group/avatar"
+                            title={user.username}
+                          >
+                            {user.avatar ? (
+                              <img src={user.avatar} alt={user.username} className="w-7 h-7 rounded-full object-cover border-2 hover:scale-110 transition-transform" style={{ borderColor: 'hsl(0,0%,7%)' }} />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-white/10 border-2 flex items-center justify-center text-[9px] font-bold text-white/60 hover:scale-110 transition-transform" style={{ borderColor: 'hsl(0,0%,7%)' }}>
+                                {user.username[0]?.toUpperCase()}
+                              </div>
+                            )}
+                            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border" style={{ borderColor: 'hsl(0,0%,7%)' }} />
+                          </button>
+                        ))}
+                        {activeUsers.length > 5 && (
+                          <div className="w-7 h-7 rounded-full bg-white/[0.06] border-2 flex items-center justify-center text-[8px] font-bold text-white/40" style={{ borderColor: 'hsl(0,0%,7%)' }}>
+                            +{activeUsers.length - 5}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-white/30 font-light ml-1">
+                        Schreib sie an 👋
+                      </p>
+                    </div>
+                  </div>
+                )}
 
               </div>
 
