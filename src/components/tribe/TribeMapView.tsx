@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { TribeEvent } from '@/types/tribe';
-import { Calendar, MapPin, Navigation, Radio, Users, ChevronUp, ChevronDown, X, Compass } from 'lucide-react';
+import { Clock, MapPin, Navigation, Radio, Users, ChevronUp, ChevronDown, X, Compass } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { loadLeaflet } from '@/utils/leafletLoader';
 import { cn } from '@/lib/utils';
@@ -113,7 +114,9 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({
   const nearbyMarkersRef = useRef<any[]>([]);
   const { toast } = useToast();
   
-  const [filterMode, setFilterMode] = useState<'TODAY' | 'TOMORROW' | 'WEEK'>('TODAY');
+  const now = new Date();
+  const currentHour = now.getHours();
+  const [timeWindow, setTimeWindow] = useState<number[]>([currentHour, Math.min(currentHour + 6, 28)]);
   const [eventCoordinates, setEventCoordinates] = useState<Map<string, {lat: number, lng: number}>>(new Map());
   const [leafletReady, setLeafletReady] = useState(typeof (window as any).L !== 'undefined');
   
@@ -334,34 +337,30 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({
     }));
   };
 
-  // Filter events based on date range
+  const formatHour = (h: number) => {
+    const normalized = h >= 24 ? h - 24 : h;
+    return `${normalized.toString().padStart(2, '0')}:00`;
+  };
+
+  // Filter events: today only, within time window, exclude past
   const filteredEvents = useMemo(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    let endDate = new Date(today);
-    if (filterMode === 'TOMORROW') {
-      endDate.setDate(endDate.getDate() + 1);
-    } else if (filterMode === 'WEEK') {
-      endDate.setDate(endDate.getDate() + 7);
-    }
+    const todayStr = today.toISOString().split('T')[0];
     
     return events.filter(event => {
       const eventDate = parseDateString(event.date);
       if (!eventDate) return false;
-      eventDate.setHours(0, 0, 0, 0);
+      const eDateStr = eventDate.toISOString().split('T')[0];
+      if (eDateStr !== todayStr) return false;
       
-      if (filterMode === 'TODAY') {
-        return eventDate.getTime() === today.getTime();
-      } else if (filterMode === 'TOMORROW') {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return eventDate.getTime() === tomorrow.getTime();
-      } else {
-        return eventDate >= today && eventDate <= endDate;
-      }
+      // Parse event hour
+      const timeMatch = event.time?.match(/^(\d{1,2})/);
+      const eventHour = timeMatch ? parseInt(timeMatch[1], 10) : 0;
+      
+      // Must be within slider range and not in the past
+      return eventHour >= timeWindow[0] && eventHour <= timeWindow[1] && eventHour >= currentHour - 2;
     });
-  }, [events, filterMode]);
+  }, [events, timeWindow, currentHour]);
 
   // Batch-Geocoding
   useEffect(() => {
@@ -709,42 +708,74 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({
       
       <div id="map" ref={mapRef} className="h-full w-full"></div>
       
-      {/* Top Left: Date Filter */}
-      <div className="absolute top-4 left-4 z-[400] pointer-events-none">
-        <div className="bg-black/90 backdrop-blur-md px-4 py-3 border border-white/10 shadow-xl pointer-events-auto rounded-xl">
+      {/* Top Left: Time Slider */}
+      <div className="absolute top-4 left-4 right-20 z-[400] pointer-events-none">
+        <div className="bg-black/90 backdrop-blur-md px-4 py-3 border border-white/10 shadow-xl pointer-events-auto rounded-xl max-w-xs">
           <div className="flex items-center gap-2 mb-2">
-            <Calendar size={14} className="text-gold" />
-            <span className="text-xs font-semibold text-white uppercase tracking-wider">Events</span>
+            <Clock size={14} className="text-gold" />
+            <span className="text-xs font-semibold text-white uppercase tracking-wider">Heute</span>
+            <span className="text-[10px] text-zinc-500 ml-auto">{filteredEvents.length} Events</span>
+          </div>
+          
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] text-zinc-400 font-medium w-10 shrink-0">
+              {formatHour(timeWindow[0])}
+            </span>
+            <Slider
+              value={timeWindow}
+              min={0}
+              max={28}
+              step={1}
+              onValueChange={(val) => setTimeWindow(val)}
+              className="flex-1"
+            />
+            <span className="text-[10px] text-zinc-400 font-medium w-10 shrink-0 text-right">
+              {formatHour(timeWindow[1])}
+            </span>
           </div>
           
           <div className="flex gap-1">
-            {(['TODAY', 'TOMORROW', 'WEEK'] as const).map(mode => (
-              <button 
-                key={mode}
-                onClick={() => setFilterMode(mode)}
-                className={cn(
-                  "px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all rounded-lg",
-                  filterMode === mode 
-                    ? 'bg-gold text-black' 
-                    : 'bg-white/5 text-zinc-400 hover:bg-white/10'
-                )}
-              >
-                {mode === 'TODAY' ? 'Heute' : mode === 'TOMORROW' ? 'Morgen' : '7 Tage'}
-              </button>
-            ))}
+            <button
+              onClick={() => setTimeWindow([currentHour, Math.min(currentHour + 4, 28)])}
+              className={cn(
+                "px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                timeWindow[0] === currentHour && timeWindow[1] === Math.min(currentHour + 4, 28)
+                  ? "bg-gold text-black"
+                  : "bg-white/5 text-zinc-400 hover:bg-white/10"
+              )}
+            >
+              Jetzt
+            </button>
+            <button
+              onClick={() => setTimeWindow([18, 28])}
+              className={cn(
+                "px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                timeWindow[0] === 18 && timeWindow[1] === 28
+                  ? "bg-gold text-black"
+                  : "bg-white/5 text-zinc-400 hover:bg-white/10"
+              )}
+            >
+              Abend
+            </button>
+            <button
+              onClick={() => setTimeWindow([0, 28])}
+              className={cn(
+                "px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                timeWindow[0] === 0 && timeWindow[1] === 28
+                  ? "bg-gold text-black"
+                  : "bg-white/5 text-zinc-400 hover:bg-white/10"
+              )}
+            >
+              Alle
+            </button>
           </div>
           
-          <div className="mt-3 flex items-center gap-2 text-zinc-400">
-            <MapPin size={12} />
-            <span className="text-xs">{filteredEvents.length} Events</span>
-            {nearbyUsers.length > 0 && (
-              <>
-                <span className="text-zinc-600">•</span>
-                <Users size={12} className="text-green-500" />
-                <span className="text-xs">{nearbyUsers.length} aktiv</span>
-              </>
-            )}
-          </div>
+          {nearbyUsers.length > 0 && (
+            <div className="mt-2 flex items-center gap-2 text-zinc-400">
+              <Users size={12} className="text-green-500" />
+              <span className="text-[10px]">{nearbyUsers.length} aktiv in der Nähe</span>
+            </div>
+          )}
         </div>
       </div>
 
