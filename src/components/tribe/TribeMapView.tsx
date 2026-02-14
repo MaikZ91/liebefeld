@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { TribeEvent } from '@/types/tribe';
 import { Clock, MapPin, Navigation, Radio, Users, ChevronUp, ChevronDown, X, Compass } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
-import { supabase } from '@/integrations/supabase/client';
 import { loadLeaflet } from '@/utils/leafletLoader';
+import { batchGeocodeWithCache } from '@/services/geocodingService';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { LocationSharingPanel } from './map/LocationSharingPanel';
 import { PingPanel } from './map/PingPanel';
@@ -362,29 +363,18 @@ export const TribeMapView: React.FC<TribeMapViewProps> = ({
     });
   }, [events, timeWindow, currentHour]);
 
-  // Batch-Geocoding
+  // Batch-Geocoding with cache + hardcoded + AI fallback
   useEffect(() => {
     const loadAllCoordinates = async () => {
       const uniqueLocations = [...new Set(
         events.filter(e => e.location).map(e => e.location)
-      )];
+      )] as string[];
       
       if (uniqueLocations.length === 0) return;
       
       try {
-        const { data, error } = await supabase.functions.invoke('ai-batch-geocode', {
-          body: { locations: uniqueLocations, cityContext: selectedCity }
-        });
-        
-        if (!error && data?.coordinates) {
-          const coordsMap = new Map<string, {lat: number, lng: number}>();
-          data.coordinates.forEach((c: any) => {
-            if (c.lat && c.lng && c.location) {
-              coordsMap.set(c.location.toLowerCase(), { lat: c.lat, lng: c.lng });
-            }
-          });
-          setEventCoordinates(coordsMap);
-        }
+        const coordsMap = await batchGeocodeWithCache(uniqueLocations, selectedCity);
+        setEventCoordinates(coordsMap);
       } catch (err) {
         console.error('Failed to batch geocode:', err);
       }
