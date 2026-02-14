@@ -227,7 +227,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
       {/* FAB Button */}
       <motion.button
         onClick={handleOpen}
-        className="fixed bottom-6 right-4 z-[60] w-14 h-14 rounded-full overflow-hidden shadow-2xl"
+        className="fixed bottom-20 right-4 z-[60] w-14 h-14 rounded-full overflow-hidden shadow-2xl"
         whileTap={{ scale: 0.9 }}
         style={{
           boxShadow: unreadCount > 0

@@ -12,7 +12,7 @@ import hochschulsportImg from "@/assets/groups/hochschulsport.jpg";
 import sportImg from "@/assets/groups/sport.jpg";
 import vhsImg from "@/assets/groups/vhs.jpg";
 import kinoImg from "@/assets/groups/kino.jpg";
-
+import { TribeBottomNav } from "./TribeBottomNav";
 import { ProfileView } from "./ProfileView";
 import { TribeLiveTicker } from "@/components/TribeLiveTicker";
 import { LocationBlockDialog } from "./LocationBlockDialog";
@@ -22,7 +22,6 @@ import { InterestsDialog } from "./InterestsDialog";
 import { MiaInlineChat } from "./MiaInlineChat";
 import { MiaNotificationHub } from "./MiaNotificationHub";
 import { LiveMapWidget } from "./LiveMapWidget";
-import { ExploreSectionCompact } from "./ExploreSectionCompact";
 import UserProfileDialog from "@/components/users/UserProfileDialog";
 import { useOnboardingFlow } from "@/hooks/useOnboardingFlow";
 import { OnboardingWorkflow } from "./onboarding/OnboardingWorkflow";
@@ -1298,71 +1297,554 @@ const TribeAppMain: React.FC<{
         </div>
       </header>
 
+      {/* --- LIVE TICKER --- */}
+      {view === ViewState.FEED && (
+        <div className="fixed top-[73px] left-0 right-0 z-40 max-w-2xl mx-auto">
+          <TribeLiveTicker
+            events={tickerTopEvents.map((e) => ({
+              id: e.id,
+              date: e.date,
+              title: e.title,
+              location: e.location,
+              likes: e.likes || 0,
+            }))}
+            selectedCity={selectedCity}
+            onEventClick={handleTickerEventClick}
+          />
+        </div>
+      )}
+
       {/* --- MAIN CONTENT --- */}
       <main
-        className="pt-16 px-0 max-w-2xl mx-auto h-screen overflow-y-auto"
+        className={`${view === ViewState.COMMUNITY ? "pt-16" : "pt-[110px]"} px-0 max-w-2xl mx-auto h-screen overflow-y-auto`}
       >
+        {view === ViewState.FEED && (
+          <div className="animate-fadeIn pb-20">
+            {/* Category Tabs */}
+            <div className="px-6 pt-2 pb-4 bg-gradient-to-b from-black via-black to-transparent">
+              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-3">
+                {CATEGORIES.map((cat) => {
+                  const isForMe = cat === "FÜR MICH";
+                  const hasPreferences = (() => {
+                    const prefs = localStorage.getItem('tribe_preferred_categories');
+                    return prefs ? JSON.parse(prefs).length > 0 : false;
+                  })();
+                  
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                        selectedCategory === cat 
+                          ? isForMe ? "text-gold bg-gold/20 px-2 py-1 rounded-full" : "text-gold" 
+                          : "text-zinc-600 hover:text-zinc-400"
+                      } ${isForMe && !hasPreferences ? "opacity-50" : ""}`}
+                      title={isForMe && !hasPreferences ? "Wähle zuerst deine Interessen im Profil" : undefined}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
 
-        {/* Explore + Community integrated view */}
+
+              {/* Active MIA Filter Indicator */}
+              {miaFilteredEventIds && (
+                <div className="mt-3 flex justify-between items-center bg-gold/10 border border-gold/30 px-3 py-2 rounded-sm animate-fadeIn">
+                  <div className="flex items-center gap-2">
+                    <Filter size={12} className="text-gold" />
+                    <span className="text-[10px] text-gold font-bold uppercase tracking-widest">
+                      MIA zeigt {miaFilteredEventIds.length} Events
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleMiaClearFilter}
+                    className="text-[9px] text-zinc-400 hover:text-white underline"
+                  >
+                    ALLE ANZEIGEN
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* MIA Inline - only during onboarding */}
+            {isOnboarding && currentStep !== 'completed' && !isCommunityOnboarding && (
+              <div className="px-6 mb-4">
+                <MiaInlineChat
+                  events={allEvents}
+                  userProfile={userProfile ? {
+                    username: userProfile.username,
+                    interests: userProfile.interests,
+                    favorite_locations: userProfile.homebase ? [userProfile.homebase] : [],
+                    hobbies: [],
+                  } : undefined}
+                  city={selectedCity}
+                  onQuery={handleQuery}
+                  onEventsFiltered={handleMiaEventsFiltered}
+                  onClearFilter={handleMiaClearFilter}
+                  onEventClick={(event) => setSelectedEventId(event.id)}
+                  onboardingStep={currentStep}
+                  onAdvanceOnboarding={advanceStep}
+                  onInterestsSelected={handleInterestsSelected}
+                />
+              </div>
+            )}
+
+
+            {/* MIA Recommendations */}
+            {spotlightEvents.length > 0 && (
+              <div className="mb-4">
+                <div className="px-6 mb-5">
+                  <h2 className="text-xs font-extrabold text-white uppercase tracking-[0.25em] flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full overflow-hidden">
+                      <img src={MIA_AVATAR} className="w-full h-full object-cover" alt="MIA" />
+                    </div>
+                    MIA Recommendations
+                  </h2>
+                </div>
+                <div 
+                  className="flex gap-4 overflow-x-auto no-scrollbar snap-x px-6 pb-4"
+                  onScroll={handleHeroScroll}
+                >
+                  {spotlightEvents.map((event, i) => (
+                    <div key={`spot-${i}`} className="min-w-[75vw] md:min-w-[340px] snap-center">
+                      <TribeEventCard
+                        event={event}
+                        variant="hero"
+                        onInteraction={handleInteraction}
+                        isLiked={likedEventIds.has(event.id)}
+                        isAttending={attendingEventIds.has(event.id)}
+                        onToggleAttendance={handleToggleAttendance}
+                        matchScore={eventMatchScores.get(event.id)}
+                      />
+                    </div>
+                  ))}
+                  {/* Loading indicator when more available */}
+                  {heroLoadedCount < filteredEvents.length && (
+                    <div className="min-w-[60px] flex items-center justify-center">
+                      <div className="w-6 h-6 border-2 border-gold/30 border-t-gold rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Feed List */}
+            <div className="px-6 space-y-2 pb-12">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3 mb-4">
+                <h2 className="text-xs font-extrabold text-white uppercase tracking-[0.25em]">Your Feed</h2>
+                <div className="flex items-center gap-3">
+                  {/* Map Button */}
+                  <button 
+                    onClick={() => setView(ViewState.MAP)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded transition-all isolate"
+                    style={{ backgroundColor: '#FFFFFF', color: '#000000' }}
+                    title="Social Map"
+                  >
+                    <MapIcon size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Map</span>
+                  </button>
+
+                  {/* Calendar Picker */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="text-zinc-500 hover:text-white transition-colors">
+                        <CalendarIcon size={16} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-zinc-900 border-white/10" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                          setSelectedDate(date);
+                          if (date) {
+                            // Check if we need to load events for this month
+                            const monthStart = new Date(date.getFullYear(), date.getMonth(), 1)
+                              .toISOString()
+                              .split("T")[0];
+                            const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+                              .toISOString()
+                              .split("T")[0];
+
+                            // Check if we have events for this date range
+                            const hasEventsInRange = allEvents.some((e) => e.date >= monthStart && e.date <= monthEnd);
+
+                            if (!hasEventsInRange) {
+                              console.log("🔄 [TribeApp] Loading events for selected month");
+                              fetchEvents(false, date);
+                            }
+                          }
+                        }}
+                        className="pointer-events-auto"
+                      />
+                      {selectedDate && (
+                        <div className="p-3 border-t border-white/10">
+                          <button
+                            onClick={() => setSelectedDate(undefined)}
+                            className="w-full text-xs text-zinc-400 hover:text-white transition-colors"
+                          >
+                            Filter zurücksetzen
+                          </button>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+              {/* Like Tutorial for first-time Feed visitors - hide during onboarding */}
+              {showLikeTutorial && view === ViewState.FEED && !isOnboarding && (
+                <div className="mb-4 bg-zinc-900/80 border border-gold/30 rounded-lg p-3 animate-fadeIn">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] font-bold text-gold uppercase tracking-widest">💡 Tipp</span>
+                    <button
+                      onClick={() => {
+                        setShowLikeTutorial(false);
+                        localStorage.setItem("tribe_seen_like_tutorial", "true");
+                      }}
+                      className="text-zinc-500 hover:text-white"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-relaxed mb-2">
+                    <strong className="text-white">Like Events</strong> die dich interessieren! Je mehr du likest, desto
+                    besser lernt MIA deinen Geschmack kennen und zeigt dir passende Events zuerst.
+                  </p>
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    <strong className="text-gold">✨ Vibe</strong> – Tippe auf das Sparkles-Icon um eine KI-Zusammenfassung
+                    des Events zu erhalten. Das Bild wird dabei vergrößert angezeigt.
+                  </p>
+                </div>
+              )}
+
+              {feedEvents.length > 0 ? (
+                (() => {
+                  // Group similar events (same title+location) with multiple times
+                  const groupedEvents = groupSimilarEvents(feedEvents);
+                  
+                  // Always compact mode - group events by date
+                  const grouped: Record<string, GroupedEvent[]> = {};
+                    groupedEvents.forEach((event) => {
+                      if (!grouped[event.date]) grouped[event.date] = [];
+                      grouped[event.date].push(event);
+                    });
+
+                    const sortedDates = Object.keys(grouped).sort();
+                    const MAX_COLLAPSED_EVENTS = 5;
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const todayStr = now.toISOString().split("T")[0];
+
+                    return sortedDates.map((date) => {
+                      const dateObj = new Date(date);
+                      const weekday = dateObj.toLocaleDateString("de-DE", { weekday: "long" });
+                      const day = dateObj.getDate();
+                      const month = dateObj.toLocaleDateString("de-DE", { month: "long" });
+                      const isToday = date === todayStr;
+
+                      // Sort events: active events first, past events last (only for today)
+                      const allEventsForDate = [...grouped[date]].sort((a, b) => {
+                        if (!isToday) return 0;
+                        
+                        const getEventHour = (timeStr?: string | null) => {
+                          if (!timeStr) return 23;
+                          const match = timeStr.match(/^(\d{1,2})/);
+                          return match ? parseInt(match[1], 10) : 23;
+                        };
+                        
+                        const aHour = getEventHour(a.time);
+                        const bHour = getEventHour(b.time);
+                        const aIsPast = aHour < currentHour;
+                        const bIsPast = bHour < currentHour;
+                        
+                        // Past events go to the end
+                        if (aIsPast && !bIsPast) return 1;
+                        if (!aIsPast && bIsPast) return -1;
+                        return 0;
+                      });
+                      
+                      // Separate active and past events for today
+                      const activeEvents = isToday 
+                        ? allEventsForDate.filter(e => {
+                            const match = e.time?.match(/^(\d{1,2})/);
+                            const hour = match ? parseInt(match[1], 10) : 23;
+                            return hour >= currentHour;
+                          })
+                        : allEventsForDate;
+                      
+                      const pastEvents = isToday 
+                        ? allEventsForDate.filter(e => {
+                            const match = e.time?.match(/^(\d{1,2})/);
+                            const hour = match ? parseInt(match[1], 10) : 23;
+                            return hour < currentHour;
+                          })
+                        : [];
+
+                      const isExpanded = expandedDates.has(date);
+                      const shouldCollapse = (hasLikedFirstEvent && activeEvents.length > MAX_COLLAPSED_EVENTS) || pastEvents.length > 0;
+                      const displayedEvents =
+                        shouldCollapse && !isExpanded
+                          ? activeEvents.slice(0, MAX_COLLAPSED_EVENTS)
+                          : [...activeEvents, ...pastEvents];
+                      const hiddenActiveCount = Math.max(0, activeEvents.length - MAX_COLLAPSED_EVENTS);
+                      const hiddenCount = (hasLikedFirstEvent ? hiddenActiveCount : 0) + pastEvents.length;
+
+                      // Calculate top event of the day based on engagement
+                      const getEngagementScore = (e: TribeEvent) => {
+                        const likes = e.likes || 0;
+                        const attendees = e.attendees || 0;
+                        const likedBy = Array.isArray(e.liked_by_users) ? e.liked_by_users.length : 0;
+                        return (likes * 3) + attendees + (likedBy * 2);
+                      };
+                      
+                      const topEventOfDay = activeEvents.length > 0 
+                        ? activeEvents.reduce((top, current) => 
+                            getEngagementScore(current) > getEngagementScore(top) ? current : top
+                          , activeEvents[0])
+                        : null;
+                      
+                      // Only mark as top if it has some engagement
+                      const topEventId = topEventOfDay && getEngagementScore(topEventOfDay) > 0 
+                        ? topEventOfDay.id 
+                        : null;
+
+                      return (
+                        <div key={date} className="mb-6">
+                          <h3 className="text-sm font-serif text-white/90 mb-2 capitalize">
+                            {weekday}, {day}. {month}
+                          </h3>
+                          <div className="space-y-0">
+                            {(() => {
+                              // Categorize events into collapsible groups
+                              const getCollapsibleGroup = (event: GroupedEvent): string | null => {
+                                const title = (event.title || '').toLowerCase();
+                                const location = (event.location || '').toLowerCase();
+                                const organizer = (event.organizer || '').toLowerCase();
+                                const category = (event.category || '').toLowerCase();
+                                
+                                // Hochschulsport
+                                if (title.includes('hochschulsport') || organizer.includes('hochschulsport') || 
+                                    (title.includes('uni ') && (title.includes('sport') || title.includes('fitness')))) {
+                                  return 'hochschulsport';
+                                }
+                                // Sport (general)
+                                if (category === 'sport') {
+                                  return 'sport';
+                                }
+                                // VHS + Wochenmarkt
+                                if (title.includes('vhs') || title.includes('volkshochschule') || 
+                                    location.includes('vhs') || location.includes('volkshochschule') ||
+                                    title.includes('wochenmarkt')) {
+                                  return 'vhs';
+                                }
+                                // Kino
+                                if (title.includes('kino') || location.includes('kino') || 
+                                    location.includes('lichtwerk') || location.includes('cinemaxx') ||
+                                    location.includes('cinestar') || location.includes('filmhaus') ||
+                                    title.includes('film:') || title.includes('filmstart')) {
+                                  return 'kino';
+                                }
+                                return null;
+                              };
+
+                              const GROUP_CONFIG: Record<string, { label: string; img: string }> = {
+                                hochschulsport: { label: 'HOCHSCHULSPORT', img: hochschulsportImg },
+                                sport: { label: 'SPORT', img: sportImg },
+                                vhs: { label: 'VHS & KURSE', img: vhsImg },
+                                kino: { label: 'KINO', img: kinoImg },
+                              };
+
+                              // Separate regular events and grouped events
+                              const regularEvents: GroupedEvent[] = [];
+                              const collapsibleGroups: Record<string, GroupedEvent[]> = {};
+                              
+                              displayedEvents.forEach(event => {
+                                const group = getCollapsibleGroup(event);
+                                if (group) {
+                                  if (!collapsibleGroups[group]) collapsibleGroups[group] = [];
+                                  collapsibleGroups[group].push(event);
+                                } else {
+                                  regularEvents.push(event);
+                                }
+                              });
+
+                              // Interleave: render regular events, insert group headers at end
+                              const renderEvent = (event: GroupedEvent) => {
+                                const isPastEvent = isToday && (() => {
+                                  const match = event.time?.match(/^(\d{1,2})/);
+                                  const hour = match ? parseInt(match[1], 10) : 23;
+                                  return hour < currentHour;
+                                })();
+                                
+                                return (
+                                  <div 
+                                    key={event.id} 
+                                    className={`animate-fade-in transition-all duration-300 ease-out ${isPastEvent ? 'opacity-40' : ''}`}
+                                  >
+                                    <TribeEventCard
+                                      event={event}
+                                      variant="compact"
+                                      onJoinTribe={handleJoinTribe}
+                                      onInteraction={handleInteraction}
+                                      isLiked={likedEventIds.has(event.id) || event.allTimes?.some(t => likedEventIds.has(t.eventId))}
+                                      isAttending={attendingEventIds.has(event.id) || event.allTimes?.some(t => attendingEventIds.has(t.eventId))}
+                                      onToggleAttendance={handleToggleAttendance}
+                                      matchScore={eventMatchScores.get(event.id)}
+                                      isPast={isPastEvent}
+                                      isTopOfDay={event.id === topEventId && !isPastEvent}
+                                      allTimes={event.allTimes}
+                                    />
+                                  </div>
+                                );
+                              };
+
+                              return (
+                                <>
+                                  {/* Regular events */}
+                                  {regularEvents.map(renderEvent)}
+                                  
+                                  {/* Collapsible group sections — rendered as TribeEventCard */}
+                                  {Object.entries(collapsibleGroups).map(([groupKey, events]) => {
+                                    const groupId = `${date}_${groupKey}`;
+                                    const isGroupExpanded = expandedGroups.has(groupId);
+                                    const { label, img } = GROUP_CONFIG[groupKey];
+                                    
+                                    // Create a fake TribeEvent for the group summary card
+                                    const groupEvent: TribeEvent = {
+                                      id: `group_${groupKey}_${date}`,
+                                      date: date,
+                                      time: null,
+                                      title: `${label} — ${events.length} Events`,
+                                      event: label,
+                                      category: groupKey,
+                                      image_url: img,
+                                      link: '',
+                                      description: events.slice(0, 3).map(e => e.title).join(' · '),
+                                    };
+                                    
+                                    return (
+                                      <div key={groupKey}>
+                                        <div 
+                                          onClick={() => setExpandedGroups(prev => {
+                                            const next = new Set(prev);
+                                            if (next.has(groupId)) next.delete(groupId);
+                                            else next.add(groupId);
+                                            return next;
+                                          })}
+                                          className="cursor-pointer"
+                                        >
+                                          <TribeEventCard
+                                            event={groupEvent}
+                                            variant="compact"
+                                            onInteraction={() => {}}
+                                          />
+                                        </div>
+                                        {isGroupExpanded && (
+                                          <div className="space-y-0 pl-3 border-l border-white/[0.06]">
+                                            {events.map(renderEvent)}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Expand button for collapsed dates */}
+                          {shouldCollapse && !isExpanded && hiddenCount > 0 && (
+                            <button
+                              onClick={() => setExpandedDates((prev) => new Set([...prev, date]))}
+                              className="w-full mt-2 py-2 text-[10px] text-zinc-500 hover:text-gold uppercase tracking-widest border border-dashed border-white/10 hover:border-gold/30 transition-colors flex items-center justify-center gap-2"
+                            >
+                              <ChevronDown size={12} />
+                              +{hiddenCount} weitere Events 
+                              {pastEvents.length > 0 && isToday && ` (${pastEvents.length} bereits vorbei)`}
+                            </button>
+                          )}
+
+                          {/* Collapse button when expanded */}
+                          {shouldCollapse && isExpanded && (
+                            <button
+                              onClick={() =>
+                                setExpandedDates((prev) => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(date);
+                                  return newSet;
+                                })
+                              }
+                              className="w-full mt-2 py-2 text-[10px] text-zinc-500 hover:text-gold uppercase tracking-widest border border-dashed border-white/10 hover:border-gold/30 transition-colors flex items-center justify-center gap-2"
+                            >
+                              <ChevronDown size={12} className="rotate-180" />
+                              Weniger anzeigen
+                            </button>
+                          )}
+                        </div>
+                      );
+                    });
+                })()
+              ) : (
+                <div className="py-10 text-center text-zinc-600 font-light text-sm">No events in this sector.</div>
+              )}
+
+              {/* Infinite Scroll Trigger */}
+              {!selectedDate && feedEvents.length > 0 && (
+                <div
+                  ref={(el) => {
+                    if (!el) return;
+                    const observer = new IntersectionObserver(
+                      (entries) => {
+                        if (entries[0].isIntersecting && !isLoadingMore && hasMoreEvents) {
+                          console.log("🔄 [TribeApp] Infinite scroll triggered, loadedEventCount:", loadedEventCount);
+                          loadMoreEvents();
+                        }
+                      },
+                      { threshold: 0.1 },
+                    );
+                    observer.observe(el);
+                  }}
+                  className="h-20 flex items-center justify-center"
+                >
+                  {isLoadingMore ? (
+                    <div className="text-zinc-600 text-xs">Lädt weitere Events...</div>
+                  ) : hasMoreEvents ? (
+                    <div className="text-zinc-700 text-[10px]">Scroll für mehr Events</div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* MIA is now integrated directly into the Explore page - no separate view needed */}
         {view === ViewState.COMMUNITY && (
-          <>
-            {/* Explore Section - compact hero + collapsible feed above community */}
-            <ExploreSectionCompact
-              spotlightEvents={spotlightEvents}
-              feedEvents={feedEvents}
-              likedEventIds={likedEventIds}
-              attendingEventIds={attendingEventIds}
-              eventMatchScores={eventMatchScores}
-              onInteraction={handleInteraction}
-              onToggleAttendance={handleToggleAttendance}
-              onJoinTribe={handleJoinTribe}
-              onHeroScroll={handleHeroScroll}
-              heroLoadedCount={heroLoadedCount}
-              totalFilteredCount={filteredEvents.length}
-              onViewChange={handleViewChange}
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
-              onFetchEventsForDate={(date) => fetchEvents(false, date)}
-              allEvents={allEvents}
-              miaFilteredEventIds={miaFilteredEventIds}
-              onMiaClearFilter={handleMiaClearFilter}
-              hasLikedFirstEvent={hasLikedFirstEvent}
-              expandedGroups={expandedGroups}
-              onToggleGroup={(groupId) => setExpandedGroups(prev => {
-                const next = new Set(prev);
-                if (next.has(groupId)) next.delete(groupId);
-                else next.add(groupId);
-                return next;
-              })}
-            />
-            <TribeCommunityBoard
-              selectedCity={selectedCity}
-              userProfile={userProfile}
-              onEditProfile={() => setView(ViewState.PROFILE)}
-              onboardingStep={isCommunityOnboarding ? currentStep : undefined}
-              onAdvanceOnboarding={advanceStep}
-              onMarkProfileComplete={markProfileComplete}
-              onMarkGreetingPosted={markGreetingPosted}
-              generateGreeting={generateGreeting}
-              onProfileClick={async (username) => {
-                setProfileDialog({ open: true, profile: null, loading: true });
-                try {
-                  const { data, error } = await supabase
-                    .from("user_profiles")
-                    .select("*")
-                    .eq("username", username)
-                    .maybeSingle();
-                  if (error) throw error;
-                  setProfileDialog({ open: true, profile: data, loading: false });
-                } catch (err) {
-                  console.error("Error fetching profile:", err);
-                  setProfileDialog({ open: false, profile: null, loading: false });
-                }
-              }}
-            />
-          </>
+          <TribeCommunityBoard
+            selectedCity={selectedCity}
+            userProfile={userProfile}
+            onEditProfile={() => setView(ViewState.PROFILE)}
+            onboardingStep={isCommunityOnboarding ? currentStep : undefined}
+            onAdvanceOnboarding={advanceStep}
+            onMarkProfileComplete={markProfileComplete}
+            onMarkGreetingPosted={markGreetingPosted}
+            generateGreeting={generateGreeting}
+            onProfileClick={async (username) => {
+              setProfileDialog({ open: true, profile: null, loading: true });
+              try {
+                const { data, error } = await supabase
+                  .from("user_profiles")
+                  .select("*")
+                  .eq("username", username)
+                  .maybeSingle();
+                if (error) throw error;
+                setProfileDialog({ open: true, profile: data, loading: false });
+              } catch (err) {
+                console.error("Error fetching profile:", err);
+                setProfileDialog({ open: false, profile: null, loading: false });
+              }
+            }}
+          />
         )}
 
         {/* User Profile Dialog */}
@@ -1427,8 +1909,12 @@ const TribeAppMain: React.FC<{
         }}
       />
 
-
-
+      {/* --- BOTTOM NAVIGATION --- */}
+      <TribeBottomNav
+        currentView={view}
+        onViewChange={handleViewChange}
+        hasNewCommunityMessages={hasNewCommunityMessages}
+      />
 
       {/* --- EVENT DETAIL DIALOG --- */}
       {selectedEventId &&

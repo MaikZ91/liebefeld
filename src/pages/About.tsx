@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-
+import CalendarNavbar from '@/components/CalendarNavbar';
 import { Download, Calendar, Users, MessageSquare, Globe, LinkIcon, Heart, TestTube, Star, Award, PartyPopper } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import CommunityTest from '@/components/CommunityTest';
@@ -25,7 +25,7 @@ const About = () => {
     alt: "Community event 4"
   }];
   return <div className="min-h-screen bg-black text-white">
-      
+      <CalendarNavbar />
       
       <div className="container mx-auto px-4 py-6 max-w-5xl animate-fade-in">
         {/* Hero Section - Updated with CTA content */}

@@ -1,6 +1,6 @@
 
 import React from 'react';
-
+import CalendarNavbar from '@/components/CalendarNavbar';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 const Impressum = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      
+      <CalendarNavbar />
       <main className="flex-grow container mx-auto px-4 py-8 max-w-3xl">
         <div className="mb-6">
           <Link to="/about">
