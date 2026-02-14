@@ -110,6 +110,32 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   // "I'm in" state for top event cards: eventId -> list of usernames
   const [imInUsers, setImInUsers] = useState<Record<string, string[]>>({});
 
+  // Load persisted "I'm in" data from community_events on mount
+  useEffect(() => {
+    const loadImInData = async () => {
+      try {
+        const { data } = await supabase
+          .from('community_events')
+          .select('id, liked_by_users')
+          .not('liked_by_users', 'eq', '[]');
+        
+        if (data) {
+          const mapped: Record<string, string[]> = {};
+          data.forEach((evt: any) => {
+            const users = evt.liked_by_users;
+            if (Array.isArray(users) && users.length > 0) {
+              mapped[evt.id] = users.filter((u: any) => typeof u === 'string');
+            }
+          });
+          setImInUsers(mapped);
+        }
+      } catch (err) {
+        console.error('Error loading I\'m in data:', err);
+      }
+    };
+    loadImInData();
+  }, []);
+
   // Handle community onboarding
   useEffect(() => {
     if (!onboardingStep) return;
