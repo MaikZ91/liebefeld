@@ -1,65 +1,48 @@
 
-
-# MIA Chat visuell aufwerten -- Event-Cards, Bilder & Rich Content
+# Fix: Event-Geolocation auf der Map
 
 ## Problem
-
-Der MIA-Chat zeigt aktuell nur Text und kleine Event-Chips (Buttons mit abgeschnittenem Titel). Das wirkt langweilig und bietet keinen visuellen Anreiz, Events anzuklicken oder den Chat zu nutzen.
+Die Map-Ansicht (`TribeMapView.tsx`) ruft bei **jedem Laden** die KI-basierte `ai-batch-geocode` Edge Function auf, um alle Event-Standorte zu geocodieren. Das hat zwei Probleme:
+1. **Bereits korrekt gecachte Koordinaten** in der `location_coordinates`-Tabelle werden komplett ignoriert
+2. **Hardcoded Mappings** aus `geocodingService.ts` (Forum, Stereo, Bunker Ulmenwall etc.) werden nicht genutzt
+3. Die KI liefert bei jedem Aufruf potenziell **unterschiedliche/falsche Koordinaten**
 
 ## Loesung
 
-MIA-Antworten werden visuell reich gestaltet mit Event-Cards (inkl. Bild, Datum, Ort, Kategorie-Badge), besserem Layout und interaktiven Elementen.
+### Schritt 1: Map nutzt gecachte Koordinaten zuerst
+Die `TribeMapView.tsx` wird so umgebaut, dass sie:
+1. Zuerst alle Koordinaten aus der `location_coordinates`-Tabelle laedt
+2. Dann die hardcoded Mappings aus `geocodingService.ts` anwendet (diese haben Prioritaet)
+3. Nur fuer **unbekannte Standorte** die KI-Batch-Funktion aufruft
+4. Neue KI-Ergebnisse in die `location_coordinates`-Tabelle cached
 
-## Was sich aendert
+### Schritt 2: Gemeinsame Geocoding-Logik
+Statt dass die Map eine eigene Geocoding-Logik hat, wird der bestehende `geocodingService.ts` wiederverwendet. Konkret:
+- Export der hardcoded Mappings als Konstante
+- Neue Hilfsfunktion `getCoordinatesForLocations(locations, city)` die Cache-DB, Hardcoded und KI kombiniert
 
-### `src/components/tribe/MiaNotificationHub.tsx`
+### Schritt 3: KI-Ergebnisse validieren und cachen
+Wenn die KI neue Koordinaten liefert, werden diese in `location_coordinates` gespeichert, damit sie beim naechsten Mal sofort verfuegbar sind.
 
-**Event-Chips ersetzen durch Event-Cards:**
+## Technische Details
 
-Statt der aktuellen kleinen Chips (Zeile 311-322) werden die `relatedEvents` als kompakte, visuelle Mini-Cards dargestellt:
+### Aenderungen in `src/services/geocodingService.ts`
+- Export der hardcoded Koordinaten-Map als `HARDCODED_COORDINATES`
+- Neue Funktion `batchGeocodeWithCache(locations: string[], city: string)` die:
+  1. `location_coordinates` Tabelle abfragt
+  2. Hardcoded Mappings prueft
+  3. Nur fehlende Locations an `ai-batch-geocode` sendet
+  4. Ergebnisse cached
 
-```text
-+--------------------------------------+
-| [Event-Bild]  Konzert im Ringloksch. |
-|               Fr 14.02 · 20:00       |
-|               Ringlokschuppen        |
-|               [Musik]    [Ansehen >] |
-+--------------------------------------+
-```
+### Aenderungen in `src/components/tribe/TribeMapView.tsx`
+- Batch-Geocoding useEffect ersetzt: statt direkt `ai-batch-geocode` aufzurufen, wird die neue `batchGeocodeWithCache` Funktion aus dem geocodingService verwendet
+- Fallback auf `getJitteredCoords` nur wenn wirklich keine Koordinaten gefunden wurden
 
-Jede Card zeigt:
-- Event-Bild (image_url) links als kleines Thumbnail (48x48, rounded)
-- Titel (max 2 Zeilen)
-- Datum + Uhrzeit
-- Location
-- Kategorie-Badge
-- "Ansehen"-Button der zum Event navigiert
+### Keine Aenderungen an Edge Functions
+Die `ai-batch-geocode` und `ai-geocode-location` Functions bleiben unveraendert - sie werden nur seltener aufgerufen.
 
-**MIA-Avatar fuer Welcome-Message:**
-
-Wenn der Chat leer ist, wird MIAs Avatar groesser und zentriert angezeigt mit einer persoenlichen Begruessung.
-
-### `src/components/tribe/MiaEventCard.tsx` (Neue Datei)
-
-Kompakte Event-Card-Komponente fuer den MIA-Chat:
-- Props: `event: TribeEvent`, `onView: (id: string) => void`
-- Zeigt Bild, Titel, Datum, Ort, Kategorie
-- Kompaktes Design passend zum dunklen MIA-Hub-Theme
-- Fallback-Bild wenn kein image_url vorhanden
-
-### Aenderungen im Detail
-
-| Datei | Aenderung |
-|-------|-----------|
-| `src/components/tribe/MiaEventCard.tsx` | Neue kompakte Event-Card mit Bild, Datum, Ort, Kategorie-Badge |
-| `src/components/tribe/MiaNotificationHub.tsx` | Event-Chips (Zeile 311-322) durch MiaEventCard ersetzen, bessere Empty-State mit groesserem MIA-Avatar |
-
-### Design-Details
-
-- Event-Bild: 48x48px, rounded-lg, object-cover
-- Fallback wenn kein Bild: Gradient-Hintergrund mit Kategorie-Icon
-- Card-Background: `bg-zinc-800/50` mit `border-white/10`
-- Kategorie-Badge: Farbig je nach Kategorie (Musik=lila, Sport=gruen, Kunst=orange)
-- Maximal 3 Event-Cards pro MIA-Antwort (wie bisher)
-- Cards sind horizontal scrollbar wenn mehr als 2
-
+## Erwartetes Ergebnis
+- Forum, Stereo und andere hardcoded Locations werden **sofort korrekt** angezeigt
+- Bereits gecachte Locations aus der DB werden ohne KI-Aufruf geladen
+- Nur wirklich neue/unbekannte Locations loesen einen KI-Aufruf aus
+- Ergebnisse werden persistent gecacht fuer zukuenftige Aufrufe
