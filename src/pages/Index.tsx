@@ -1,6 +1,6 @@
 // src/pages/Index.tsx
 import React, { useEffect, useState, useRef } from 'react';
-import CalendarNavbar from '@/components/CalendarNavbar';
+
 import LiveTicker from '@/components/LiveTicker';
 import InstagramFeed from '@/components/InstagramFeed';
 import CommunityTest from '@/components/CommunityTest';
@@ -128,7 +128,6 @@ const Index = () => {
     <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden fixed inset-0 pb-20">
       {/* Header - Fixed height */}
       <div className="h-20 flex-shrink-0">
-        <CalendarNavbar />
         <BetaTesterBanner />
       </div>
       

@@ -1,7 +1,7 @@
 
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
-import CalendarNavbar from "@/components/CalendarNavbar";
+
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 
@@ -17,7 +17,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <CalendarNavbar />
+      
       <main className="flex-grow flex items-center justify-center">
         <div className="text-center max-w-md px-4 py-8 animate-fade-in">
           <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-8">
