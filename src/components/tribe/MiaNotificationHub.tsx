@@ -68,13 +68,15 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
     if (!isOpen) return;
     const loadActiveUsers = async () => {
       try {
-        const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
         const { data } = await supabase
           .from('user_profiles')
           .select('username, avatar')
-          .gte('last_online', fiveMinAgo)
+          .gte('last_online', todayStart.toISOString())
           .neq('username', username)
-          .limit(8);
+          .order('last_online', { ascending: false })
+          .limit(12);
         if (data) {
           setActiveUsers(data.filter(u => !u.username.startsWith('Guest_')));
         }
@@ -304,17 +306,16 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
                         <Users size={10} className="text-white/40" />
-                        <span className="text-[9px] text-white/40 uppercase tracking-[0.15em] font-medium">Gerade aktiv</span>
+                        <span className="text-[9px] text-white/40 uppercase tracking-[0.15em] font-medium">Heute aktiv</span>
                       </div>
-                      <span className="text-[9px] text-white/25">{activeUsers.length} online</span>
+                      <span className="text-[9px] text-white/25">{activeUsers.length} dabei</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex -space-x-2">
                         {activeUsers.slice(0, 5).map((user, i) => (
-                          <button
+                          <div
                             key={user.username}
-                            onClick={() => { onViewProfile?.(user.username); setIsOpen(false); }}
-                            className="relative group/avatar"
+                            className="relative"
                             title={user.username}
                           >
                             {user.avatar ? (
@@ -324,8 +325,7 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                                 {user.username[0]?.toUpperCase()}
                               </div>
                             )}
-                            <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border" style={{ borderColor: 'hsl(0,0%,7%)' }} />
-                          </button>
+                          </div>
                         ))}
                         {activeUsers.length > 5 && (
                           <div className="w-7 h-7 rounded-full bg-white/[0.06] border-2 flex items-center justify-center text-[8px] font-bold text-white/40" style={{ borderColor: 'hsl(0,0%,7%)' }}>
@@ -333,9 +333,12 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
                           </div>
                         )}
                       </div>
-                      <p className="text-[10px] text-white/30 font-light ml-1">
-                        Schreib sie an 👋
-                      </p>
+                      <button
+                        onClick={() => { onJoinCommunityChat?.(); setIsOpen(false); }}
+                        className="text-[10px] text-white/40 hover:text-white/70 font-medium ml-1 transition-colors"
+                      >
+                        Im Chat connecten →
+                      </button>
                     </div>
                   </div>
                 )}

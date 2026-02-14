@@ -57,18 +57,27 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
     Math.min(currentH + 2, 24),
   ]);
 
-  // Count currently active users
+  // Today's active users
+  const [activeUsers, setActiveUsers] = useState<Array<{ username: string; avatar: string | null }>>([]);
+  
   useEffect(() => {
-    const fetchActiveCount = async () => {
-      const { count } = await supabase
+    const fetchActiveUsers = async () => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data, count } = await supabase
         .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .not('current_status_message', 'is', null)
-        .neq('username', userProfile.username || '');
+        .select('username, avatar', { count: 'exact' })
+        .gte('last_online', todayStart.toISOString())
+        .neq('username', userProfile.username || '')
+        .order('last_online', { ascending: false })
+        .limit(6);
       setActiveCount(count || 0);
+      if (data) {
+        setActiveUsers(data.filter(u => !u.username.startsWith('Guest_')));
+      }
     };
-    fetchActiveCount();
-    const interval = setInterval(fetchActiveCount, 60000);
+    fetchActiveUsers();
+    const interval = setInterval(fetchActiveUsers, 60000);
     return () => clearInterval(interval);
   }, [userProfile.username]);
 
@@ -213,13 +222,26 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
             className="group w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-zinc-800/50 border border-white/[0.06] hover:border-yellow-500/20 transition-all"
           >
             <Zap className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
-            <span className="text-xs text-white/60 group-hover:text-white/80 transition-colors flex-1 text-left">
+            <span className="text-xs text-white/60 group-hover:text-white/80 transition-colors text-left">
               Spontan was machen?
             </span>
-            {activeCount > 0 && (
-              <span className="text-[10px] text-yellow-500/50 flex-shrink-0">
-                {activeCount} aktiv
-              </span>
+            {activeUsers.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex -space-x-1.5">
+                  {activeUsers.slice(0, 3).map(u => (
+                    u.avatar ? (
+                      <img key={u.username} src={u.avatar} className="w-4 h-4 rounded-full object-cover border border-zinc-800" alt="" />
+                    ) : (
+                      <div key={u.username} className="w-4 h-4 rounded-full bg-zinc-700 border border-zinc-800 flex items-center justify-center text-[6px] text-white/50 font-bold">
+                        {u.username[0]?.toUpperCase()}
+                      </div>
+                    )
+                  ))}
+                </div>
+                <span className="text-[9px] text-yellow-500/50">
+                  {activeCount} heute
+                </span>
+              </div>
             )}
             <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 flex-shrink-0" />
           </motion.button>
