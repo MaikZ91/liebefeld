@@ -184,7 +184,7 @@ const TribeAppMain: React.FC<{
   // Track if user has seen interests dialog on Explore page
   const [showInterestsDialog, setShowInterestsDialog] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>(() => {
-    return userProfile?.homebase || "Bielefeld";
+    return localStorage.getItem('selectedCityName') || userProfile?.homebase || "Bielefeld";
   });
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     const saved = localStorage.getItem("tribe_selected_category");
@@ -1230,6 +1230,7 @@ const TribeAppMain: React.FC<{
                       key={city}
                       onClick={() => {
                         setSelectedCity(city);
+                        localStorage.setItem('selectedCityName', city);
                         setIsCityMenuOpen(false);
                       }}
                       className="block w-full text-right px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.25em] text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
