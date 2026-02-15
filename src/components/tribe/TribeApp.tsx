@@ -944,7 +944,12 @@ const TribeAppMain: React.FC<{
   const handleLogin = (profile: UserProfile) => {
     // Save profile locally and update state immediately (no waiting)
     setUserProfile(profile);
-    if (profile.homebase) setSelectedCity(profile.homebase);
+    // Only set homebase if no city was previously saved by the user
+    const savedCity = localStorage.getItem('selectedCityName');
+    if (!savedCity && profile.homebase) {
+      setSelectedCity(profile.homebase);
+      localStorage.setItem('selectedCityName', profile.homebase);
+    }
     localStorage.setItem("tribe_user_profile", JSON.stringify(profile));
 
     // Fire-and-forget: Create profile in DB in background
