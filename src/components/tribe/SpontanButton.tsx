@@ -64,17 +64,29 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
     const fetchActiveUsers = async () => {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
-      const { data, count } = await supabase
-        .from('user_profiles')
-        .select('username, avatar', { count: 'exact' })
-        .gte('last_online', todayStart.toISOString())
-        .order('last_online', { ascending: false })
-        .limit(6);
-      setActiveCount(count || 0);
-      if (data) {
-        const real = data.filter(u => !u.username.startsWith('Guest_'));
-        setActiveUsers(real);
+      
+      // Get distinct usernames from activity logs today (accumulated, not just "currently online")
+      const { data: logData } = await supabase
+        .from('user_activity_logs')
+        .select('username')
+        .gte('created_at', todayStart.toISOString());
+      
+      const uniqueUsernames = [...new Set((logData || []).map(l => l.username))]
+        .filter(u => !u.startsWith('Guest_'));
+      
+      if (uniqueUsernames.length > 0) {
+        // Fetch profiles for these users
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('username, avatar')
+          .in('username', uniqueUsernames);
+        
+        const real = (profiles || []).filter(u => !u.username.startsWith('Guest_'));
+        setActiveUsers(real.slice(0, 6));
         setActiveCount(real.length);
+      } else {
+        setActiveUsers([]);
+        setActiveCount(0);
       }
     };
     fetchActiveUsers();

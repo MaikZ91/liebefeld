@@ -70,15 +70,27 @@ export const MiaNotificationHub: React.FC<MiaNotificationHubProps> = ({
       try {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
-        const { data } = await supabase
-          .from('user_profiles')
-          .select('username, avatar')
-          .gte('last_online', todayStart.toISOString())
-          .neq('username', username)
-          .order('last_online', { ascending: false })
-          .limit(12);
-        if (data) {
-          setActiveUsers(data.filter(u => !u.username.startsWith('Guest_')));
+        
+        // Get all distinct usernames active today from activity logs
+        const { data: logData } = await supabase
+          .from('user_activity_logs')
+          .select('username')
+          .gte('created_at', todayStart.toISOString());
+        
+        const uniqueUsernames = [...new Set((logData || []).map(l => l.username))]
+          .filter(u => !u.startsWith('Guest_') && u !== username);
+        
+        if (uniqueUsernames.length > 0) {
+          const { data: profiles } = await supabase
+            .from('user_profiles')
+            .select('username, avatar')
+            .in('username', uniqueUsernames);
+          
+          if (profiles) {
+            setActiveUsers(profiles.filter(u => !u.username.startsWith('Guest_')).slice(0, 12));
+          }
+        } else {
+          setActiveUsers([]);
         }
       } catch (err) {
         console.error('Error loading active users:', err);
