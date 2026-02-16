@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { chatMediaService } from '@/services/chatMediaService';
 import { NewMembersWidget } from './NewMembersWidget';
 import { SpontanButton } from './SpontanButton';
+import { LiveActivityTicker } from './LiveActivityTicker';
 import { Badge } from '@/components/ui/badge';
 import { OnboardingStep } from '@/hooks/useOnboardingFlow';
 
@@ -778,6 +779,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-32">
             {/* Spontan Button - always visible */}
             <SpontanButton userProfile={userProfile} selectedCity={selectedCity} />
+            {/* Live Activity Ticker */}
+            <LiveActivityTicker />
             {/* MIA Willkommensnachricht - scrollbar im Feed */}
             {onboardingMiaMessage && (
               <div className="flex items-start gap-2 p-3 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn relative">
