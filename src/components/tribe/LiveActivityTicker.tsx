@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Heart, Eye, Users, MessageCircle, Zap, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +9,12 @@ interface ActivityItem {
   avatar?: string | null;
   action: 'liked' | 'rsvp' | 'posted' | 'joined' | 'viewed';
   target?: string;
+  eventId?: string; // UUID of the event for clickable items
   timestamp: string;
+}
+
+interface LiveActivityTickerProps {
+  onEventClick?: (eventId: string) => void;
 }
 
 const ACTION_CONFIG: Record<ActivityItem['action'], { icon: React.ElementType; verb: string; color: string }> = {
@@ -20,7 +25,7 @@ const ACTION_CONFIG: Record<ActivityItem['action'], { icon: React.ElementType; v
   viewed: { icon: Eye, verb: 'schaut sich an:', color: 'text-white/50' },
 };
 
-export const LiveActivityTicker: React.FC = () => {
+export const LiveActivityTicker: React.FC<LiveActivityTickerProps> = ({ onEventClick }) => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [visibleIndex, setVisibleIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -40,30 +45,35 @@ export const LiveActivityTicker: React.FC = () => {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [activities.length]);
 
-  const fetchRecentActivity = async () => {
+  const fetchRecentActivity = useCallback(async () => {
     const items: ActivityItem[] = [];
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
     try {
-      // 1. Recent likes on events (from activity logs with "like" interactions)
-      const { data: likeLogs } = await supabase
+      // 1. Explicit event views/likes tracked via activityTracker (event_view, event_like)
+      const { data: eventInteractions } = await supabase
         .from('user_activity_logs')
         .select('username, event_target, event_data, created_at')
         .gte('created_at', twoHoursAgo)
-        .or('event_target.ilike.%like%,event_target.ilike.%herz%,event_target.ilike.%heart%,event_target.ilike.%❤%')
-        .eq('event_type', 'click')
+        .eq('event_type', 'interaction')
+        .or('event_target.eq.event_view,event_target.eq.event_like')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(15);
 
-      (likeLogs || []).forEach(log => {
+      (eventInteractions || []).forEach(log => {
         if (log.username.startsWith('Guest_')) return;
+        const data = log.event_data as Record<string, any> | null;
+        if (!data?.event_title) return;
+        
+        const isLike = log.event_target === 'event_like';
         items.push({
-          id: `like-${log.created_at}-${log.username}`,
+          id: `${log.event_target}-${log.created_at}-${log.username}`,
           username: log.username,
-          action: 'liked',
-          target: 'ein Event',
+          action: isLike ? 'liked' : 'viewed',
+          target: (data.event_title as string).slice(0, 35),
+          eventId: data.event_id as string | undefined,
           timestamp: log.created_at,
         });
       });
@@ -86,6 +96,7 @@ export const LiveActivityTicker: React.FC = () => {
               username: u,
               action: 'rsvp',
               target: evt.title?.slice(0, 30) || 'einem Event',
+              eventId: evt.id,
               timestamp: new Date().toISOString(),
             });
           }
@@ -134,27 +145,6 @@ export const LiveActivityTicker: React.FC = () => {
         });
       });
 
-      // 5. Recent page views on event pages
-      const { data: viewLogs } = await supabase
-        .from('user_activity_logs')
-        .select('username, event_target, event_data, created_at')
-        .gte('created_at', twoHoursAgo)
-        .eq('event_type', 'click')
-        .or('event_target.ilike.%event%,event_target.ilike.%details%,event_target.ilike.%anschauen%')
-        .order('created_at', { ascending: false })
-        .limit(8);
-
-      (viewLogs || []).forEach(log => {
-        if (log.username.startsWith('Guest_')) return;
-        items.push({
-          id: `view-${log.created_at}-${log.username}`,
-          username: log.username,
-          action: 'viewed',
-          target: 'Events',
-          timestamp: log.created_at,
-        });
-      });
-
       // Resolve avatars for items missing them
       const usernamesNeedingAvatars = [...new Set(items.filter(i => !i.avatar).map(i => i.username))];
       if (usernamesNeedingAvatars.length > 0) {
@@ -184,7 +174,7 @@ export const LiveActivityTicker: React.FC = () => {
     } catch (err) {
       console.error('Error fetching activity ticker:', err);
     }
-  };
+  }, []);
 
   if (activities.length === 0) return null;
 
@@ -192,6 +182,7 @@ export const LiveActivityTicker: React.FC = () => {
   if (!current) return null;
   const config = ACTION_CONFIG[current.action];
   const Icon = config.icon;
+  const isClickable = !!current.eventId && !!onEventClick;
 
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 overflow-hidden">
@@ -211,7 +202,8 @@ export const LiveActivityTicker: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center gap-2"
+          className={`flex items-center gap-2 ${isClickable ? 'cursor-pointer' : ''}`}
+          onClick={() => isClickable && onEventClick!(current.eventId!)}
         >
           {/* Avatar */}
           <div className="w-6 h-6 rounded-full bg-zinc-800 border border-white/10 overflow-hidden flex-shrink-0">
@@ -233,7 +225,9 @@ export const LiveActivityTicker: React.FC = () => {
             <span className="text-[10px] text-white/50 truncate">
               {config.verb}
               {current.target && (
-                <span className="text-white/70 ml-1">{current.target}</span>
+                <span className={`ml-1 ${isClickable ? 'text-gold underline decoration-gold/30' : 'text-white/70'}`}>
+                  {current.target}
+                </span>
               )}
             </span>
           </div>

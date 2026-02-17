@@ -4,6 +4,7 @@ import { generateEventSummary } from '@/services/tribe/aiHelpers';
 import { getVibeBadgeColor } from '@/utils/tribe/eventHelpers';
 import { Sparkles, Users, Share2, X, Heart, Check, ExternalLink, Play, ChevronDown, Eye, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { activityTracker } from '@/services/activityTrackingService';
 import { formatTimeOption } from '@/utils/tribe/eventGrouping';
 import { getEventDisplayImage } from '@/utils/tribe/sportImages';
 interface TimeSlot {
@@ -171,15 +172,22 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
 
   const handleGetSummary = async (e: React.MouseEvent) => {
       e.stopPropagation();
+      
+      // Track event view with metadata
+      activityTracker.trackInteraction('event_view', {
+        event_id: event.id,
+        event_title: event.title,
+        event_category: event.category,
+        event_date: event.date,
+      });
+      
       if (summary) {
-        // Toggle expanded view when clicking on already loaded summary
         setIsExpanded(!isExpanded);
         return;
       }
       setLoadingSummary(true);
-      setIsExpanded(true); // Expand image when loading
+      setIsExpanded(true);
       
-      // Fetch both summary and YouTube video in parallel
       const [aiSummary] = await Promise.all([
         generateEventSummary(event),
         fetchYouTubeVideo()
@@ -191,16 +199,22 @@ export const TribeEventCard: React.FC<EventCardProps> = ({
 
   const handleInteractionClick = (type: 'like' | 'dislike', e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Track like/dislike with event metadata
+    if (type === 'like') {
+      activityTracker.trackInteraction('event_like', {
+        event_id: event.id,
+        event_title: event.title,
+        event_category: event.category,
+      });
+    }
+    
     if (type === 'dislike') {
       setSwipeDirection('left');
       if (onInteraction) {
-        // For grouped events, collect all event IDs and pass the primary one
-        // The parent will handle hiding all related events
         const allEventIds = allTimes && allTimes.length > 1 
           ? allTimes.map(slot => slot.eventId)
           : [event.id];
-        
-        // Call onInteraction for each event ID to ensure all get hidden
         allEventIds.forEach(id => onInteraction(id, type));
       }
     } else if (onInteraction) {

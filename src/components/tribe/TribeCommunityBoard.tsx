@@ -17,6 +17,7 @@ interface Props {
   userProfile: UserProfile;
   onProfileClick?: (username: string) => void;
   onEditProfile?: () => void;
+  onEventClick?: (eventId: string) => void;
   // Onboarding props
   onboardingStep?: OnboardingStep;
   onAdvanceOnboarding?: () => void;
@@ -70,6 +71,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   userProfile, 
   onProfileClick, 
   onEditProfile,
+  onEventClick,
   onboardingStep,
   onAdvanceOnboarding,
   onMarkProfileComplete,
@@ -780,7 +782,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
             {/* Spontan Button - always visible */}
             <SpontanButton userProfile={userProfile} selectedCity={selectedCity} />
             {/* Live Activity Ticker */}
-            <LiveActivityTicker />
+            <LiveActivityTicker onEventClick={onEventClick} />
             {/* MIA Willkommensnachricht - scrollbar im Feed */}
             {onboardingMiaMessage && (
               <div className="flex items-start gap-2 p-3 bg-zinc-900/50 border border-gold/20 rounded-lg animate-fadeIn relative">
