@@ -1830,6 +1830,7 @@ const TribeAppMain: React.FC<{
             selectedCity={selectedCity}
             userProfile={userProfile}
             onEditProfile={() => setView(ViewState.PROFILE)}
+            onEventClick={(eventId) => setSelectedEventId(eventId)}
             onboardingStep={isCommunityOnboarding ? currentStep : undefined}
             onAdvanceOnboarding={advanceStep}
             onMarkProfileComplete={markProfileComplete}
