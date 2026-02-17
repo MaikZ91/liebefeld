@@ -290,6 +290,38 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                 </button>
               ))}
             </div>
+
+            {/* Active users today */}
+            {activeUsers.length > 0 && (
+              <div className="pt-1 border-t border-white/[0.06]">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                  </span>
+                  <span className="text-[9px] text-white/40 uppercase tracking-wider font-medium">
+                    {activeCount} heute aktiv
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeUsers.map(u => (
+                    <div
+                      key={u.username}
+                      className="flex items-center gap-1 px-1.5 py-1 rounded-full bg-zinc-700/40 border border-white/[0.06]"
+                    >
+                      {u.avatar ? (
+                        <img src={u.avatar} className="w-4 h-4 rounded-full object-cover" alt="" />
+                      ) : (
+                        <div className="w-4 h-4 rounded-full bg-zinc-600 flex items-center justify-center text-[7px] text-white/50 font-bold">
+                          {u.username[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-[10px] text-white/60 max-w-[60px] truncate">{u.username}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
