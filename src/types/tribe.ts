@@ -76,6 +76,10 @@ export interface Post {
   meetup_responses?: Record<string, Array<{username: string; avatar?: string}>>;
   relevanceScore?: number;
   mediaUrl?: string | null;
+  poll_question?: string | null;
+  poll_options?: string[] | null;
+  poll_votes?: Record<string, string[]> | null;
+  poll_allow_multiple?: boolean;
 }
 
 export enum ViewState {
