@@ -333,7 +333,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({
       userAvatar: msg.avatar,
       comments: [],
       meetup_responses: msg.meetup_responses || {},
-      mediaUrl: msg.media_url || null
+      mediaUrl: msg.media_url || null,
+      poll_question: msg.poll_question || null,
+      poll_options: msg.poll_options ? (msg.poll_options as string[]) : null,
+      poll_votes: msg.poll_votes ? (msg.poll_votes as Record<string, string[]>) : null,
+      poll_allow_multiple: msg.poll_allow_multiple || false,
     };
   };
 
@@ -437,6 +441,33 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     });
     setTopicDislikes(newTopicDislikes);
     localStorage.setItem(TOPIC_DISLIKES_KEY, JSON.stringify(newTopicDislikes));
+  };
+
+  // Handle Location Poll vote
+  const handlePollVote = async (postId: string, optionIndex: number, currentVotes: Record<string, string[]> | null, allowMultiple: boolean) => {
+    try {
+      const username = userProfile?.username || 'Guest';
+      const votes = { ...(currentVotes || {}) };
+      const key = String(optionIndex);
+
+      if (!allowMultiple) {
+        // Remove user from all options first
+        Object.keys(votes).forEach(k => {
+          votes[k] = (votes[k] || []).filter(u => u !== username);
+        });
+      }
+
+      if (!(votes[key] || []).includes(username)) {
+        votes[key] = [...(votes[key] || []), username];
+      } else {
+        votes[key] = (votes[key] || []).filter(u => u !== username);
+      }
+
+      await supabase.from('chat_messages').update({ poll_votes: votes }).eq('id', postId);
+      loadPosts();
+    } catch (error) {
+      console.error('Error voting on poll:', error);
+    }
   };
 
   // Handle RSVP for TribeCalls
@@ -1059,9 +1090,64 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                             </div>
                         )}
 
-                        {/* RSVP - Unified clickable rows with integrated avatars */}
-                        {isTribeCall && (
+                        {/* Location Poll (Kennenlernabend etc.) */}
+                        {post.poll_options && post.poll_options.length > 0 && (
                           <div className="pl-[52px] mb-3 space-y-1.5">
+                            {post.poll_question && (
+                              <p className="text-[10px] text-zinc-400 font-medium mb-2">🗳️ {post.poll_question}</p>
+                            )}
+                            {post.poll_options.map((option, idx) => {
+                              const votes = post.poll_votes || {};
+                              const voterList = votes[String(idx)] || [];
+                              const totalPollVotes = Object.values(votes).reduce((sum, arr) => sum + arr.length, 0);
+                              const hasVoted = voterList.includes(userProfile?.username || '');
+                              const pct = totalPollVotes > 0 ? Math.round((voterList.length / totalPollVotes) * 100) : 0;
+                              const isAI = option.startsWith('🤖');
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => handlePollVote(post.id, idx, post.poll_votes || null, post.poll_allow_multiple || false)}
+                                  className={`w-full relative flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all overflow-hidden ${
+                                    hasVoted
+                                      ? 'bg-gold/15 border border-gold/40'
+                                      : 'bg-white/[0.03] border border-white/5 hover:border-gold/20 hover:bg-gold/5'
+                                  }`}
+                                >
+                                  {/* Progress bar background */}
+                                  {totalPollVotes > 0 && (
+                                    <div
+                                      className="absolute inset-0 bg-gold/5 transition-all duration-500"
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  )}
+                                  <span className={`relative text-[10px] font-medium flex-1 ${hasVoted ? 'text-gold' : 'text-zinc-300'}`}>
+                                    {option}
+                                    {isAI && <span className="ml-1 text-[7px] bg-gold/20 text-gold px-1 py-0.5 rounded uppercase tracking-wider">MIA</span>}
+                                  </span>
+                                  <div className="relative flex items-center gap-2 flex-shrink-0">
+                                    {voterList.length > 0 && (
+                                      <div className="flex -space-x-1.5">
+                                        {voterList.slice(0, 4).map((name, i) => (
+                                          <div key={i} className="w-4 h-4 rounded-full border border-black bg-zinc-700 flex items-center justify-center text-[6px] text-zinc-300 font-bold">
+                                            {name[0]?.toUpperCase()}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <span className={`text-[9px] font-bold min-w-[28px] text-right ${hasVoted ? 'text-gold' : 'text-zinc-500'}`}>
+                                      {pct}%
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* RSVP - Unified clickable rows with integrated avatars */}
+                        {isTribeCall && !post.poll_options?.length && (
+                          <div className="pl-[52px] mb-3 space-y-1.5">
+
                             {/* Dabei Row */}
                             <button
                               onClick={() => handleRSVP(post.id, 'yes')}

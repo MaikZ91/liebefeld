@@ -165,95 +165,74 @@ export const EventRSVP: React.FC<EventRSVPProps> = ({
     }
   };
 
-  const renderVoteButton = (option: 'yes' | 'no' | 'maybe', count: number, icon: React.ReactNode, label: string, bgColor: string) => {
+  const renderRow = (
+    option: 'yes' | 'no' | 'maybe',
+    label: string,
+    icon: React.ReactNode,
+    activeClass: string,
+    activeTextClass: string,
+    activeRingClass: string,
+    activeNameClass: string,
+  ) => {
     const isSelected = userVote === option;
     const users = rsvpData.userVotes?.[option] || [];
+    const count = option === 'yes' ? rsvpData.rsvpYes : option === 'no' ? rsvpData.rsvpNo : rsvpData.rsvpMaybe;
 
     return (
-      <div className="flex flex-col items-center">
-        <Button
-          variant={isSelected ? "default" : "outline"}
-          size="sm"
-          onClick={() => handleVote(option)}
-          disabled={loading}
-          className={`
-            h-auto py-2 px-3 flex flex-col items-center gap-1 min-w-[60px] transition-all duration-300
-            ${isSelected 
-              ? `${bgColor} text-white shadow-lg transform scale-105` 
-              : 'bg-card/30 border-border/50 hover:bg-card/50 text-muted-foreground hover:text-foreground backdrop-blur-sm'
-            }
-          `}
-        >
+      <button
+        onClick={() => handleVote(option)}
+        disabled={loading}
+        className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all ${
+          isSelected ? activeClass : 'bg-white/[0.03] border border-white/5 hover:border-white/10 hover:bg-white/[0.05]'
+        }`}
+      >
+        <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+          isSelected ? activeTextClass : 'bg-white/10 text-zinc-400'
+        }`}>
           {icon}
-          <span className="text-xs font-medium">{label}</span>
-          <span className="text-xs font-bold">{count}</span>
-        </Button>
-        
+        </div>
+        <span className={`text-[10px] font-medium flex-shrink-0 ${isSelected ? activeNameClass : 'text-zinc-400'}`}>
+          {label}
+        </span>
         {users.length > 0 && (
-          <div className="flex -space-x-1 mt-1">
-            {users.slice(0, 3).map((user, index) => (
-              <div
-                key={index}
-                className="w-5 h-5 rounded-full border border-white bg-muted flex items-center justify-center text-xs overflow-hidden"
-                title={user.username}
-              >
-                {user.avatar ? (
-                  <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-foreground font-medium">
-                    {user.username.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
-            ))}
-            {users.length > 3 && (
-              <div className="w-5 h-5 rounded-full border border-white bg-muted flex items-center justify-center text-xs">
-                <span className="text-foreground text-[8px]">+{users.length - 3}</span>
-              </div>
-            )}
+          <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
+            <div className="flex -space-x-1.5 flex-shrink-0">
+              {users.slice(0, 5).map((u, i) => (
+                <div key={i} className={`w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ${activeRingClass}`}>
+                  {u.avatar ? (
+                    <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
+                  ) : (
+                    <span className={`text-[7px] flex items-center justify-center h-full font-bold ${activeNameClass}`}>{u.username[0]}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+            <span className={`text-[9px] truncate ${activeNameClass} opacity-80`}>
+              {users.map(u => u.username).join(', ')}
+            </span>
           </div>
         )}
-      </div>
+        {users.length === 0 && count > 0 && (
+          <span className={`text-[9px] ${activeNameClass} opacity-60`}>{count}</span>
+        )}
+      </button>
     );
   };
 
   const totalVotes = rsvpData.rsvpYes + rsvpData.rsvpNo + rsvpData.rsvpMaybe;
 
   return (
-    <div className="mt-3 p-3 rounded-lg bg-card/20 border border-border/30 backdrop-blur-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <Users className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium text-foreground">RSVP</span>
+    <div className="mt-3 space-y-1.5">
+      <div className="flex items-center gap-2 mb-2">
+        <Users className="h-3 w-3 text-zinc-500" />
+        <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">RSVP</span>
         {totalVotes > 0 && (
-          <span className="text-xs text-muted-foreground">
-            • {totalVotes} {totalVotes === 1 ? 'Antwort' : 'Antworten'}
-          </span>
+          <span className="text-[9px] text-zinc-600">• {totalVotes} {totalVotes === 1 ? 'Antwort' : 'Antworten'}</span>
         )}
       </div>
-      
-      <div className="flex justify-center gap-4">
-        {renderVoteButton(
-          'yes', 
-          rsvpData.rsvpYes, 
-          <CheckCircle className="h-4 w-4" />, 
-          'Ja', 
-          'bg-green-600 hover:bg-green-700'
-        )}
-        {renderVoteButton(
-          'maybe', 
-          rsvpData.rsvpMaybe, 
-          <HelpCircle className="h-4 w-4" />, 
-          'Vielleicht', 
-          'bg-yellow-600 hover:bg-yellow-700'
-        )}
-        {renderVoteButton(
-          'no', 
-          rsvpData.rsvpNo, 
-          <XCircle className="h-4 w-4" />, 
-          'Nein', 
-          'bg-red-600 hover:bg-red-700'
-        )}
-      </div>
+      {renderRow('yes', 'Dabei', <Check size={12} />, 'bg-green-500/15 border border-green-500/30', 'bg-green-500 text-black', 'ring-green-500/50', 'text-green-400')}
+      {renderRow('maybe', 'Vielleicht', <HelpCircle size={12} />, 'bg-yellow-500/15 border border-yellow-500/30', 'bg-yellow-500 text-black', 'ring-yellow-500/40', 'text-yellow-400')}
+      {renderRow('no', 'Diesmal nicht', <X size={12} />, 'bg-zinc-800/50 border border-zinc-700', 'bg-zinc-600 text-zinc-300', 'ring-zinc-600/50', 'text-zinc-400')}
     </div>
   );
 };
