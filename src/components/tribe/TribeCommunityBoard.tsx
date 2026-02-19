@@ -1096,12 +1096,13 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         {post.poll_options && post.poll_options.length > 0 && (
                           <div className="pl-[52px] mb-3 space-y-1.5">
                             {post.poll_question && (
-                              <p className="text-[10px] text-zinc-400 font-medium mb-2">🗳️ {post.poll_question}</p>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">🗳️ {post.poll_question}</span>
+                              </div>
                             )}
                             {post.poll_options.map((option, idx) => {
                               const votes = post.poll_votes || {};
                               const rawVoterList: any[] = votes[String(idx)] || [];
-                              // Support both old string[] and new {username, avatar}[] format
                               const voterObjects = rawVoterList.map((v: any) =>
                                 typeof v === 'string' ? { username: v, avatar: null } : v
                               );
@@ -1113,60 +1114,53 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                 <button
                                   key={idx}
                                   onClick={() => handlePollVote(post.id, idx, post.poll_votes || null, post.poll_allow_multiple || false)}
-                                  className={`w-full relative flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all overflow-hidden ${
+                                  className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all ${
                                     hasVoted
                                       ? 'bg-gold/15 border border-gold/40'
                                       : 'bg-white/[0.03] border border-white/5 hover:border-gold/20 hover:bg-gold/5'
                                   }`}
                                 >
-                                  {/* Progress bar background */}
-                                  {totalPollVotes > 0 && (
-                                    <div
-                                      className="absolute inset-0 bg-gold/5 transition-all duration-500"
-                                      style={{ width: `${pct}%` }}
-                                    />
-                                  )}
-                                  <div className="relative flex flex-col gap-0.5 flex-1 min-w-0">
-                                    <span className={`text-[10px] font-medium ${hasVoted ? 'text-gold' : 'text-zinc-300'}`}>
-                                      {option}
-                                      {isAI && <span className="ml-1 text-[7px] bg-gold/20 text-gold px-1 py-0.5 rounded uppercase tracking-wider">MIA</span>}
-                                    </span>
-                                    {/* Voter names below option label */}
-                                    {voterObjects.length > 0 && (
-                                      <span className="text-[8px] text-zinc-500 truncate">
-                                        {voterObjects.map(v => v.username).join(', ')}
-                                      </span>
-                                    )}
+                                  {/* Numbered icon circle — like RSVP check icon */}
+                                  <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[8px] font-bold ${
+                                    hasVoted ? 'bg-gold text-black' : 'bg-white/10 text-zinc-400'
+                                  }`}>
+                                    {idx + 1}
                                   </div>
-                                  <div className="relative flex items-center gap-1.5 flex-shrink-0">
-                                    {voterObjects.length > 0 && (
-                                      <div className="flex -space-x-1.5">
+                                  {/* Label */}
+                                  <span className={`text-[10px] font-medium flex-shrink-0 ${hasVoted ? 'text-gold' : 'text-zinc-400'}`}>
+                                    {option}
+                                    {isAI && <span className="ml-1 text-[7px] bg-gold/20 text-gold px-1 py-0.5 rounded uppercase tracking-wider">MIA</span>}
+                                  </span>
+                                  {/* Avatars + names (same layout as RSVP rows) */}
+                                  {voterObjects.length > 0 && (
+                                    <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
+                                      <div className="flex -space-x-1.5 flex-shrink-0">
                                         {voterObjects.slice(0, 5).map((voter, i) => (
                                           <div
                                             key={i}
-                                            className={`w-5 h-5 rounded-full border-2 border-black overflow-hidden flex items-center justify-center text-[6px] font-bold ${hasVoted ? 'ring-1 ring-gold/50' : ''}`}
-                                            style={{ background: voter.avatar ? undefined : '#3f3f46' }}
+                                            className={`w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ${hasVoted ? 'ring-gold/50' : 'ring-zinc-600/40'}`}
                                           >
                                             {voter.avatar ? (
                                               <img src={voter.avatar} className="w-full h-full object-cover" alt={voter.username} />
                                             ) : (
-                                              <span className={hasVoted ? 'text-gold' : 'text-zinc-300'}>
+                                              <span className={`text-[7px] flex items-center justify-center h-full font-bold ${hasVoted ? 'text-gold' : 'text-zinc-400'}`}>
                                                 {voter.username[0]?.toUpperCase()}
                                               </span>
                                             )}
                                           </div>
                                         ))}
-                                        {voterObjects.length > 5 && (
-                                          <div className="w-5 h-5 rounded-full border-2 border-black bg-zinc-700 flex items-center justify-center text-[6px] text-zinc-400 font-bold">
-                                            +{voterObjects.length - 5}
-                                          </div>
-                                        )}
                                       </div>
-                                    )}
-                                    <span className={`text-[9px] font-bold min-w-[28px] text-right ${hasVoted ? 'text-gold' : 'text-zinc-500'}`}>
+                                      <span className={`text-[9px] truncate ${hasVoted ? 'text-gold/80' : 'text-zinc-500'}`}>
+                                        {voterObjects.map(v => v.username).join(', ')}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {/* Percentage — always right-aligned */}
+                                  {totalPollVotes > 0 && (
+                                    <span className={`text-[9px] font-bold ml-auto flex-shrink-0 ${hasVoted ? 'text-gold' : 'text-zinc-500'}`}>
                                       {pct}%
                                     </span>
-                                  </div>
+                                  )}
                                 </button>
                               );
                             })}
