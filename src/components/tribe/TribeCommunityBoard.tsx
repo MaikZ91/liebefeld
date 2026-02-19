@@ -112,6 +112,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   
   // "I'm in" state for top event cards: eventId -> list of usernames
   const [imInUsers, setImInUsers] = useState<Record<string, string[]>>({});
+  // Avatar cache: username -> avatar URL
+  const [avatarCache, setAvatarCache] = useState<Record<string, string | null>>({});
 
   // Load persisted "I'm in" data from community_events on mount
   useEffect(() => {
@@ -257,6 +259,32 @@ export const TribeCommunityBoard: React.FC<Props> = ({
       });
 
       setPosts(convertedPosts);
+
+      // Collect all unique usernames from poll votes that need avatar lookup
+      const usernamesNeeded = new Set<string>();
+      (postsData || []).forEach(msg => {
+        if (msg.poll_votes) {
+          Object.values(msg.poll_votes as Record<string, any[]>).forEach(voters => {
+            (voters || []).forEach((v: any) => {
+              const name = typeof v === 'string' ? v : v?.username;
+              if (name) usernamesNeeded.add(name);
+            });
+          });
+        }
+      });
+
+      if (usernamesNeeded.size > 0) {
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('username, avatar')
+          .in('username', [...usernamesNeeded]);
+        
+        if (profiles) {
+          const cache: Record<string, string | null> = {};
+          profiles.forEach((p: any) => { cache[p.username] = p.avatar || null; });
+          setAvatarCache(prev => ({ ...prev, ...cache }));
+        }
+      }
     } catch (error) {
       console.error('Error loading posts:', error);
     } finally {
@@ -1103,9 +1131,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                             {post.poll_options.map((option, idx) => {
                               const votes = post.poll_votes || {};
                               const rawVoterList: any[] = votes[String(idx)] || [];
-                              const voterObjects = rawVoterList.map((v: any) =>
-                                typeof v === 'string' ? { username: v, avatar: null } : v
-                              );
+                              const voterObjects = rawVoterList.map((v: any) => {
+                                const username = typeof v === 'string' ? v : v?.username;
+                                const storedAvatar = typeof v === 'string' ? null : v?.avatar;
+                                return { username, avatar: storedAvatar || avatarCache[username] || null };
+                              });
                               const totalPollVotes = Object.values(votes).reduce((sum, arr) => sum + (arr as any[]).length, 0);
                               const hasVoted = voterObjects.some(v => v.username === (userProfile?.username || ''));
                               const pct = totalPollVotes > 0 ? Math.round((voterObjects.length / totalPollVotes) * 100) : 0;
