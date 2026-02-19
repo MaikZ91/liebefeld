@@ -444,23 +444,25 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   };
 
   // Handle Location Poll vote
-  const handlePollVote = async (postId: string, optionIndex: number, currentVotes: Record<string, string[]> | null, allowMultiple: boolean) => {
+  const handlePollVote = async (postId: string, optionIndex: number, currentVotes: Record<string, any[]> | null, allowMultiple: boolean) => {
     try {
       const username = userProfile?.username || 'Guest';
+      const avatar = userProfile?.avatarUrl || userProfile?.avatar || null;
       const votes = { ...(currentVotes || {}) };
       const key = String(optionIndex);
 
       if (!allowMultiple) {
-        // Remove user from all options first
+        // Remove user from all options first (support both old string[] and new {username,avatar}[] format)
         Object.keys(votes).forEach(k => {
-          votes[k] = (votes[k] || []).filter(u => u !== username);
+          votes[k] = (votes[k] || []).filter((u: any) => (typeof u === 'string' ? u : u.username) !== username);
         });
       }
 
-      if (!(votes[key] || []).includes(username)) {
-        votes[key] = [...(votes[key] || []), username];
+      const alreadyVoted = (votes[key] || []).some((u: any) => (typeof u === 'string' ? u : u.username) === username);
+      if (!alreadyVoted) {
+        votes[key] = [...(votes[key] || []), { username, avatar }];
       } else {
-        votes[key] = (votes[key] || []).filter(u => u !== username);
+        votes[key] = (votes[key] || []).filter((u: any) => (typeof u === 'string' ? u : u.username) !== username);
       }
 
       await supabase.from('chat_messages').update({ poll_votes: votes }).eq('id', postId);
@@ -1098,10 +1100,14 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                             )}
                             {post.poll_options.map((option, idx) => {
                               const votes = post.poll_votes || {};
-                              const voterList = votes[String(idx)] || [];
-                              const totalPollVotes = Object.values(votes).reduce((sum, arr) => sum + arr.length, 0);
-                              const hasVoted = voterList.includes(userProfile?.username || '');
-                              const pct = totalPollVotes > 0 ? Math.round((voterList.length / totalPollVotes) * 100) : 0;
+                              const rawVoterList: any[] = votes[String(idx)] || [];
+                              // Support both old string[] and new {username, avatar}[] format
+                              const voterObjects = rawVoterList.map((v: any) =>
+                                typeof v === 'string' ? { username: v, avatar: null } : v
+                              );
+                              const totalPollVotes = Object.values(votes).reduce((sum, arr) => sum + (arr as any[]).length, 0);
+                              const hasVoted = voterObjects.some(v => v.username === (userProfile?.username || ''));
+                              const pct = totalPollVotes > 0 ? Math.round((voterObjects.length / totalPollVotes) * 100) : 0;
                               const isAI = option.startsWith('🤖');
                               return (
                                 <button
@@ -1120,18 +1126,41 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                       style={{ width: `${pct}%` }}
                                     />
                                   )}
-                                  <span className={`relative text-[10px] font-medium flex-1 ${hasVoted ? 'text-gold' : 'text-zinc-300'}`}>
-                                    {option}
-                                    {isAI && <span className="ml-1 text-[7px] bg-gold/20 text-gold px-1 py-0.5 rounded uppercase tracking-wider">MIA</span>}
-                                  </span>
-                                  <div className="relative flex items-center gap-2 flex-shrink-0">
-                                    {voterList.length > 0 && (
+                                  <div className="relative flex flex-col gap-0.5 flex-1 min-w-0">
+                                    <span className={`text-[10px] font-medium ${hasVoted ? 'text-gold' : 'text-zinc-300'}`}>
+                                      {option}
+                                      {isAI && <span className="ml-1 text-[7px] bg-gold/20 text-gold px-1 py-0.5 rounded uppercase tracking-wider">MIA</span>}
+                                    </span>
+                                    {/* Voter names below option label */}
+                                    {voterObjects.length > 0 && (
+                                      <span className="text-[8px] text-zinc-500 truncate">
+                                        {voterObjects.map(v => v.username).join(', ')}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="relative flex items-center gap-1.5 flex-shrink-0">
+                                    {voterObjects.length > 0 && (
                                       <div className="flex -space-x-1.5">
-                                        {voterList.slice(0, 4).map((name, i) => (
-                                          <div key={i} className="w-4 h-4 rounded-full border border-black bg-zinc-700 flex items-center justify-center text-[6px] text-zinc-300 font-bold">
-                                            {name[0]?.toUpperCase()}
+                                        {voterObjects.slice(0, 5).map((voter, i) => (
+                                          <div
+                                            key={i}
+                                            className={`w-5 h-5 rounded-full border-2 border-black overflow-hidden flex items-center justify-center text-[6px] font-bold ${hasVoted ? 'ring-1 ring-gold/50' : ''}`}
+                                            style={{ background: voter.avatar ? undefined : '#3f3f46' }}
+                                          >
+                                            {voter.avatar ? (
+                                              <img src={voter.avatar} className="w-full h-full object-cover" alt={voter.username} />
+                                            ) : (
+                                              <span className={hasVoted ? 'text-gold' : 'text-zinc-300'}>
+                                                {voter.username[0]?.toUpperCase()}
+                                              </span>
+                                            )}
                                           </div>
                                         ))}
+                                        {voterObjects.length > 5 && (
+                                          <div className="w-5 h-5 rounded-full border-2 border-black bg-zinc-700 flex items-center justify-center text-[6px] text-zinc-400 font-bold">
+                                            +{voterObjects.length - 5}
+                                          </div>
+                                        )}
                                       </div>
                                     )}
                                     <span className={`text-[9px] font-bold min-w-[28px] text-right ${hasVoted ? 'text-gold' : 'text-zinc-500'}`}>
