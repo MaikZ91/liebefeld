@@ -1140,54 +1140,79 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                               const hasVoted = voterObjects.some(v => v.username === (userProfile?.username || ''));
                               const pct = totalPollVotes > 0 ? Math.round((voterObjects.length / totalPollVotes) * 100) : 0;
                               const isAI = option.startsWith('🤖');
+
+                              // Detect RSVP-style polls (Bin dabei / Diesmal nicht)
+                              const isBinDabei = option.includes('Bin dabei');
+                              const isDiesmalnicht = option.includes('Diesmal nicht') || option.includes('diesmal nicht');
+                              const isRsvpPoll = post.poll_options.some((o: string) => o.includes('Bin dabei'));
+
+                              // Color logic: RSVP-style uses green/zinc, location polls use gold
+                              let activeBg, activeBorder, hoverBorder, hoverBg, iconBg, textColor, ringColor, nameColor;
+                              if (isRsvpPoll && isBinDabei) {
+                                activeBg = 'bg-green-500/15'; activeBorder = 'border-green-500/30';
+                                hoverBorder = 'hover:border-green-500/20'; hoverBg = 'hover:bg-green-500/5';
+                                iconBg = 'bg-green-500 text-black'; textColor = 'text-green-400';
+                                ringColor = 'ring-green-500/50'; nameColor = 'text-green-400';
+                              } else if (isRsvpPoll && isDiesmalnicht) {
+                                activeBg = 'bg-zinc-800/50'; activeBorder = 'border-zinc-700';
+                                hoverBorder = 'hover:border-zinc-600'; hoverBg = 'hover:bg-zinc-800/30';
+                                iconBg = 'bg-zinc-600 text-zinc-300'; textColor = 'text-zinc-400';
+                                ringColor = 'ring-zinc-600/50'; nameColor = 'text-zinc-400';
+                              } else {
+                                activeBg = 'bg-gold/15'; activeBorder = 'border-gold/40';
+                                hoverBorder = 'hover:border-gold/20'; hoverBg = 'hover:bg-gold/5';
+                                iconBg = 'bg-gold text-black'; textColor = 'text-gold';
+                                ringColor = 'ring-gold/50'; nameColor = 'text-gold/80';
+                              }
+
                               return (
                                 <button
                                   key={idx}
                                   onClick={() => handlePollVote(post.id, idx, post.poll_votes || null, post.poll_allow_multiple || false)}
                                   className={`w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg transition-all ${
                                     hasVoted
-                                      ? 'bg-gold/15 border border-gold/40'
-                                      : 'bg-white/[0.03] border border-white/5 hover:border-gold/20 hover:bg-gold/5'
+                                      ? `${activeBg} border ${activeBorder}`
+                                      : `bg-white/[0.03] border border-white/5 ${hoverBorder} ${hoverBg}`
                                   }`}
                                 >
-                                  {/* Numbered icon circle — like RSVP check icon */}
+                                  {/* Icon circle */}
                                   <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[8px] font-bold ${
-                                    hasVoted ? 'bg-gold text-black' : 'bg-white/10 text-zinc-400'
+                                    hasVoted ? iconBg : 'bg-white/10 text-zinc-400'
                                   }`}>
-                                    {idx + 1}
+                                    {isBinDabei ? '✓' : isDiesmalnicht ? '✗' : idx + 1}
                                   </div>
                                   {/* Label */}
-                                  <span className={`text-[10px] font-medium flex-shrink-0 ${hasVoted ? 'text-gold' : 'text-zinc-400'}`}>
+                                  <span className={`text-[10px] font-medium flex-shrink-0 ${hasVoted ? textColor : 'text-zinc-400'}`}>
                                     {option}
                                     {isAI && <span className="ml-1 text-[7px] bg-gold/20 text-gold px-1 py-0.5 rounded uppercase tracking-wider">MIA</span>}
                                   </span>
-                                  {/* Avatars + names (same layout as RSVP rows) */}
+                                  {/* Avatars + names */}
                                   {voterObjects.length > 0 && (
                                     <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
                                       <div className="flex -space-x-1.5 flex-shrink-0">
                                         {voterObjects.slice(0, 5).map((voter, i) => (
                                           <div
                                             key={i}
-                                            className={`w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ${hasVoted ? 'ring-gold/50' : 'ring-zinc-600/40'}`}
+                                            className={`w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ${hasVoted ? ringColor : 'ring-zinc-600/40'}`}
                                           >
                                             {voter.avatar ? (
                                               <img src={voter.avatar} className="w-full h-full object-cover" alt={voter.username} />
                                             ) : (
-                                              <span className={`text-[7px] flex items-center justify-center h-full font-bold ${hasVoted ? 'text-gold' : 'text-zinc-400'}`}>
+                                              <span className={`text-[7px] flex items-center justify-center h-full font-bold ${hasVoted ? textColor : 'text-zinc-400'}`}>
                                                 {voter.username[0]?.toUpperCase()}
                                               </span>
                                             )}
                                           </div>
                                         ))}
                                       </div>
-                                      <span className={`text-[9px] truncate ${hasVoted ? 'text-gold/80' : 'text-zinc-500'}`}>
+                                      <span className={`text-[9px] truncate ${hasVoted ? nameColor : 'text-zinc-500'}`}>
                                         {voterObjects.map(v => v.username).join(', ')}
                                       </span>
                                     </div>
                                   )}
-                                  {/* Percentage — always right-aligned */}
+                                  {/* Percentage */}
                                   {totalPollVotes > 0 && (
-                                    <span className={`text-[9px] font-bold ml-auto flex-shrink-0 ${hasVoted ? 'text-gold' : 'text-zinc-500'}`}>
+                                    <span className={`text-[9px] font-bold ml-auto flex-shrink-0 ${hasVoted ? textColor : 'text-zinc-500'}`}>
                                       {pct}%
                                     </span>
                                   )}
