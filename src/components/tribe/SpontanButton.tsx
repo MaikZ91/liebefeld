@@ -82,6 +82,12 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
           .in('username', uniqueUsernames);
         
         const real = (profiles || []).filter(u => !u.username.startsWith('Guest_'));
+        // Sort users with avatar first
+        real.sort((a, b) => {
+          if (a.avatar && !b.avatar) return -1;
+          if (!a.avatar && b.avatar) return 1;
+          return 0;
+        });
         setActiveUsers(real.slice(0, 6));
         setActiveCount(real.length);
       } else {
