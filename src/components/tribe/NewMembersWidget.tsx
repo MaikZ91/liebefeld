@@ -51,7 +51,15 @@ export const NewMembersWidget: React.FC<NewMembersWidgetProps> = ({ onProfileCli
         .limit(5);
 
       if (!error && data) {
-        setRecentMembers(data);
+        // Sort: users with real avatar (uploaded, not default) first
+        const sorted = [...data].sort((a, b) => {
+          const aReal = a.avatar && (a.avatar.includes('supabase') || a.avatar.includes('lovable-uploads'));
+          const bReal = b.avatar && (b.avatar.includes('supabase') || b.avatar.includes('lovable-uploads'));
+          if (aReal && !bReal) return -1;
+          if (!aReal && bReal) return 1;
+          return 0;
+        });
+        setRecentMembers(sorted);
       }
     } catch (error) {
       console.error('Error loading recent members:', error);
