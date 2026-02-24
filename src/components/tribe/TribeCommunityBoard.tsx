@@ -26,6 +26,28 @@ interface Props {
   generateGreeting?: (profile: { username?: string; interests?: string[]; favorite_locations?: string[] }) => string;
 }
 
+// Sort users: real uploaded avatar first, then current user
+const hasRealAvatar = (avatar?: string | null) =>
+  !!avatar && (avatar.includes('supabase') || avatar.includes('lovable-uploads'));
+
+const sortByRealAvatar = <T extends { avatar?: string | null; username?: string }>(
+  list: T[],
+  currentUsername?: string
+): T[] => {
+  return [...list].sort((a, b) => {
+    // Current user always first
+    if (currentUsername) {
+      if (a.username === currentUsername) return -1;
+      if (b.username === currentUsername) return 1;
+    }
+    const aReal = hasRealAvatar(a.avatar);
+    const bReal = hasRealAvatar(b.avatar);
+    if (aReal && !bReal) return -1;
+    if (!aReal && bReal) return 1;
+    return 0;
+  });
+};
+
 
 
 const TRIBE_BOARD_GROUP_ID = 'tribe_community_board';
@@ -1149,15 +1171,11 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                   const storedAvatar = typeof v === 'string' ? null : v?.avatar;
                                   return { username, avatar: storedAvatar || avatarCache[username] || null };
                                 });
-                                // Sort: current user first, then others
-                                voterObjects.sort((a, b) => {
-                                  if (a.username === currentUsername) return -1;
-                                  if (b.username === currentUsername) return 1;
-                                  return 0;
-                                });
+                                // Sort: current user first, then real avatar users
+                                const sortedVoters = sortByRealAvatar(voterObjects, currentUsername);
                                 const totalPollVotes = Object.values(votes).reduce((sum, arr) => sum + (arr as any[]).length, 0);
-                                const hasVoted = voterObjects.some(v => v.username === currentUsername);
-                                const pct = totalPollVotes > 0 ? Math.round((voterObjects.length / totalPollVotes) * 100) : 0;
+                                const hasVoted = sortedVoters.some(v => v.username === currentUsername);
+                                const pct = totalPollVotes > 0 ? Math.round((sortedVoters.length / totalPollVotes) * 100) : 0;
                                 const isAI = option.startsWith('🤖');
                                 const isLeading = !isRsvpPoll && idx === leadingIdx && leadingCount > 0;
 
@@ -1223,9 +1241,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                         )}
                                       </div>
                                       {/* Voter list with avatars + names inline */}
-                                      {voterObjects.length > 0 && (
+                                      {sortedVoters.length > 0 && (
                                         <div className="flex flex-wrap items-center gap-1 mt-1">
-                                          {voterObjects.slice(0, 6).map((voter, i) => (
+                                          {sortedVoters.slice(0, 6).map((voter, i) => (
                                             <div key={i} className="flex items-center gap-0.5 flex-shrink-0">
                                               <div className={`w-4 h-4 rounded-full border border-black bg-zinc-800 overflow-hidden ring-1 ${isHighlighted ? ringColor : 'ring-zinc-600/40'}`}>
                                                 {voter.avatar ? (
@@ -1241,8 +1259,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                               </span>
                                             </div>
                                           ))}
-                                          {voterObjects.length > 6 && (
-                                            <span className={`text-[8px] ${isHighlighted ? nameColor : 'text-zinc-500'}`}>+{voterObjects.length - 6}</span>
+                                          {sortedVoters.length > 6 && (
+                                            <span className={`text-[8px] ${isHighlighted ? nameColor : 'text-zinc-500'}`}>+{sortedVoters.length - 6}</span>
                                           )}
                                         </div>
                                       )}
@@ -1280,7 +1298,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                               {meetupResponses?.['bin dabei']?.length > 0 && (
                                 <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
                                   <div className="flex -space-x-1.5 flex-shrink-0">
-                                    {meetupResponses['bin dabei'].map((u, i) => (
+                                    {sortByRealAvatar(meetupResponses['bin dabei'], userProfile?.username).map((u, i) => (
                                       <div 
                                         key={i} 
                                         className="w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ring-green-500/50"
@@ -1294,7 +1312,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                     ))}
                                   </div>
                                   <span className="text-[9px] text-green-400/80 truncate">
-                                    {meetupResponses['bin dabei'].map(u => u.username).join(', ')}
+                                    {sortByRealAvatar(meetupResponses['bin dabei'], userProfile?.username).map(u => u.username).join(', ')}
                                   </span>
                                 </div>
                               )}
@@ -1322,7 +1340,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                               {meetupResponses?.['vielleicht']?.length > 0 && (
                                 <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
                                   <div className="flex -space-x-1.5 flex-shrink-0">
-                                    {meetupResponses['vielleicht'].map((u, i) => (
+                                    {sortByRealAvatar(meetupResponses['vielleicht'], userProfile?.username).map((u, i) => (
                                       <div 
                                         key={i} 
                                         className="w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ring-yellow-500/40"
@@ -1336,7 +1354,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                     ))}
                                   </div>
                                   <span className="text-[9px] text-yellow-400/70 truncate">
-                                    {meetupResponses['vielleicht'].map(u => u.username).join(', ')}
+                                    {sortByRealAvatar(meetupResponses['vielleicht'], userProfile?.username).map(u => u.username).join(', ')}
                                   </span>
                                 </div>
                               )}
@@ -1364,7 +1382,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                               {meetupResponses?.['diesmal nicht']?.length > 0 && (
                                 <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden">
                                   <div className="flex -space-x-1.5 flex-shrink-0">
-                                    {meetupResponses['diesmal nicht'].map((u, i) => (
+                                    {sortByRealAvatar(meetupResponses['diesmal nicht'], userProfile?.username).map((u, i) => (
                                       <div 
                                         key={i} 
                                         className="w-5 h-5 rounded-full border-2 border-black bg-zinc-800 overflow-hidden ring-1 ring-zinc-600/50"
@@ -1378,7 +1396,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                     ))}
                                   </div>
                                   <span className="text-[9px] text-zinc-500 truncate">
-                                    {meetupResponses['diesmal nicht'].map(u => u.username).join(', ')}
+                                    {sortByRealAvatar(meetupResponses['diesmal nicht'], userProfile?.username).map(u => u.username).join(', ')}
                                   </span>
                                 </div>
                               )}
