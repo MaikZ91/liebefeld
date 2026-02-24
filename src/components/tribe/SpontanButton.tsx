@@ -82,10 +82,12 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
           .in('username', uniqueUsernames);
         
         const real = (profiles || []).filter(u => !u.username.startsWith('Guest_'));
-        // Sort users with avatar first
+        // Sort users with real (uploaded) avatar first
         real.sort((a, b) => {
-          if (a.avatar && !b.avatar) return -1;
-          if (!a.avatar && b.avatar) return 1;
+          const aReal = a.avatar && (a.avatar.includes('supabase') || a.avatar.includes('lovable-uploads'));
+          const bReal = b.avatar && (b.avatar.includes('supabase') || b.avatar.includes('lovable-uploads'));
+          if (aReal && !bReal) return -1;
+          if (!aReal && bReal) return 1;
           return 0;
         });
         setActiveUsers(real.slice(0, 6));
