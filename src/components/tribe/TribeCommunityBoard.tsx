@@ -28,7 +28,7 @@ interface Props {
 
 // Sort users: real uploaded avatar first, then current user
 const hasRealAvatar = (avatar?: string | null) =>
-  !!avatar && (avatar.includes('supabase') || avatar.includes('lovable-uploads'));
+  !!avatar && !avatar.includes('unsplash.com');
 
 const sortByRealAvatar = <T extends { avatar?: string | null; username?: string }>(
   list: T[],
