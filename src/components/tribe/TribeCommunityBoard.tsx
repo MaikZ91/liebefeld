@@ -1447,11 +1447,28 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                 <span className={`text-[10px] font-bold ${(post.comments?.length || 0) > 0 ? 'text-white' : 'text-zinc-600'}`}>
                                   {post.comments?.length || 0}
                                 </span>
-                                {(post.comments?.length || 0) > 0 && (
-                                  <span className="text-[9px] text-zinc-400 truncate max-w-[120px]">
-                                    {[...new Set(post.comments?.map(c => c.user) || [])].slice(0, 3).join(', ')}{[...new Set(post.comments?.map(c => c.user) || [])].length > 3 ? ` +${[...new Set(post.comments?.map(c => c.user) || [])].length - 3}` : ''}
-                                  </span>
-                                )}
+                                {(post.comments?.length || 0) > 0 && (() => {
+                                  const uniqueCommenters = [...new Map((post.comments || []).map(c => [c.user, c])).values()];
+                                  const sorted = sortByRealAvatar(uniqueCommenters.map(c => ({ username: c.user, avatar: c.userAvatar })), userProfile?.username);
+                                  return (
+                                    <div className="flex items-center gap-1 truncate max-w-[160px]">
+                                      <div className="flex -space-x-1 flex-shrink-0">
+                                        {sorted.slice(0, 3).map((u, i) => (
+                                          <div key={i} className="w-3.5 h-3.5 rounded-full border border-black bg-zinc-800 overflow-hidden">
+                                            {u.avatar ? (
+                                              <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
+                                            ) : (
+                                              <span className="text-[5px] flex items-center justify-center h-full text-zinc-400 font-bold">{u.username?.[0]?.toUpperCase()}</span>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <span className="text-[9px] text-zinc-400 truncate">
+                                        {sorted.slice(0, 3).map(u => u.username).join(', ')}{sorted.length > 3 ? ` +${sorted.length - 3}` : ''}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                             </button>
                         </div>
 
@@ -1464,10 +1481,17 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                                         {post.comments.map(comment => (
                                             <div key={comment.id}>
                                                 <div className="flex items-center gap-1.5 mb-0.5">
+                                                    <div className="w-4 h-4 rounded-full bg-zinc-800 overflow-hidden flex-shrink-0">
+                                                      {comment.userAvatar ? (
+                                                        <img src={comment.userAvatar} className="w-full h-full object-cover" alt={comment.user} />
+                                                      ) : (
+                                                        <span className="text-[6px] flex items-center justify-center h-full text-zinc-400 font-bold">{comment.user?.[0]?.toUpperCase()}</span>
+                                                      )}
+                                                    </div>
                                                     <span className="text-[9px] font-bold text-white">{comment.user}</span>
                                                     <span className="text-[8px] text-zinc-600">{comment.time}</span>
                                                 </div>
-                                                <p className="text-[10px] text-zinc-400">{comment.text}</p>
+                                                <p className="text-[10px] text-zinc-400 pl-[22px]">{comment.text}</p>
                                             </div>
                                         ))}
                                     </div>
