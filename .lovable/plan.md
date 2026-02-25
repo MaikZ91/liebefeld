@@ -1,43 +1,36 @@
 
 
-# Korrektur aller Geocoding-Koordinaten mit verifizierten OpenStreetMap-Daten
+## Analyse
 
-## Problem
-Die bisherigen Koordinaten in `HARDCODED_COORDINATES` waren von der KI generiert und teilweise komplett falsch. Zum Beispiel wurde Stereo Bielefeld auf die Feilenstrasse gesetzt, obwohl es am Ostwestfalen-Platz 3 liegt.
+Ja, das ist genau die PWA-Installations-Funktion. Der Browser erkennt, dass deine App ein gültiges `manifest.json` hat und bietet die native "App installieren"-Leiste an. Das nennt sich `beforeinstallprompt`-Event.
 
-## Verifizierte Koordinaten (Quelle: OpenStreetMap/Nominatim)
+Deine App hat bereits:
+- Ein `manifest.json` mit allen nötigen Feldern
+- Einen Service Worker (`sw.js`)
+- Die richtigen Meta-Tags in `index.html`
 
-| Location | Echte Adresse | Korrekt (lat, lng) | Bisher im Code |
-|---|---|---|---|
-| Stereo Bielefeld | Ostwestfalen-Platz 3 | 52.02998, 8.53112 | 52.0198, 8.5268 |
-| Forum | Meller Str. 2 | 52.03082, 8.52991 | 52.0268, 8.5405 |
-| Ringlokschuppen | Stadtheider Str. | 52.03720, 8.55226 | 52.0295, 8.5595 |
-| Bunker Ulmenwall | Kreuzstr. 0 | 52.01617, 8.53192 | 52.0235, 8.5375 |
-| Platzhirsch | Boulevard 1 | 52.03001, 8.53131 | 52.0212, 8.5335 |
-| NR.Z.P | Grosse-Kurfuersten-Str. 81 | 52.02739, 8.52865 | 52.027554, 8.528664 |
-| Cafe Europa | Jahnplatz 4 | 52.02325, 8.53396 | 52.022940, 8.532826 |
-| Movie | Am Bahnhof 6 | 52.02812, 8.53281 | 52.0198, 8.5268 |
-| Irish Pub | Mauerstr. 38 | 52.02190, 8.52852 | 52.0217, 8.5332 |
-| Cutie | Grosse-Kurfuersten-Str. 81 | 52.02747, 8.52869 | 52.027474, 8.528685 |
-| Cantine | Bleichstr. 77a | 52.02437, 8.55026 | 52.024371, 8.550264 |
-| Stadttheater | Niederwall 27 | 52.02076, 8.53527 | 52.0228, 8.5295 |
-| SchuecoArena | Melanchthonstr. 31a | 52.03203, 8.51678 | 52.031389, 8.516944 |
+Was fehlt: Du fängst das `beforeinstallprompt`-Event nicht ab und nutzt es nicht aktiv. Der Browser zeigt es manchmal automatisch, aber du kannst es kontrolliert einsetzen.
 
-## Aenderung
+## Plan
 
-Nur eine Datei wird geaendert: `src/services/geocodingService.ts`
+### 1. PWA Install Hook erstellen (`src/hooks/usePWAInstall.ts`)
+- Neuer Hook der das `beforeinstallprompt`-Event abfängt und speichert
+- Exportiert `canInstall` (boolean), `installApp()` (Funktion) und `isInstalled` (boolean)
+- Prüft ob die App bereits im Standalone-Modus läuft
 
-Alle Eintraege in `HARDCODED_COORDINATES` werden mit den verifizierten OpenStreetMap-Koordinaten aktualisiert. Die groessten Korrekturen betreffen:
+### 2. `AppDownloadPrompt.tsx` erweitern
+- Statt nur auf Android den Play Store zu verlinken, zuerst prüfen ob die native PWA-Installation möglich ist
+- Wenn `beforeinstallprompt` verfügbar: direkten "Installieren"-Button anzeigen (für Android UND Desktop)
+- Fallback auf Play Store Link wenn das Event nicht verfügbar ist
+- iOS behält die manuelle Anleitung (Safari unterstützt `beforeinstallprompt` nicht)
 
-- **Stereo**: War komplett falsch (Feilenstrasse statt Ostwestfalen-Platz) -- Abweichung ca. 1km
-- **Forum**: War falsch (Herforder Str. statt Meller Str.) -- Abweichung ca. 1km
-- **Bunker Ulmenwall**: War deutlich verschoben -- Abweichung ca. 800m
-- **Platzhirsch**: War deutlich verschoben -- Abweichung ca. 1km
-- **Movie**: Hatte dieselben falschen Koordinaten wie Stereo -- Abweichung ca. 1km
-- **Irish Pub**: War an falscher Stelle -- Abweichung ca. 500m
-- **Stadttheater**: War verschoben -- Abweichung ca. 500m
+### 3. Optionaler Install-Button im Profil/Settings
+- Kleinen "App installieren"-Hinweis im Profil-Bereich anzeigen wenn `canInstall === true`
+- Verschwindet automatisch wenn die App bereits installiert ist
 
-Einige Locations waren schon fast korrekt (NR.Z.P, Cutie, Cantine, SchuecoArena, Cafe Europa) und bekommen nur minimale Feinkorrekturen.
-
-Zusaetzlich werden auch die falschen Eintraege in der `location_coordinates`-Datenbanktabelle automatisch ueberschrieben, da die `batchGeocodeWithCache`-Funktion bei Hardcoded-Treffern die DB aktualisiert.
+### Technische Details
+- Das `beforeinstallprompt`-Event wird vom Browser nur gefeuert wenn bestimmte Kriterien erfüllt sind (manifest.json, service worker, HTTPS)
+- Auf iOS/Safari gibt es kein `beforeinstallprompt` -- dort bleibt die manuelle "Zum Home-Bildschirm"-Anleitung
+- Der bestehende Service Worker `sw.js` wird manuell registriert (nicht via vite-plugin-pwa), was ausreicht
+- Service Worker Registration muss in `main.tsx` oder `index.html` hinzugefügt werden falls noch nicht vorhanden
 
