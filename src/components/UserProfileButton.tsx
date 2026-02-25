@@ -8,13 +8,15 @@ import {
   DropdownMenuSeparator 
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Users, Settings, LogOut } from 'lucide-react';
+import { User, Users, Settings, LogOut, Download } from 'lucide-react';
 import { USERNAME_KEY, AVATAR_KEY } from '@/types/chatTypes';
 import { getInitials } from '@/utils/chatUIUtils';
 import UserDirectory from './users/UserDirectory';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 const UserProfileButton: React.FC = () => {
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
+  const { canInstall, installApp } = usePWAInstall();
   
   const username = typeof window !== 'undefined' 
     ? localStorage.getItem(USERNAME_KEY) || 'User'
@@ -84,6 +86,15 @@ const UserProfileButton: React.FC = () => {
             <Settings className="mr-2 h-4 w-4" />
             <span>Einstellungen</span>
           </DropdownMenuItem>
+          {canInstall && (
+            <DropdownMenuItem 
+              className="text-gold hover:bg-gold/10 cursor-pointer"
+              onClick={installApp}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              <span>App installieren</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator className="bg-red-500/30" />
           <DropdownMenuItem 
             className="text-white hover:bg-red-500/20 cursor-pointer"
