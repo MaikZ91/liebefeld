@@ -100,33 +100,47 @@ serve(async (req) => {
     const funEvents = sortedEvents.filter(e => {
       const cat = (e.category || '').toLowerCase();
       const titleLower = (e.title || '').toLowerCase();
-      // Filter out boring categories and blocked keywords
       if (cat === 'bildung' || cat === 'sonstiges') return false;
       if (BLOCKED_TITLE_KEYWORDS.some(kw => titleLower.includes(kw))) return false;
       return true;
     });
-    const topPool = funEvents.length >= 3 ? funEvents : sortedEvents;
+    const rawPool = funEvents.length >= 3 ? funEvents : sortedEvents;
+
+    // Deduplicate by normalized title – keep the one with most likes
+    const deduped = new Map<string, any>();
+    for (const event of rawPool) {
+      const key = cleanTitle(event.title).toLowerCase();
+      const existing = deduped.get(key);
+      if (!existing || (event.likes || 0) > (existing.likes || 0)) {
+        deduped.set(key, event);
+      }
+    }
+    const topPool = Array.from(deduped.values());
 
     // Build top 3
     const topEvents: any[] = [];
     const addedIds = new Set<string>();
+    const addedTitles = new Set<string>();
 
     if (dayOfWeek === 0) {
       const k = allEvents.find(e => e.title?.toLowerCase().includes('kennenlernabend') || e.title?.toLowerCase().includes('stammtisch'));
-      if (k) { topEvents.push(k); addedIds.add(k.id); }
-      else topEvents.push({ id: 'tribe-kennenlernabend', title: 'TRIBE Kennenlernabend', time: '18:00', location: 'Wird im Chat bekannt gegeben', category: 'Ausgehen', image_url: 'https://liebefeld.lovable.app/images/tribe/tribe-kennenlernabend.jpg', likes: 0 });
+      if (k) { topEvents.push(k); addedIds.add(k.id); addedTitles.add(cleanTitle(k.title).toLowerCase()); }
+      else { topEvents.push({ id: 'tribe-kennenlernabend', title: 'TRIBE Kennenlernabend', time: '18:00', location: 'Wird im Chat bekannt gegeben', category: 'Ausgehen', image_url: 'https://liebefeld.lovable.app/images/tribe/tribe-kennenlernabend.jpg', likes: 0 }); addedTitles.add('tribe kennenlernabend'); }
     }
     if (dayOfWeek === 2) {
       const t = allEvents.find(e => e.title?.toLowerCase().includes('tuesday run') || e.title?.toLowerCase().includes('dienstagslauf'));
-      if (t) { topEvents.push(t); addedIds.add(t.id); }
-      else topEvents.push({ id: 'tribe-tuesday-run', title: 'TRIBE Tuesday Run', time: '17:00', location: 'Gellershagen Park Teich', category: 'Sport', image_url: 'https://liebefeld.lovable.app/images/tribe/tribe-tuesday-run.jpg', likes: 0 });
+      if (t) { topEvents.push(t); addedIds.add(t.id); addedTitles.add(cleanTitle(t.title).toLowerCase()); }
+      else { topEvents.push({ id: 'tribe-tuesday-run', title: 'TRIBE Tuesday Run', time: '17:00', location: 'Gellershagen Park Teich', category: 'Sport', image_url: 'https://liebefeld.lovable.app/images/tribe/tribe-tuesday-run.jpg', likes: 0 }); addedTitles.add('tribe tuesday run'); }
     }
 
     for (const event of topPool) {
       if (topEvents.length >= 3) break;
       if (addedIds.has(event.id)) continue;
+      const titleKey = cleanTitle(event.title).toLowerCase();
+      if (addedTitles.has(titleKey)) continue;
       topEvents.push(event);
       addedIds.add(event.id);
+      addedTitles.add(titleKey);
     }
 
     if (topEvents.length === 0) {
