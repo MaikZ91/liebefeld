@@ -159,6 +159,33 @@ Deno.serve(async (req) => {
               console.log(`[DATE PARSING] No year found for "${title}". Inferring to ${year}.`);
             }
             eventDate = `${year}-${month}-${day}`;
+
+            // --- WEEKDAY CORRECTION ---
+            // If title starts with a weekday prefix like "MI •", "FR•", "SA •", etc.,
+            // adjust the parsed date to the nearest matching weekday (within ±3 days).
+            const weekdayPrefixes: Record<string, number> = {
+              'MO': 1, 'DI': 2, 'MI': 3, 'DO': 4, 'FR': 5, 'SA': 6, 'SO': 0,
+            };
+            const prefixMatch = title.match(/^(MO|DI|MI|DO|FR|SA|SO)\s*[•·\-\s]/i);
+            if (prefixMatch) {
+              const expectedDay = weekdayPrefixes[prefixMatch[1].toUpperCase()];
+              const parsed = new Date(eventDate + 'T12:00:00');
+              const actualDay = parsed.getDay();
+              if (expectedDay !== undefined && actualDay !== expectedDay) {
+                // Find the offset to shift: try -3 to +3 days
+                for (let offset = -3; offset <= 3; offset++) {
+                  const candidate = new Date(parsed);
+                  candidate.setDate(candidate.getDate() + offset);
+                  if (candidate.getDay() === expectedDay) {
+                    eventDate = candidate.toISOString().split('T')[0];
+                    console.log(`[DATE CORRECTION] "${title}" date shifted by ${offset} days: ${year}-${month}-${day} -> ${eventDate}`);
+                    break;
+                  }
+                }
+              }
+            }
+            // --- END WEEKDAY CORRECTION ---
+
             console.log(`[DATE PARSING] Successfully parsed "${dateStr}" -> "${eventDate}" for event "${title}"`);
           } else {
             console.warn(`[DATE PARSING] Regex failed to match date string: "${dateStr}" for event "${title}"`);
