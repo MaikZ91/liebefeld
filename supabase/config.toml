@@ -43,6 +43,9 @@ verify_jwt = false
 [functions.mia-notifications]
 verify_jwt = false
 
+[functions.post-saturday-kennenlernabend]
+verify_jwt = false
+
 [db]
 port = 54322
 
