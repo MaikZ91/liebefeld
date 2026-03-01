@@ -233,39 +233,59 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
     <div className="space-y-0">
       <AnimatePresence mode="wait">
         {step === 'idle' && (
-          <motion.button
+          <motion.div
             key="idle"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setStep('activity')}
-            className="group w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-zinc-800/50 border border-white/[0.06] hover:border-yellow-500/20 transition-all"
+            className="rounded-lg bg-zinc-800/60 border border-white/[0.06] overflow-hidden"
           >
-            <Zap className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
-            <span className="text-xs text-white/60 group-hover:text-white/80 transition-colors text-left">
-              Spontan was machen?
-            </span>
-            {activeUsers.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <div className="flex -space-x-1.5">
-                  {activeUsers.slice(0, 3).map(u => (
-                    u.avatar ? (
-                      <img key={u.username} src={u.avatar} className="w-4 h-4 rounded-full object-cover border border-zinc-800" alt="" />
-                    ) : (
-                      <div key={u.username} className="w-4 h-4 rounded-full bg-zinc-700 border border-zinc-800 flex items-center justify-center text-[6px] text-white/50 font-bold">
-                        {u.username[0]?.toUpperCase()}
-                      </div>
-                    )
-                  ))}
-                </div>
-                <span className="text-[9px] text-white/40 truncate max-w-[100px]">
-                  {activeUsers.slice(0, 2).map(u => u.username.replace('Guest_', '').slice(0, 6)).join(', ')}{activeCount > 2 ? ` +${activeCount - 2}` : ''}
+            {/* Header bar – tappable */}
+            <button
+              onClick={() => setStep('activity')}
+              className="group w-full flex items-center justify-between gap-2 px-3 py-2 hover:bg-zinc-700/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5 text-yellow-500" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-white/70 group-hover:text-white/90 transition-colors">
+                  Spontan was machen?
                 </span>
               </div>
+              <div className="flex items-center gap-1.5">
+                {activeCount > 0 && (
+                  <span className="flex items-center gap-1 text-[10px] text-green-400/80">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-400" />
+                    </span>
+                    {activeCount} aktiv
+                  </span>
+                )}
+                <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40" />
+              </div>
+            </button>
+
+            {/* Active users grid – always visible */}
+            {activeUsers.length > 0 && (
+              <div className="px-2 pb-2 grid grid-cols-2 gap-1.5">
+                {activeUsers.map(u => (
+                  <div
+                    key={u.username}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-zinc-700/30 border border-white/[0.04]"
+                  >
+                    {u.avatar ? (
+                      <img src={u.avatar} className="w-7 h-7 rounded-sm object-cover flex-shrink-0" alt="" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-sm bg-zinc-600 flex items-center justify-center text-[10px] text-white/50 font-bold flex-shrink-0">
+                        {u.username[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <span className="text-[11px] text-white/70 truncate">{u.username}</span>
+                  </div>
+                ))}
+              </div>
             )}
-            <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-white/40 flex-shrink-0" />
-          </motion.button>
+          </motion.div>
         )}
 
         {step === 'activity' && (
@@ -274,16 +294,18 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="rounded-xl bg-zinc-800/80 border border-white/10 p-3 space-y-2.5"
+            className="rounded-lg bg-zinc-800/80 border border-white/10 overflow-hidden"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-white/70">Was hast du vor?</span>
+            {/* Header */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-white/[0.06]">
+              <span className="text-xs font-semibold uppercase tracking-wider text-white/70">Was hast du vor?</span>
               <button onClick={reset} className="p-0.5 text-white/30 hover:text-white/60">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5">
+            {/* Activity grid */}
+            <div className="grid grid-cols-3 gap-1.5 p-2.5">
               {ACTIVITIES.map(a => (
                 <button
                   key={a.label}
@@ -291,7 +313,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                     setSelectedActivity(a);
                     setStep('details');
                   }}
-                  className="flex flex-col items-center gap-1 py-2 px-1 rounded-lg bg-zinc-700/30 hover:bg-zinc-700/60 border border-transparent hover:border-white/10 transition-all active:scale-95"
+                  className="flex flex-col items-center gap-1 py-2.5 px-1 rounded-md bg-zinc-700/30 hover:bg-zinc-700/60 border border-transparent hover:border-white/10 transition-all active:scale-95"
                 >
                   <span className="text-lg">{a.emoji}</span>
                   <span className="text-[10px] text-white/60">{a.label}</span>
@@ -299,9 +321,9 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
               ))}
             </div>
 
-            {/* Active users today */}
+            {/* Active users list */}
             {activeUsers.length > 0 && (
-              <div className="pt-1 border-t border-white/[0.06]">
+              <div className="px-2.5 pb-2.5 border-t border-white/[0.06] pt-2">
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="relative flex h-1.5 w-1.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -311,20 +333,20 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                     {activeCount} heute aktiv
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="space-y-1">
                   {activeUsers.map(u => (
                     <div
                       key={u.username}
-                      className="flex items-center gap-1 px-1.5 py-1 rounded-full bg-zinc-700/40 border border-white/[0.06]"
+                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-md bg-zinc-700/25 border border-white/[0.04]"
                     >
                       {u.avatar ? (
-                        <img src={u.avatar} className="w-4 h-4 rounded-full object-cover" alt="" />
+                        <img src={u.avatar} className="w-8 h-8 rounded-sm object-cover flex-shrink-0" alt="" />
                       ) : (
-                        <div className="w-4 h-4 rounded-full bg-zinc-600 flex items-center justify-center text-[7px] text-white/50 font-bold">
+                        <div className="w-8 h-8 rounded-sm bg-zinc-600 flex items-center justify-center text-xs text-white/50 font-bold flex-shrink-0">
                           {u.username[0]?.toUpperCase()}
                         </div>
                       )}
-                      <span className="text-[10px] text-white/60 max-w-[60px] truncate">{u.username}</span>
+                      <span className="text-[11px] text-white/70 truncate">{u.username}</span>
                     </div>
                   ))}
                 </div>
