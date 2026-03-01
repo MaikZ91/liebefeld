@@ -90,7 +90,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
           if (!aReal && bReal) return 1;
           return 0;
         });
-        setActiveUsers(real.slice(0, 6));
+        setActiveUsers(real);
         setActiveCount(real.length);
       } else {
         setActiveUsers([]);
