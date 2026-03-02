@@ -290,7 +290,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
             {activeUsers.length > 0 && (
               <div className="px-2 pb-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
                 {activeUsers.map(u => (
-                  <div key={u.username} className="flex flex-col items-center gap-0.5 flex-shrink-0 w-10">
+                  <div key={u.username} className="flex flex-col items-center gap-0.5 flex-shrink-0 w-10 cursor-pointer" onClick={(e) => handleAvatarClick(u.username, e)}>
                     {u.avatar ? (
                       <img src={u.avatar} className="w-9 h-9 rounded-sm object-cover" alt="" />
                     ) : (
@@ -355,7 +355,8 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                   {activeUsers.map(u => (
                     <div
                       key={u.username}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-zinc-700/30 border border-white/[0.04]"
+                      onClick={(e) => handleAvatarClick(u.username, e)}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-zinc-700/30 border border-white/[0.04] cursor-pointer hover:bg-zinc-700/50 transition-colors"
                     >
                       {u.avatar ? (
                         <img src={u.avatar} className="w-7 h-7 rounded-sm object-cover flex-shrink-0" alt="" />
@@ -457,6 +458,13 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <UserProfileDialog
+        open={showUserProfileDialog}
+        onOpenChange={setShowUserProfileDialog}
+        userProfile={selectedUserProfile}
+        loading={loadingUserProfile}
+      />
     </div>
   );
 };
