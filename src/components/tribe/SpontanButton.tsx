@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Zap, X, MapPin, Send, ChevronRight, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/tribe';
+import { UserProfile as ChatUserProfile } from '@/types/chatTypes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from '@/components/ui/slider';
+import UserProfileDialog from '@/components/users/UserProfileDialog';
+import { userService } from '@/services/userService';
 
 interface Props {
   userProfile: UserProfile;
