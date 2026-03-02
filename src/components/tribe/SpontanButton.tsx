@@ -265,22 +265,19 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
               </div>
             </button>
 
-            {/* Active users grid – always visible */}
+            {/* Active users – horizontal row */}
             {activeUsers.length > 0 && (
-              <div className="px-2 pb-2 grid grid-cols-2 gap-1.5">
+              <div className="px-2 pb-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
                 {activeUsers.map(u => (
-                  <div
-                    key={u.username}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-zinc-700/30 border border-white/[0.04]"
-                  >
+                  <div key={u.username} className="flex flex-col items-center gap-0.5 flex-shrink-0 w-10">
                     {u.avatar ? (
-                      <img src={u.avatar} className="w-7 h-7 rounded-sm object-cover flex-shrink-0" alt="" />
+                      <img src={u.avatar} className="w-9 h-9 rounded-sm object-cover" alt="" />
                     ) : (
-                      <div className="w-7 h-7 rounded-sm bg-zinc-600 flex items-center justify-center text-[10px] text-white/50 font-bold flex-shrink-0">
+                      <div className="w-9 h-9 rounded-sm bg-zinc-600 flex items-center justify-center text-[10px] text-white/50 font-bold">
                         {u.username[0]?.toUpperCase()}
                       </div>
                     )}
-                    <span className="text-[11px] text-white/70 truncate">{u.username}</span>
+                    <span className="text-[9px] text-white/50 truncate w-full text-center">{u.username}</span>
                   </div>
                 ))}
               </div>
@@ -321,7 +318,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
               ))}
             </div>
 
-            {/* Active users list */}
+            {/* Active users grid */}
             {activeUsers.length > 0 && (
               <div className="px-2.5 pb-2.5 border-t border-white/[0.06] pt-2">
                 <div className="flex items-center gap-1.5 mb-2">
@@ -333,16 +330,16 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                     {activeCount} heute aktiv
                   </span>
                 </div>
-                <div className="space-y-1">
+                <div className="grid grid-cols-2 gap-1.5">
                   {activeUsers.map(u => (
                     <div
                       key={u.username}
-                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-md bg-zinc-700/25 border border-white/[0.04]"
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-zinc-700/30 border border-white/[0.04]"
                     >
                       {u.avatar ? (
-                        <img src={u.avatar} className="w-8 h-8 rounded-sm object-cover flex-shrink-0" alt="" />
+                        <img src={u.avatar} className="w-7 h-7 rounded-sm object-cover flex-shrink-0" alt="" />
                       ) : (
-                        <div className="w-8 h-8 rounded-sm bg-zinc-600 flex items-center justify-center text-xs text-white/50 font-bold flex-shrink-0">
+                        <div className="w-7 h-7 rounded-sm bg-zinc-600 flex items-center justify-center text-[10px] text-white/50 font-bold flex-shrink-0">
                           {u.username[0]?.toUpperCase()}
                         </div>
                       )}
