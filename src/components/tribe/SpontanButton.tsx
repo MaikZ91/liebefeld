@@ -52,6 +52,24 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
   const [isActive, setIsActive] = useState(false);
   const [activeLabel, setActiveLabel] = useState('');
   const [activeCount, setActiveCount] = useState(0);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<ChatUserProfile | null>(null);
+  const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
+  const [loadingUserProfile, setLoadingUserProfile] = useState(false);
+
+  const handleAvatarClick = async (username: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLoadingUserProfile(true);
+    setShowUserProfileDialog(true);
+    try {
+      const profile = await userService.fetchUserProfile(username);
+      setSelectedUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setShowUserProfileDialog(false);
+    } finally {
+      setLoadingUserProfile(false);
+    }
+  };
 
   // Time range slider state (hours as decimals, e.g. 18.5 = 18:30)
   const currentH = Math.ceil(getCurrentHour() * 2) / 2; // round to nearest 30min
