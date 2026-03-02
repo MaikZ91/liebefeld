@@ -777,10 +777,10 @@ export const TribeCommunityBoard: React.FC<Props> = ({
             {/* Spontan Button - above chat input */}
             <SpontanButton userProfile={userProfile} selectedCity={selectedCity} />
             
-            <div className={`bg-surface border rounded-lg p-1.5 shadow-lg flex items-end gap-2 ${
+            <div className={`bg-zinc-800/80 border rounded-xl p-2.5 shadow-xl flex items-end gap-2 ${
               (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
                 ? 'border-gold/50 ring-2 ring-gold/20' 
-                : 'border-white/10'
+                : 'border-white/15'
             }`}>
                 <textarea 
                     ref={textareaRef}
@@ -796,7 +796,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         ? '👋 Stell dich vor...'
                         : `What's happening in ${selectedCity}?`
                     }
-                    className="flex-1 bg-transparent text-white text-sm placeholder-zinc-600 outline-none resize-none min-h-[28px] max-h-[120px] py-1"
+                    className="flex-1 bg-transparent text-white text-sm placeholder-zinc-500 outline-none resize-none min-h-[32px] max-h-[120px] py-1.5"
                     rows={1}
                 />
                 
@@ -823,7 +823,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                     <button 
                         onClick={handlePost} 
                         disabled={(!newPost.trim() && !selectedImage) || isUploading} 
-                        className={`isolate relative z-10 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 transition-colors flex items-center gap-1 rounded ${
+                        className={`isolate relative z-10 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 transition-colors flex items-center gap-1 rounded-md ${
                           (onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post')
                             ? 'bg-gold text-black hover:bg-gold/90 animate-pulse'
                             : 'text-black'
