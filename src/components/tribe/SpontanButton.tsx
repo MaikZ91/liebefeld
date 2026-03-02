@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Zap, X, MapPin, Send, ChevronRight, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/tribe';
+import { UserProfile as ChatUserProfile } from '@/types/chatTypes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from '@/components/ui/slider';
+import UserProfileDialog from '@/components/users/UserProfileDialog';
+import { userService } from '@/services/userService';
 
 interface Props {
   userProfile: UserProfile;
@@ -49,6 +52,24 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
   const [isActive, setIsActive] = useState(false);
   const [activeLabel, setActiveLabel] = useState('');
   const [activeCount, setActiveCount] = useState(0);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<ChatUserProfile | null>(null);
+  const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
+  const [loadingUserProfile, setLoadingUserProfile] = useState(false);
+
+  const handleAvatarClick = async (username: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLoadingUserProfile(true);
+    setShowUserProfileDialog(true);
+    try {
+      const profile = await userService.getUserByUsername(username);
+      setSelectedUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setShowUserProfileDialog(false);
+    } finally {
+      setLoadingUserProfile(false);
+    }
+  };
 
   // Time range slider state (hours as decimals, e.g. 18.5 = 18:30)
   const currentH = Math.ceil(getCurrentHour() * 2) / 2; // round to nearest 30min
@@ -269,7 +290,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
             {activeUsers.length > 0 && (
               <div className="px-2 pb-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
                 {activeUsers.map(u => (
-                  <div key={u.username} className="flex flex-col items-center gap-0.5 flex-shrink-0 w-10">
+                  <div key={u.username} className="flex flex-col items-center gap-0.5 flex-shrink-0 w-10 cursor-pointer" onClick={(e) => handleAvatarClick(u.username, e)}>
                     {u.avatar ? (
                       <img src={u.avatar} className="w-9 h-9 rounded-sm object-cover" alt="" />
                     ) : (
@@ -334,7 +355,8 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                   {activeUsers.map(u => (
                     <div
                       key={u.username}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-zinc-700/30 border border-white/[0.04]"
+                      onClick={(e) => handleAvatarClick(u.username, e)}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-zinc-700/30 border border-white/[0.04] cursor-pointer hover:bg-zinc-700/50 transition-colors"
                     >
                       {u.avatar ? (
                         <img src={u.avatar} className="w-7 h-7 rounded-sm object-cover flex-shrink-0" alt="" />
@@ -436,6 +458,13 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <UserProfileDialog
+        open={showUserProfileDialog}
+        onOpenChange={setShowUserProfileDialog}
+        userProfile={selectedUserProfile}
+        loading={loadingUserProfile}
+      />
     </div>
   );
 };
