@@ -61,7 +61,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
     setLoadingUserProfile(true);
     setShowUserProfileDialog(true);
     try {
-      const profile = await userService.fetchUserProfile(username);
+      const profile = await userService.getUserByUsername(username);
       setSelectedUserProfile(profile);
     } catch (error) {
       console.error('Error fetching user profile:', error);
