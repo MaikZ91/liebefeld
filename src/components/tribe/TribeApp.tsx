@@ -1587,14 +1587,7 @@ const TribeAppMain: React.FC<{
                           })
                         : [];
 
-                      const isExpanded = expandedDates.has(date);
-                      const shouldCollapse = (hasLikedFirstEvent && activeEvents.length > MAX_COLLAPSED_EVENTS) || pastEvents.length > 0;
-                      const displayedEvents =
-                        shouldCollapse && !isExpanded
-                          ? activeEvents.slice(0, MAX_COLLAPSED_EVENTS)
-                          : [...activeEvents, ...pastEvents];
-                      const hiddenActiveCount = Math.max(0, activeEvents.length - MAX_COLLAPSED_EVENTS);
-                      const hiddenCount = (hasLikedFirstEvent ? hiddenActiveCount : 0) + pastEvents.length;
+                      const displayedEvents = [...activeEvents, ...pastEvents];
 
                       // Calculate top event of the day based on engagement
                       const getEngagementScore = (e: TribeEvent) => {
@@ -1759,34 +1752,6 @@ const TribeAppMain: React.FC<{
                             })()}
                           </div>
 
-                          {/* Expand button for collapsed dates */}
-                          {shouldCollapse && !isExpanded && hiddenCount > 0 && (
-                            <button
-                              onClick={() => setExpandedDates((prev) => new Set([...prev, date]))}
-                              className="w-full mt-2 py-2 text-[10px] text-zinc-500 hover:text-gold uppercase tracking-widest border border-dashed border-white/10 hover:border-gold/30 transition-colors flex items-center justify-center gap-2"
-                            >
-                              <ChevronDown size={12} />
-                              +{hiddenCount} weitere Events 
-                              {pastEvents.length > 0 && isToday && ` (${pastEvents.length} bereits vorbei)`}
-                            </button>
-                          )}
-
-                          {/* Collapse button when expanded */}
-                          {shouldCollapse && isExpanded && (
-                            <button
-                              onClick={() =>
-                                setExpandedDates((prev) => {
-                                  const newSet = new Set(prev);
-                                  newSet.delete(date);
-                                  return newSet;
-                                })
-                              }
-                              className="w-full mt-2 py-2 text-[10px] text-zinc-500 hover:text-gold uppercase tracking-widest border border-dashed border-white/10 hover:border-gold/30 transition-colors flex items-center justify-center gap-2"
-                            >
-                              <ChevronDown size={12} className="rotate-180" />
-                              Weniger anzeigen
-                            </button>
-                          )}
                         </div>
                       );
                     });
