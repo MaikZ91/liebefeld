@@ -892,6 +892,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                   <X size={14} />
                 </button>
                 <img 
+                  loading="lazy"
                   src={MIA_AVATAR} 
                   className="w-10 h-10 rounded-full ring-2 ring-gold/50 object-cover flex-shrink-0" 
                   alt="MIA" 
