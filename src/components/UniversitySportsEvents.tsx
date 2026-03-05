@@ -1,9 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Event } from '@/types/eventTypes';
 import EventCard from './EventCard';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface UniversitySportsEventsProps {
   events: Event[];
