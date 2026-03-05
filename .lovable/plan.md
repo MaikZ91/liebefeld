@@ -1,36 +1,38 @@
 
 
-## Analyse
+## Performance-Optimierung: Community Chat Scrolling
 
-Ja, das ist genau die PWA-Installations-Funktion. Der Browser erkennt, dass deine App ein gültiges `manifest.json` hat und bietet die native "App installieren"-Leiste an. Das nennt sich `beforeinstallprompt`-Event.
+### Problem-Analyse
+Der Community Board (`TribeCommunityBoard.tsx`, 1523 Zeilen) rendert **alle Posts auf einmal** mit vielen Bildern und Avataren:
+- Jeder Post hat Avatare (User, Voter in Polls, RSVP-Teilnehmer)
+- MIA Top-Event-Posts laden 3 Bilder im 3:4-Format
+- Kennenlernabend-Polls zeigen bis zu 6 Voter-Avatare pro Option
+- Kein Lazy Loading auf Bildern
+- `loadPosts()` wird bei **jedem** Realtime-UPDATE neu aufgerufen (kompletter Refresh)
+- Keine Virtualisierung oder Pagination
 
-Deine App hat bereits:
-- Ein `manifest.json` mit allen nötigen Feldern
-- Einen Service Worker (`sw.js`)
-- Die richtigen Meta-Tags in `index.html`
+### Plan
 
-Was fehlt: Du fängst das `beforeinstallprompt`-Event nicht ab und nutzt es nicht aktiv. Der Browser zeigt es manchmal automatisch, aber du kannst es kontrolliert einsetzen.
+**1. Lazy Loading für alle Bilder**
+- `loading="lazy"` auf alle `<img>`-Tags setzen (Post-Bilder, Avatare in Top-Events, Poll-Voter-Avatare, RSVP-Avatare, Post-Media)
+- Betrifft ca. 15 Stellen im Component
 
-## Plan
+**2. Post-Pagination einführen**
+- Nur die letzten 15 Posts initial rendern
+- "Mehr laden"-Button am Ende des Feeds
+- Neue Posts kommen weiterhin oben live rein
 
-### 1. PWA Install Hook erstellen (`src/hooks/usePWAInstall.ts`)
-- Neuer Hook der das `beforeinstallprompt`-Event abfängt und speichert
-- Exportiert `canInstall` (boolean), `installApp()` (Funktion) und `isInstalled` (boolean)
-- Prüft ob die App bereits im Standalone-Modus läuft
+**3. Realtime-Updates optimieren**
+- Bei `UPDATE`-Events nicht mehr `loadPosts()` aufrufen (kompletter DB-Fetch + Re-Render)
+- Stattdessen nur den betroffenen Post im State updaten via `setPosts(prev => prev.map(...))`
 
-### 2. `AppDownloadPrompt.tsx` erweitern
-- Statt nur auf Android den Play Store zu verlinken, zuerst prüfen ob die native PWA-Installation möglich ist
-- Wenn `beforeinstallprompt` verfügbar: direkten "Installieren"-Button anzeigen (für Android UND Desktop)
-- Fallback auf Play Store Link wenn das Event nicht verfügbar ist
-- iOS behält die manuelle Anleitung (Safari unterstützt `beforeinstallprompt` nicht)
-
-### 3. Optionaler Install-Button im Profil/Settings
-- Kleinen "App installieren"-Hinweis im Profil-Bereich anzeigen wenn `canInstall === true`
-- Verschwindet automatisch wenn die App bereits installiert ist
+**4. Post-Rendering in eigene Komponente extrahieren**
+- Einzelne Posts in `React.memo`-wrapped Komponente auslagern
+- Verhindert Re-Render aller Posts wenn sich nur ein Post ändert
 
 ### Technische Details
-- Das `beforeinstallprompt`-Event wird vom Browser nur gefeuert wenn bestimmte Kriterien erfüllt sind (manifest.json, service worker, HTTPS)
-- Auf iOS/Safari gibt es kein `beforeinstallprompt` -- dort bleibt die manuelle "Zum Home-Bildschirm"-Anleitung
-- Der bestehende Service Worker `sw.js` wird manuell registriert (nicht via vite-plugin-pwa), was ausreicht
-- Service Worker Registration muss in `main.tsx` oder `index.html` hinzugefügt werden falls noch nicht vorhanden
+
+- **Dateien**: `src/components/tribe/TribeCommunityBoard.tsx` (Hauptänderungen), neue Datei `src/components/tribe/CommunityPost.tsx`
+- **Keine neuen Dependencies** nötig – `loading="lazy"` ist native HTML, `React.memo` ist built-in
+- Pagination über einfachen `useState<number>` für `visibleCount`
 
