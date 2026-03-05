@@ -102,6 +102,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   generateGreeting,
 }) => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [visibleCount, setVisibleCount] = useState(15);
   const [newPost, setNewPost] = useState('');
   
   const [generatedTags, setGeneratedTags] = useState<string[]>([]);
@@ -236,9 +237,17 @@ export const TribeCommunityBoard: React.FC<Props> = ({
         schema: 'public',
         table: 'chat_messages',
         filter: `group_id=eq.${TRIBE_BOARD_GROUP_ID}`
-      }, () => {
-        // Refresh on updates (likes, etc.)
-        loadPosts();
+      }, (payload) => {
+        // Optimized: patch the single post in state instead of full reload
+        const updated = payload.new;
+        setPosts(prev => prev.map(p => {
+          if (p.id !== updated.id) return p;
+          return {
+            ...p,
+            ...convertMessageToPost(updated),
+            comments: p.comments, // keep existing comments
+          };
+        }));
       })
       .subscribe();
 
