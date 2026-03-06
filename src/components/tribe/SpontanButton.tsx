@@ -297,7 +297,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="rounded-lg bg-zinc-800/60 border border-white/[0.06] overflow-hidden"
+            className="rounded-lg bg-zinc-800/60 border border-white/[0.06]"
           >
             {/* Header bar – tappable */}
             <button
@@ -326,7 +326,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
 
             {/* Active users – horizontal row */}
             {activeUsers.length > 0 && (
-              <div className="px-2 pb-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
+              <div className="px-2 pb-2 pt-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
                 {activeUsers.map(u => (
                   <div key={u.username} className="flex flex-col items-center gap-0.5 flex-shrink-0 w-10 cursor-pointer relative" onClick={(e) => handleAvatarClick(u.username, e)}>
                     <div className="relative">
