@@ -127,21 +127,25 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
           return { username: u.username, avatar: u.avatar, isNew };
         });
         
-        // Sort: new members first (with own avatar ranked highest), then rest by avatar
+        // Ranking: 1) active + real avatar, 2) new members, 3) active + default avatar
         enriched.sort((a, b) => {
           const aReal = a.avatar && !a.avatar.includes('unsplash.com');
           const bReal = b.avatar && !b.avatar.includes('unsplash.com');
-          // New members first
+          const aActive = activeUsernames.includes(a.username);
+          const bActive = activeUsernames.includes(b.username);
+          const aActiveReal = aActive && aReal;
+          const bActiveReal = bActive && bReal;
+          // Tier 1: Active + real avatar first
+          if (aActiveReal && !bActiveReal) return -1;
+          if (!aActiveReal && bActiveReal) return 1;
+          // Tier 2: New members next
           if (a.isNew && !b.isNew) return -1;
           if (!a.isNew && b.isNew) return 1;
-          // Within same group: real avatar first
+          // Within new: real avatar first
           if (a.isNew && b.isNew) {
             if (aReal && !bReal) return -1;
             if (!aReal && bReal) return 1;
-            return 0;
           }
-          if (aReal && !bReal) return -1;
-          if (!aReal && bReal) return 1;
           return 0;
         });
         
@@ -334,7 +338,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                         </div>
                       )}
                       {u.isNew && (
-                        <span className="absolute -top-1 -right-1 px-1 py-0.5 text-[7px] font-bold bg-gold text-black rounded-sm leading-none">
+                        <span className="absolute -top-1.5 -right-1.5 z-10 px-1 py-0.5 text-[7px] font-bold bg-gold text-black rounded-sm leading-none">
                           NEU
                         </span>
                       )}
@@ -408,7 +412,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                           </div>
                         )}
                         {u.isNew && (
-                          <span className="absolute -top-1 -right-1.5 px-1 py-0.5 text-[6px] font-bold bg-gold text-black rounded-sm leading-none">
+                          <span className="absolute -top-1.5 -right-1.5 z-10 px-1 py-0.5 text-[6px] font-bold bg-gold text-black rounded-sm leading-none">
                             NEU
                           </span>
                         )}
