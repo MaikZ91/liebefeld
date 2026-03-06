@@ -297,7 +297,7 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="rounded-lg bg-zinc-800/60 border border-white/[0.06] overflow-hidden"
+            className="rounded-lg bg-zinc-800/60 border border-white/[0.06]"
           >
             {/* Header bar – tappable */}
             <button
