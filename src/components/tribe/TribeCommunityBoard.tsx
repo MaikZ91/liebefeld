@@ -978,6 +978,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                       onImIn={handleImIn}
                       avatarCache={avatarCache}
                       getUserRSVP={getUserRSVP}
+                      onEventClick={onEventClick}
                     />
                   ))}
                   {visibleCount < filteredPosts.length && (
