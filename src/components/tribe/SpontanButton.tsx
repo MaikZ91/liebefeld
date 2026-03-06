@@ -78,41 +78,75 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
     Math.min(currentH + 2, 24),
   ]);
 
-  // Today's active users
-  const [activeUsers, setActiveUsers] = useState<Array<{ username: string; avatar: string | null }>>([]);
+  // Today's active users + new members (last 3 days)
+  const [activeUsers, setActiveUsers] = useState<Array<{ username: string; avatar: string | null; isNew?: boolean }>>([]);
   
   useEffect(() => {
     const fetchActiveUsers = async () => {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       
-      // Get distinct usernames from activity logs today (accumulated, not just "currently online")
+      // Get distinct usernames from activity logs today
       const { data: logData } = await supabase
         .from('user_activity_logs')
         .select('username')
         .gte('created_at', todayStart.toISOString());
       
-      const uniqueUsernames = [...new Set((logData || []).map(l => l.username))]
+      const activeUsernames = [...new Set((logData || []).map(l => l.username))]
         .filter(u => !u.startsWith('Guest_'));
       
-      if (uniqueUsernames.length > 0) {
-        // Fetch profiles for these users
+      // Get new members (created within last 3 days) - shown even if not active
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const tenDaysAgo = new Date();
+      tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+      
+      const { data: newMembers } = await supabase
+        .from('user_profiles')
+        .select('username, avatar, created_at')
+        .not('username', 'like', 'Guest_%')
+        .gte('created_at', threeDaysAgo.toISOString())
+        .order('created_at', { ascending: false });
+      
+      // All usernames to fetch profiles for (active + new)
+      const newMemberUsernames = (newMembers || []).map(m => m.username);
+      const allUsernames = [...new Set([...activeUsernames, ...newMemberUsernames])];
+      
+      if (allUsernames.length > 0) {
         const { data: profiles } = await supabase
           .from('user_profiles')
-          .select('username, avatar')
-          .in('username', uniqueUsernames);
+          .select('username, avatar, created_at')
+          .in('username', allUsernames);
         
         const real = (profiles || []).filter(u => !u.username.startsWith('Guest_'));
-        // Sort users with real (uploaded) avatar first
-        real.sort((a, b) => {
+        
+        // Mark new members (badge for 10 days, visible for 3 days even if inactive)
+        const enriched = real.map(u => {
+          const createdAt = u.created_at ? new Date(u.created_at) : null;
+          const isNew = createdAt ? createdAt >= tenDaysAgo : false;
+          return { username: u.username, avatar: u.avatar, isNew };
+        });
+        
+        // Sort: new members first (with own avatar ranked highest), then rest by avatar
+        enriched.sort((a, b) => {
           const aReal = a.avatar && !a.avatar.includes('unsplash.com');
           const bReal = b.avatar && !b.avatar.includes('unsplash.com');
+          // New members first
+          if (a.isNew && !b.isNew) return -1;
+          if (!a.isNew && b.isNew) return 1;
+          // Within same group: real avatar first
+          if (a.isNew && b.isNew) {
+            if (aReal && !bReal) return -1;
+            if (!aReal && bReal) return 1;
+            return 0;
+          }
           if (aReal && !bReal) return -1;
           if (!aReal && bReal) return 1;
           return 0;
         });
-        setActiveUsers(real);
-        setActiveCount(real.length);
+        
+        setActiveUsers(enriched);
+        setActiveCount(enriched.length);
       } else {
         setActiveUsers([]);
         setActiveCount(0);
@@ -290,14 +324,21 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
             {activeUsers.length > 0 && (
               <div className="px-2 pb-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
                 {activeUsers.map(u => (
-                  <div key={u.username} className="flex flex-col items-center gap-0.5 flex-shrink-0 w-10 cursor-pointer" onClick={(e) => handleAvatarClick(u.username, e)}>
-                    {u.avatar ? (
-                      <img src={u.avatar} className="w-9 h-9 rounded-sm object-cover" alt="" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-sm bg-zinc-600 flex items-center justify-center text-[10px] text-white/50 font-bold">
-                        {u.username[0]?.toUpperCase()}
-                      </div>
-                    )}
+                  <div key={u.username} className="flex flex-col items-center gap-0.5 flex-shrink-0 w-10 cursor-pointer relative" onClick={(e) => handleAvatarClick(u.username, e)}>
+                    <div className="relative">
+                      {u.avatar ? (
+                        <img src={u.avatar} className="w-9 h-9 rounded-sm object-cover" alt="" loading="lazy" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-sm bg-zinc-600 flex items-center justify-center text-[10px] text-white/50 font-bold">
+                          {u.username[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      {u.isNew && (
+                        <span className="absolute -top-1 -right-1 px-1 py-0.5 text-[7px] font-bold bg-gold text-black rounded-sm leading-none">
+                          NEU
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[9px] text-white/50 truncate w-full text-center">{u.username}</span>
                   </div>
                 ))}
@@ -358,13 +399,20 @@ export const SpontanButton: React.FC<Props> = ({ userProfile, selectedCity }) =>
                       onClick={(e) => handleAvatarClick(u.username, e)}
                       className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-zinc-700/30 border border-white/[0.04] cursor-pointer hover:bg-zinc-700/50 transition-colors"
                     >
-                      {u.avatar ? (
-                        <img src={u.avatar} className="w-7 h-7 rounded-sm object-cover flex-shrink-0" alt="" />
-                      ) : (
-                        <div className="w-7 h-7 rounded-sm bg-zinc-600 flex items-center justify-center text-[10px] text-white/50 font-bold flex-shrink-0">
-                          {u.username[0]?.toUpperCase()}
-                        </div>
-                      )}
+                      <div className="relative flex-shrink-0">
+                        {u.avatar ? (
+                          <img src={u.avatar} className="w-7 h-7 rounded-sm object-cover" alt="" loading="lazy" />
+                        ) : (
+                          <div className="w-7 h-7 rounded-sm bg-zinc-600 flex items-center justify-center text-[10px] text-white/50 font-bold">
+                            {u.username[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        {u.isNew && (
+                          <span className="absolute -top-1 -right-1.5 px-1 py-0.5 text-[6px] font-bold bg-gold text-black rounded-sm leading-none">
+                            NEU
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[11px] text-white/70 truncate">{u.username}</span>
                     </div>
                   ))}

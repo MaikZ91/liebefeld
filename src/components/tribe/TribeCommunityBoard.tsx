@@ -5,7 +5,7 @@ import { CommunityPost } from './CommunityPost';
 import { SpontanCard } from './SpontanCard';
 import { supabase } from '@/integrations/supabase/client';
 import { chatMediaService } from '@/services/chatMediaService';
-import { NewMembersWidget } from './NewMembersWidget';
+
 import { SpontanButton } from './SpontanButton';
 import { LiveActivityTicker } from './LiveActivityTicker';
 import { Badge } from '@/components/ui/badge';
@@ -947,7 +947,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
             })()}
             
             {/* Welcome Widget for new members */}
-            <NewMembersWidget onProfileClick={onProfileClick} />
+            
             {loading ? (
                 <div className="text-center py-10 text-zinc-600 font-light italic">
                     Loading posts...
