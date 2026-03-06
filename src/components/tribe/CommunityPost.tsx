@@ -43,13 +43,14 @@ interface CommunityPostProps {
   onImIn: (eventId: string) => void;
   avatarCache: Record<string, string | null>;
   getUserRSVP: (post: Post) => string | null;
+  onEventClick?: (eventId: string) => void;
 }
 
 const CommunityPostInner: React.FC<CommunityPostProps> = ({
   post, userProfile, isNewest, expandedPostId, onExpandPost,
   onLike, onReply, replyText, onReplyTextChange, onDismiss,
   onRSVP, onPollVote, onProfileClick, onJoinSpontan,
-  imInUsers, onImIn, avatarCache, getUserRSVP,
+  imInUsers, onImIn, avatarCache, getUserRSVP, onEventClick,
 }) => {
   const ownPost = userProfile?.username ? post.user === userProfile.username : false;
   const involved = !ownPost && (post.comments?.some(c => c.user === userProfile?.username) || false);
@@ -75,7 +76,7 @@ const CommunityPostInner: React.FC<CommunityPostProps> = ({
     <div
       className={`group border-b border-white/5 pb-4 last:border-0 relative transition-all duration-300 ${
         isNewest ? 'bg-white/[0.02] -mx-4 px-4 py-3 border border-gold/10 rounded-lg' : ''
-      } ${isMIAPost ? 'bg-gradient-to-r from-gold/5 via-transparent to-transparent border-l-2 border-l-gold -mx-4 px-4 py-3' : ''}`}
+      } ${isMIAPost ? 'bg-gradient-to-r from-gold/5 via-transparent to-transparent -mx-4 px-4 py-3' : ''}`}
     >
       {/* Dismiss button */}
       {!ownPost && !isMIAPost && (
@@ -169,9 +170,13 @@ const CommunityPostInner: React.FC<CommunityPostProps> = ({
           return (
             <div className="pl-[52px] mb-2">
               <p className="text-white text-xs font-bold mb-3">{headline}</p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mr-4 pr-4">
                 {eventCards.map((card) => (
-                  <div key={card.id} className="relative group/card rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold/30 transition-all">
+                  <div
+                    key={card.id}
+                    className="relative group/card rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold/30 transition-all flex-shrink-0 w-[120px]"
+                    onClick={() => onEventClick?.(card.id)}
+                  >
                     <div className="aspect-[3/4] relative">
                       <img loading="lazy" src={card.image} alt={card.title} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />

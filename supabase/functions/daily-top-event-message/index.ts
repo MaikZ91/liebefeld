@@ -134,7 +134,7 @@ serve(async (req) => {
     }
 
     for (const event of topPool) {
-      if (topEvents.length >= 3) break;
+      if (topEvents.length >= 7) break;
       if (addedIds.has(event.id)) continue;
       const titleKey = cleanTitle(event.title).toLowerCase();
       if (addedTitles.has(titleKey)) continue;
@@ -157,7 +157,7 @@ serve(async (req) => {
     const dateFormatted = today.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
 
     // Build structured event data for the frontend to render as cards
-    const top3 = topEvents.slice(0, 3);
+    const top3 = topEvents.slice(0, 7);
     const eventCards = top3.map(e => ({
       id: e.id,
       title: cleanTitle(e.title),
