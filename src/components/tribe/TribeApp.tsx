@@ -1322,7 +1322,7 @@ const TribeAppMain: React.FC<{
 
       {/* --- MAIN CONTENT --- */}
       <main
-        className={`${view === ViewState.COMMUNITY ? "pt-16" : "pt-[110px]"} px-0 max-w-2xl mx-auto h-screen overflow-y-auto`}
+        className={`${view === ViewState.COMMUNITY ? "pt-16" : "pt-[110px]"} px-0 max-w-2xl mx-auto h-screen overflow-y-auto pb-12`}
       >
         {view === ViewState.FEED && (
           <div className="animate-fadeIn pb-20">
