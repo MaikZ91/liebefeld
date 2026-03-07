@@ -174,7 +174,7 @@ const CommunityPostInner: React.FC<CommunityPostProps> = ({
                 {eventCards.map((card) => (
                   <div
                     key={card.id}
-                    className="relative group/card rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold/30 transition-all flex-shrink-0 w-[120px]"
+                    className="relative group/card rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-gold/30 transition-all flex-shrink-0 w-[calc(33.3%-6px)]"
                     onClick={() => onEventClick?.(card.id)}
                   >
                     <div className="aspect-[3/4] relative">
