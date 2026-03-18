@@ -188,6 +188,9 @@ const CommunityPostInner: React.FC<CommunityPostProps> = ({
                         {card.time && (
                           <span className="text-[8px] text-white/70">{card.time} Uhr</span>
                         )}
+                        {card.location && (
+                          <p className="text-[7px] text-white/50 truncate mt-0.5">📍 {card.location}</p>
+                        )}
                         <button
                           onClick={(e) => { e.stopPropagation(); onImIn(card.id); }}
                           className={`mt-1.5 w-full text-[7px] font-bold uppercase tracking-widest py-1 rounded border transition-colors ${
