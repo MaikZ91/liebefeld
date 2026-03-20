@@ -20,7 +20,7 @@ const categoryImages: Record<string, string> = {
 };
 
 // Blocked title keywords – these events should never appear in top highlights
-const BLOCKED_TITLE_KEYWORDS = ['cutie', 'live', 'liv', 'hinterzimmer'];
+const BLOCKED_TITLE_KEYWORDS = ['cutie', 'live', 'liv', 'hinterzimmer', 'wochenmarkt'];
 
 const categoryPriority: Record<string, number> = {
   'party': 0, 'ausgehen': 1, 'konzert': 2, 'kreativität': 3, 'sport': 4, 'kino': 5,
@@ -100,7 +100,7 @@ serve(async (req) => {
     const funEvents = sortedEvents.filter(e => {
       const cat = (e.category || '').toLowerCase();
       const titleLower = (e.title || '').toLowerCase();
-      if (cat === 'bildung' || cat === 'sonstiges') return false;
+      if (cat === 'bildung' || cat === 'sonstiges' || cat === 'sport') return false;
       if (BLOCKED_TITLE_KEYWORDS.some(kw => titleLower.includes(kw))) return false;
       return true;
     });

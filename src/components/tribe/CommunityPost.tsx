@@ -161,10 +161,15 @@ const CommunityPostInner: React.FC<CommunityPostProps> = ({
         if (!match) return <p className="text-zinc-200 text-xs font-light leading-relaxed mb-2 pl-[52px]">{post.text}</p>;
 
         try {
-          const eventCards = JSON.parse(match[1]) as Array<{
+          const rawCards = JSON.parse(match[1]) as Array<{
             id: string; title: string; time: string | null;
             location: string | null; category: string; image: string; likes: number;
           }>;
+          const eventCards = rawCards.filter(c => {
+            const cat = (c.category || '').toLowerCase();
+            const title = (c.title || '').toLowerCase();
+            return cat !== 'sport' && !title.includes('wochenmarkt');
+          });
           const headline = post.text.split('\n')[0];
 
           return (
