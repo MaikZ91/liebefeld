@@ -1,36 +1,64 @@
 
 
-## Analyse
+# Push-Benachrichtigungen & PWA-Install reparieren
 
-Ja, das ist genau die PWA-Installations-Funktion. Der Browser erkennt, dass deine App ein gültiges `manifest.json` hat und bietet die native "App installieren"-Leiste an. Das nennt sich `beforeinstallprompt`-Event.
+## Probleme
 
-Deine App hat bereits:
-- Ein `manifest.json` mit allen nötigen Feldern
-- Einen Service Worker (`sw.js`)
-- Die richtigen Meta-Tags in `index.html`
+Es gibt zwei zusammenhaengende Probleme:
 
-Was fehlt: Du fängst das `beforeinstallprompt`-Event nicht ab und nutzt es nicht aktiv. Der Browser zeigt es manchmal automatisch, aber du kannst es kontrolliert einsetzen.
+1. **Service Worker wird im Lovable-Preview/Iframe registriert** -- `main.tsx` registriert den SW bedingungslos. Im Preview-Iframe verursacht das Konflikte: der SW cached Inhalte falsch und blockiert die korrekte FCM-Initialisierung. Das kann auch dazu fuehren, dass die Play Store-App (die intern einen WebView nutzt) einen kaputten SW-State hat.
+
+2. **Notification-Permission wird nicht explizit VOR `getToken()` angefragt** -- Firebase's `getToken()` sollte die Permission automatisch anfragen, tut es aber in manchen Kontexten (installed PWA, WebView) nicht zuverlaessig. Die Permission muss explizit vorher per `Notification.requestPermission()` angefragt werden.
+
+3. **PWA-Install-Prompt erscheint nicht** -- Weil der SW im Preview-Iframe registriert wird und dort cached, kann der Browser die PWA-Kriterien nicht sauber pruefen. Ausserdem fehlt ein Guard gegen Iframe/Preview-Registrierung.
 
 ## Plan
 
-### 1. PWA Install Hook erstellen (`src/hooks/usePWAInstall.ts`)
-- Neuer Hook der das `beforeinstallprompt`-Event abfängt und speichert
-- Exportiert `canInstall` (boolean), `installApp()` (Funktion) und `isInstalled` (boolean)
-- Prüft ob die App bereits im Standalone-Modus läuft
+### Schritt 1: Service Worker Registration absichern (main.tsx)
 
-### 2. `AppDownloadPrompt.tsx` erweitern
-- Statt nur auf Android den Play Store zu verlinken, zuerst prüfen ob die native PWA-Installation möglich ist
-- Wenn `beforeinstallprompt` verfügbar: direkten "Installieren"-Button anzeigen (für Android UND Desktop)
-- Fallback auf Play Store Link wenn das Event nicht verfügbar ist
-- iOS behält die manuelle Anleitung (Safari unterstützt `beforeinstallprompt` nicht)
+Guard hinzufuegen, der verhindert dass der SW in Lovable-Preview-Iframes oder auf Preview-Domains registriert wird. Bestehende fehlerhafte SW-Registrierungen in diesen Kontexten werden automatisch deregistriert.
 
-### 3. Optionaler Install-Button im Profil/Settings
-- Kleinen "App installieren"-Hinweis im Profil-Bereich anzeigen wenn `canInstall === true`
-- Verschwindet automatisch wenn die App bereits installiert ist
+```typescript
+// Nur in Production/echtem Browser registrieren, NICHT im Lovable-Preview
+const isInIframe = (() => {
+  try { return window.self !== window.top; } catch { return true; }
+})();
+const isPreviewHost = window.location.hostname.includes('id-preview--') 
+  || window.location.hostname.includes('lovableproject.com');
 
-### Technische Details
-- Das `beforeinstallprompt`-Event wird vom Browser nur gefeuert wenn bestimmte Kriterien erfüllt sind (manifest.json, service worker, HTTPS)
-- Auf iOS/Safari gibt es kein `beforeinstallprompt` -- dort bleibt die manuelle "Zum Home-Bildschirm"-Anleitung
-- Der bestehende Service Worker `sw.js` wird manuell registriert (nicht via vite-plugin-pwa), was ausreicht
-- Service Worker Registration muss in `main.tsx` oder `index.html` hinzugefügt werden falls noch nicht vorhanden
+if (isPreviewHost || isInIframe) {
+  navigator.serviceWorker?.getRegistrations().then(regs => 
+    regs.forEach(r => r.unregister())
+  );
+} else if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+```
+
+### Schritt 2: Notification-Permission explizit anfragen (firebaseMessaging.ts)
+
+Vor dem `getToken()`-Aufruf explizit `Notification.requestPermission()` aufrufen. Das stellt sicher, dass der Browser-Dialog auch in PWA/WebView-Kontexten erscheint.
+
+```typescript
+// VOR getToken():
+const permission = await Notification.requestPermission();
+if (permission !== 'granted') {
+  console.warn('Notification permission not granted:', permission);
+  return null;
+}
+// Dann erst getToken()...
+```
+
+### Schritt 3: SW-Registrierung in firebaseMessaging.ts absichern
+
+Auch in `initializeFCM` den gleichen Guard einbauen -- wenn wir im Preview sind, FCM ueberspringen.
+
+## Erwartetes Ergebnis
+
+- Im Lovable-Preview wird kein SW registriert (keine Cache-Probleme mehr)
+- Auf der echten Domain / in der installierten PWA wird der Notification-Permission-Dialog korrekt angezeigt
+- FCM-Tokens werden nach Permission-Erteilung gespeichert
+- Der PWA-Install-Prompt funktioniert wieder korrekt auf der echten Domain
 
