@@ -28,7 +28,20 @@ const getFirebaseMessaging = async () => {
 export const initializeFCM = async (city?: string, forceRefresh: boolean = false) => {
   try {
     console.log("🚀 Starting FCM initialization...");
-    
+
+    // Guard: skip in Lovable preview / iframe contexts
+    const isInIframe = (() => {
+      try { return window.self !== window.top; } catch { return true; }
+    })();
+    const isPreviewHost =
+      window.location.hostname.includes('id-preview--') ||
+      window.location.hostname.includes('lovableproject.com');
+
+    if (isPreviewHost || isInIframe) {
+      console.log("⏭️ Skipping FCM in preview/iframe context");
+      return null;
+    }
+
     // Check if service worker is supported
     if (!('serviceWorker' in navigator)) {
       console.error("❌ Service Worker not supported");
@@ -39,6 +52,23 @@ export const initializeFCM = async (city?: string, forceRefresh: boolean = false
     if (!('PushManager' in window)) {
       console.error("❌ Push messaging not supported");
       return null;
+    }
+
+    // Explicitly request notification permission BEFORE getToken
+    console.log("🔔 Current notification permission:", Notification.permission);
+    if (Notification.permission === 'denied') {
+      console.error("❌ Notification permission denied by user");
+      return null;
+    }
+
+    if (Notification.permission !== 'granted') {
+      console.log("📋 Requesting notification permission...");
+      const permission = await Notification.requestPermission();
+      console.log("🔔 Permission result:", permission);
+      if (permission !== 'granted') {
+        console.warn("⚠️ Notification permission not granted:", permission);
+        return null;
+      }
     }
 
     console.log("📋 Registering service worker...");
@@ -66,7 +96,7 @@ export const initializeFCM = async (city?: string, forceRefresh: boolean = false
     });
 
     if (token) {
-      console.log("✅ FCM Token obtained:", token);
+      console.log("✅ FCM Token obtained:", token.substring(0, 20) + "...");
       
       // Token in der Datenbank speichern
       try {
@@ -81,9 +111,9 @@ export const initializeFCM = async (city?: string, forceRefresh: boolean = false
           .upsert({ token, city: cityToStore }, { onConflict: 'token' });
 
         if (error) {
-          console.error("❌ Error saving push token:", error);
+          console.error("❌ Error saving push token:", error.message, error.details, error.hint);
         } else {
-          console.log("✅ Push token saved to database successfully!");
+          console.log("✅ Push token saved to database successfully! City:", cityToStore);
         }
       } catch (saveError) {
         console.error("❌ Error during token save:", saveError);
@@ -91,26 +121,7 @@ export const initializeFCM = async (city?: string, forceRefresh: boolean = false
       
       return token;
     } else {
-      console.warn("⚠️ No token received. Permissions missing?");
-      
-      // Check notification permission
-      const permission = Notification.permission;
-      console.log("🔔 Notification permission:", permission);
-      
-      if (permission === 'denied') {
-        console.error("❌ Notification permission denied");
-        alert("Benachrichtigungen sind blockiert. Bitte aktiviere sie in den Browser-Einstellungen.");
-      } else if (permission === 'default') {
-        console.log("📋 Requesting notification permission...");
-        const newPermission = await Notification.requestPermission();
-        console.log("🔔 New notification permission:", newPermission);
-        
-        if (newPermission === 'granted') {
-          // Try again after permission granted
-          return initializeFCM(city, true);
-        }
-      }
-      
+      console.warn("⚠️ No FCM token received despite granted permission");
       return null;
     }
   } catch (err) {
