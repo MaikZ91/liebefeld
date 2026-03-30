@@ -104,6 +104,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   onMarkGreetingPosted,
   generateGreeting,
 }) => {
+  const { toast } = useToast();
+  const { selectedCity: eventCity } = useEventContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [visibleCount, setVisibleCount] = useState(15);
   const [newPost, setNewPost] = useState('');
