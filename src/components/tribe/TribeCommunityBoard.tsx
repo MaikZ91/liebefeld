@@ -999,3 +999,100 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     </div>
   );
 };
+
+// --- Download Banner Component ---
+const DOWNLOAD_BANNER_DISMISSED_KEY = 'tribe_download_banner_dismissed';
+
+const DownloadBanner: React.FC = () => {
+  const [dismissed, setDismissed] = useState(() => 
+    localStorage.getItem(DOWNLOAD_BANNER_DISMISSED_KEY) === 'true'
+  );
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const { canInstall, isInstalled, installApp } = usePWAInstall();
+
+  if (dismissed || isInstalled) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    localStorage.setItem(DOWNLOAD_BANNER_DISMISSED_KEY, 'true');
+  };
+
+  const handlePWAInstall = async () => {
+    const accepted = await installApp();
+    if (accepted) handleDismiss();
+  };
+
+  return (
+    <div className="bg-zinc-900/80 border border-gold/20 rounded-lg p-3 relative animate-fadeIn">
+      <button
+        onClick={handleDismiss}
+        className="absolute top-2 right-2 p-1 text-white/40 hover:text-white/80 transition-colors"
+      >
+        <X size={14} />
+      </button>
+
+      <div className="flex items-center gap-2.5 mb-2.5">
+        <div className="w-9 h-9 bg-gold/10 rounded-full flex items-center justify-center flex-shrink-0">
+          <Download className="text-gold" size={18} />
+        </div>
+        <div>
+          <h4 className="text-white font-bold text-sm tracking-wide">APP HOLEN</h4>
+          <p className="text-zinc-400 text-[11px]">Push-Notifications & schnellere Experience</p>
+        </div>
+      </div>
+
+      {showIOSGuide ? (
+        <div className="space-y-2 mb-2">
+          {[
+            { step: '1', text: 'Teilen-Button tippen (unten in Safari)' },
+            { step: '2', text: '"Zum Home-Bildschirm" wählen' },
+            { step: '3', text: 'Fertig – THE TRIBE erscheint als App!' },
+          ].map(({ step, text }) => (
+            <div key={step} className="flex items-center gap-2">
+              <span className="w-5 h-5 bg-gold/10 rounded-full flex items-center justify-center text-gold text-[10px] font-bold flex-shrink-0">{step}</span>
+              <span className="text-zinc-300 text-xs">{text}</span>
+            </div>
+          ))}
+          <button onClick={() => setShowIOSGuide(false)} className="text-zinc-500 text-[10px] hover:text-white transition-colors mt-1">
+            ← Zurück
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          {/* PWA Install */}
+          {canInstall && (
+            <button
+              onClick={handlePWAInstall}
+              className="flex-1 bg-gold hover:bg-gold/90 text-black font-bold text-xs py-2 px-3 rounded flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <Download size={14} />
+              Installieren
+            </button>
+          )}
+
+          {/* Android Play Store */}
+          {!canInstall && (
+            <a
+              href="https://play.google.com/store/apps/details?id=co.median.android.yadezx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs py-2 px-3 rounded flex items-center justify-center gap-1.5 transition-colors border border-white/10"
+            >
+              <Smartphone size={14} />
+              Android
+            </a>
+          )}
+
+          {/* iOS */}
+          <button
+            onClick={() => setShowIOSGuide(true)}
+            className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs py-2 px-3 rounded flex items-center justify-center gap-1.5 transition-colors border border-white/10"
+          >
+            <Smartphone size={14} />
+            iOS
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
