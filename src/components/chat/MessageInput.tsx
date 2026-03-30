@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Image, X } from 'lucide-react';
+import { Loader2, Send, Image, X, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
 import { messageService } from '@/services/messageService';
