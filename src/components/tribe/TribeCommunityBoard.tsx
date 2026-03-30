@@ -833,6 +833,15 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         <Image size={18} />
                     </button>
                     
+                    {/* Push notification bell button */}
+                    <button 
+                        onClick={handleEnablePushNotifications}
+                        className="p-1.5 text-zinc-500 hover:text-gold transition-colors"
+                        title="Push-Benachrichtigungen aktivieren"
+                    >
+                        <Bell size={18} />
+                    </button>
+                    
                     <button 
                         onClick={handlePost} 
                         disabled={(!newPost.trim() && !selectedImage) || isUploading} 
