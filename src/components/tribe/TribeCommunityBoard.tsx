@@ -674,7 +674,20 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     }
   };
 
-  const handlePost = async () => {
+  const handleEnablePushNotifications = async () => {
+    try {
+      const token = await initializeFCM(eventCity, true);
+      if (token) {
+        toast({ title: "Erfolgreich!", description: "Push-Benachrichtigungen wurden aktiviert." });
+      } else {
+        toast({ title: "Fehler", description: "Push-Benachrichtigungen konnten nicht aktiviert werden.", variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      toast({ title: "Fehler", description: "Push-Benachrichtigungen konnten nicht aktiviert werden.", variant: "destructive" });
+    }
+  };
+
     if (!newPost.trim() && !selectedImage) return;
     
     setIsUploading(true);
