@@ -289,6 +289,28 @@ const MessageInput: React.FC<MessageInputProps> = ({
             )}
           </Button>
         )}
+
+        {/* Notification bell button */}
+        {mode === 'community' && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleEnablePushNotifications}
+            className={cn(
+              "h-8 w-8 rounded-full shrink-0 transition-all duration-200",
+              "text-white border hover:bg-white/10"
+            )}
+            style={{
+              backgroundColor: 'transparent',
+              borderColor: inputColors.border,
+              boxShadow: inputColors.glow,
+            }}
+            title="Push-Benachrichtigungen aktivieren"
+          >
+            <Bell className="h-4 w-4" />
+          </Button>
+        )}
         
         <div className="flex-1">
           <Textarea

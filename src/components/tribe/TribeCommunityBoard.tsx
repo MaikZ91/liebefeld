@@ -875,6 +875,9 @@ export const TribeCommunityBoard: React.FC<Props> = ({
 
         {/* --- FEED --- */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 pb-16">
+            {/* Download Banner */}
+            <DownloadBanner />
+            
             {/* Live Activity Ticker */}
             <LiveActivityTicker onEventClick={onEventClick} />
             {/* MIA Willkommensnachricht - scrollbar im Feed */}
