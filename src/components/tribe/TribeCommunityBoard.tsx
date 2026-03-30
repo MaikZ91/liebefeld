@@ -688,6 +688,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     }
   };
 
+  const handlePost = async () => {
     if (!newPost.trim() && !selectedImage) return;
     
     setIsUploading(true);
