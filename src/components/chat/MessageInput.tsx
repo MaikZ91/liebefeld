@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Send, Image, X } from 'lucide-react';
+import { Loader2, Send, Image, X, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from "@/integrations/supabase/client";
 import { messageService } from '@/services/messageService';
@@ -287,6 +287,28 @@ const MessageInput: React.FC<MessageInputProps> = ({
             ) : (
               <Image className="h-4 w-4" />
             )}
+          </Button>
+        )}
+
+        {/* Notification bell button */}
+        {mode === 'community' && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleEnablePushNotifications}
+            className={cn(
+              "h-8 w-8 rounded-full shrink-0 transition-all duration-200",
+              "text-white border hover:bg-white/10"
+            )}
+            style={{
+              backgroundColor: 'transparent',
+              borderColor: inputColors.border,
+              boxShadow: inputColors.glow,
+            }}
+            title="Push-Benachrichtigungen aktivieren"
+          >
+            <Bell className="h-4 w-4" />
           </Button>
         )}
         
