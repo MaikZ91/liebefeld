@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
-import { ArrowRight, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2, Heart, Download, Smartphone } from 'lucide-react';
+import { ArrowRight, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2, Heart, Download, Smartphone, Bell } from 'lucide-react';
 import { CommunityPost } from './CommunityPost';
 import { SpontanCard } from './SpontanCard';
 import { supabase } from '@/integrations/supabase/client';
 import { chatMediaService } from '@/services/chatMediaService';
-
+import { initializeFCM } from '@/services/firebaseMessaging';
+import { useToast } from '@/hooks/use-toast';
+import { useEventContext } from '@/contexts/EventContext';
 import { SpontanButton } from './SpontanButton';
 import { LiveActivityTicker } from './LiveActivityTicker';
 import { Badge } from '@/components/ui/badge';
@@ -102,6 +104,8 @@ export const TribeCommunityBoard: React.FC<Props> = ({
   onMarkGreetingPosted,
   generateGreeting,
 }) => {
+  const { toast } = useToast();
+  const { selectedCity: eventCity } = useEventContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [visibleCount, setVisibleCount] = useState(15);
   const [newPost, setNewPost] = useState('');
@@ -670,6 +674,20 @@ export const TribeCommunityBoard: React.FC<Props> = ({
     }
   };
 
+  const handleEnablePushNotifications = async () => {
+    try {
+      const token = await initializeFCM(eventCity, true);
+      if (token) {
+        toast({ title: "Erfolgreich!", description: "Push-Benachrichtigungen wurden aktiviert." });
+      } else {
+        toast({ title: "Fehler", description: "Push-Benachrichtigungen konnten nicht aktiviert werden.", variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      toast({ title: "Fehler", description: "Push-Benachrichtigungen konnten nicht aktiviert werden.", variant: "destructive" });
+    }
+  };
+
   const handlePost = async () => {
     if (!newPost.trim() && !selectedImage) return;
     
@@ -829,6 +847,15 @@ export const TribeCommunityBoard: React.FC<Props> = ({
                         title="Bild hinzufügen"
                     >
                         <Image size={18} />
+                    </button>
+                    
+                    {/* Push notification bell button */}
+                    <button 
+                        onClick={handleEnablePushNotifications}
+                        className="p-1.5 text-zinc-500 hover:text-gold transition-colors"
+                        title="Push-Benachrichtigungen aktivieren"
+                    >
+                        <Bell size={18} />
                     </button>
                     
                     <button 
