@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { UserProfile, Post, Comment } from '@/types/tribe';
-import { ArrowRight, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2, Heart } from 'lucide-react';
+import { ArrowRight, MessageCircle, Hash, Send, X, Check, HelpCircle, Users, Camera, Star, Sparkles, Edit3, Image, Loader2, Heart, Download, Smartphone } from 'lucide-react';
 import { CommunityPost } from './CommunityPost';
 import { SpontanCard } from './SpontanCard';
 import { supabase } from '@/integrations/supabase/client';
