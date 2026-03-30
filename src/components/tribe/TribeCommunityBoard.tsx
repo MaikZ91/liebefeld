@@ -5,7 +5,9 @@ import { CommunityPost } from './CommunityPost';
 import { SpontanCard } from './SpontanCard';
 import { supabase } from '@/integrations/supabase/client';
 import { chatMediaService } from '@/services/chatMediaService';
-
+import { initializeFCM } from '@/services/firebaseMessaging';
+import { useToast } from '@/hooks/use-toast';
+import { useEventContext } from '@/contexts/EventContext';
 import { SpontanButton } from './SpontanButton';
 import { LiveActivityTicker } from './LiveActivityTicker';
 import { Badge } from '@/components/ui/badge';
