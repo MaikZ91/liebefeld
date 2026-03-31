@@ -81,6 +81,11 @@ export const AppDownloadPrompt: React.FC = () => {
             {deviceType === 'ios' && (
               <IOSContent onDismiss={handleDismiss} />
             )}
+
+            {/* Desktop without PWA support → general install prompt */}
+            {!canInstall && deviceType === 'desktop' && (
+              <PWAInstallContent onInstall={handlePWAInstall} onDismiss={handleDismiss} />
+            )}
           </div>
         </div>
       </div>
