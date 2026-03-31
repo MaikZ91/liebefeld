@@ -57,8 +57,8 @@ export const AppDownloadPrompt: React.FC = () => {
         onClick={handleDismiss}
       />
       
-      <div className="fixed bottom-0 left-0 right-0 z-[201] animate-slide-in-bottom">
-        <div className="bg-gradient-to-t from-black via-zinc-900 to-zinc-800 border-t border-gold/30 p-6 shadow-2xl">
+      <div className="fixed top-0 left-0 right-0 z-[201] animate-fade-in">
+        <div className="bg-gradient-to-b from-black via-zinc-900 to-zinc-800 border-b border-gold/30 p-6 shadow-2xl">
           <button
             onClick={handleDismiss}
             className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
