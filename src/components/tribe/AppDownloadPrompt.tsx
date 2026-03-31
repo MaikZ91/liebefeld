@@ -3,7 +3,7 @@ import { X, Smartphone, Download } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 const DISMISSED_KEY = 'app_download_dismissed';
-const SHOW_DELAY_MS = 45000;
+const SHOW_DELAY_MS = 3000;
 
 export const AppDownloadPrompt: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -47,8 +47,8 @@ export const AppDownloadPrompt: React.FC = () => {
 
   if (!isVisible) return null;
 
-  // On desktop, only show if PWA install is available
-  if (deviceType === 'desktop' && !canInstall) return null;
+  // On desktop, show PWA install content if available, otherwise show a general prompt
+  // Don't block rendering on desktop anymore
 
   return (
     <>
@@ -80,6 +80,11 @@ export const AppDownloadPrompt: React.FC = () => {
             {/* iOS → manual instructions */}
             {deviceType === 'ios' && (
               <IOSContent onDismiss={handleDismiss} />
+            )}
+
+            {/* Desktop without PWA support → general install prompt */}
+            {!canInstall && deviceType === 'desktop' && (
+              <PWAInstallContent onInstall={handlePWAInstall} onDismiss={handleDismiss} />
             )}
           </div>
         </div>
