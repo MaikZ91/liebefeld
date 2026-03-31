@@ -163,7 +163,7 @@ export const useOnboardingFlow = () => {
       greeting += '!';
     }
     
-    greeting += '\n\n🎲 Fun Fact: ';
+    greeting += ' 🎲 Fun Fact: ';
     
     return greeting;
   }, []);
