@@ -806,7 +806,7 @@ export const TribeCommunityBoard: React.FC<Props> = ({
             {/* Spontan Button - above chat input */}
             <SpontanButton userProfile={userProfile} selectedCity={selectedCity} />
             
-            <div className={`bg-zinc-900/60 border rounded-lg p-1.5 flex items-end gap-2 ${
+            <div className={`bg-zinc-900/60 border rounded-lg p-1.5 flex items-end gap-1 ${
               (onboardingStep === 'community_intro' || onboardingStep === 'greeting_ready' || onboardingStep === 'waiting_for_post') 
                 ? 'border-gold/50 ring-2 ring-gold/20' 
                 : 'border-zinc-700/60'
