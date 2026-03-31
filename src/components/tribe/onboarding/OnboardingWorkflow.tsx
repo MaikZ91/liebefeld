@@ -87,7 +87,7 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
 
       {/* Content - uses CSS transitions instead of framer-motion */}
       <div
-        className={`relative z-10 h-full flex flex-col items-center justify-center px-6 transition-opacity duration-150 ${contentVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`relative z-10 h-full flex flex-col items-center justify-center px-6 pb-20 transition-opacity duration-150 ${contentVisible ? 'opacity-100' : 'opacity-0'}`}
       >
         <div className="w-full max-w-md text-center">
           {/* Tagline */}
