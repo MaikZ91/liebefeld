@@ -47,8 +47,8 @@ export const AppDownloadPrompt: React.FC = () => {
 
   if (!isVisible) return null;
 
-  // On desktop, only show if PWA install is available
-  if (deviceType === 'desktop' && !canInstall) return null;
+  // On desktop, show PWA install content if available, otherwise show a general prompt
+  // Don't block rendering on desktop anymore
 
   return (
     <>
