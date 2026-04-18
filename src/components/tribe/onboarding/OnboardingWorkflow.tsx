@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { trackFunnelStep, trackLandingOnce } from '@/services/onboardingFunnelService';
 
 // Background image - use dynamic URL for lazy loading
 const nameBg = new URL('@/assets/onboarding/name-bg.png', import.meta.url).href;
@@ -27,17 +28,25 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
   const [userName, setUserName] = useState('');
   const [imageLoaded, setImageLoaded] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
+  const interestTrackedRef = useRef(false);
+  const nameTrackedRef = useRef(false);
 
-  // Show content immediately, preload background image
+  // Show content immediately, preload background image, track landing
   useEffect(() => {
-    // Content fades in immediately
     requestAnimationFrame(() => setContentVisible(true));
-    
-    // Background image loads in background
+    trackLandingOnce();
     const img = new Image();
     img.onload = () => setImageLoaded(true);
     img.src = nameBg;
   }, []);
+
+  // Track first interest selection
+  useEffect(() => {
+    if (selectedInterests.size > 0 && !interestTrackedRef.current) {
+      interestTrackedRef.current = true;
+      trackFunnelStep('interest_selected', { interests: Array.from(selectedInterests) });
+    }
+  }, [selectedInterests]);
 
   const hasSelectedInterests = selectedInterests.size > 0;
   const canContinue = hasSelectedInterests && userName.trim().length > 0;
@@ -53,6 +62,11 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
 
   const handleSubmit = () => {
     if (canContinue) {
+      // Track final step BEFORE redirect
+      trackFunnelStep('completed_los_gehts', {
+        name: userName.trim(),
+        interests: Array.from(selectedInterests),
+      });
       localStorage.setItem('tribe_preferred_categories', JSON.stringify(Array.from(selectedInterests)));
       localStorage.setItem('tribe_onboarding_completed', 'true');
       localStorage.setItem('tribe_seen_interests_dialog', 'true');
@@ -149,7 +163,16 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
               <input
                 type="text"
                 value={userName}
-                onChange={(e) => setUserName(e.target.value)}
+                onChange={(e) => {
+                  setUserName(e.target.value);
+                  if (e.target.value.trim().length >= 2 && !nameTrackedRef.current) {
+                    nameTrackedRef.current = true;
+                    trackFunnelStep('name_entered', {
+                      name: e.target.value.trim(),
+                      interests: Array.from(selectedInterests),
+                    });
+                  }
+                }}
                 placeholder="Vorname oder Spitzname"
                 className="w-full bg-transparent border-b border-white/20 py-3 text-center text-lg font-light text-white placeholder:text-white/25 focus:outline-none focus:border-white/50 transition-colors tracking-wide"
                 autoFocus={hasSelectedInterests}

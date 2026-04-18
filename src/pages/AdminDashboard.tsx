@@ -17,6 +17,7 @@ import { UserJourneyAnalysis } from '@/components/admin/UserJourneyAnalysis';
 import { LiveActivityFeed } from '@/components/admin/LiveActivityFeed';
 import { TopPagesChart } from '@/components/admin/TopPagesChart';
 import { UserRanking } from '@/components/admin/UserRanking';
+import { OnboardingFunnelAnalysis } from '@/components/admin/OnboardingFunnelAnalysis';
 
 interface ActivityStats {
   totalSessions: number;
@@ -314,13 +315,18 @@ export default function AdminDashboard() {
 
         {/* Tabs for detailed views */}
         <Tabs defaultValue="live" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+            <TabsTrigger value="funnel">Onboarding</TabsTrigger>
             <TabsTrigger value="live">Live Feed</TabsTrigger>
             <TabsTrigger value="ranking">Ranking</TabsTrigger>
             <TabsTrigger value="heatmap">Heatmap</TabsTrigger>
-            <TabsTrigger value="journey">User Journey</TabsTrigger>
+            <TabsTrigger value="journey">Journey</TabsTrigger>
             <TabsTrigger value="pages">Top Seiten</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="funnel" className="mt-4">
+            <OnboardingFunnelAnalysis />
+          </TabsContent>
 
           <TabsContent value="live" className="mt-4">
             <LiveActivityFeed />
