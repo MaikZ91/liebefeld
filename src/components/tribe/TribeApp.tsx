@@ -147,10 +147,9 @@ export const TribeApp: React.FC = () => {
       }, { onConflict: 'username' })
       .then(() => console.log('Profile saved after onboarding'));
     
-    // Show welcome page instead of going directly to app
-    setPendingUserName(data.name);
+    // Skip welcome page and redirect directly to WhatsApp community group
     setShowOnboarding(false);
-    setShowWelcome(true);
+    window.location.href = 'https://chat.whatsapp.com/CTbK6Xi8QHRExmoXhkaqvL';
   };
 
   const handleWelcomeComplete = () => {
