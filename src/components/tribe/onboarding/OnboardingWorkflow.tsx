@@ -79,8 +79,12 @@ export const OnboardingWorkflow: React.FC<OnboardingWorkflowProps> = ({ onComple
         });
       });
       
-      // Redirect to WhatsApp community group instead of entering the app
-      window.location.href = 'https://chat.whatsapp.com/CTbK6Xi8QHRExmoXhkaqvL';
+      // Enter the app
+      onComplete({
+        name: userName.trim(),
+        interests: Array.from(selectedInterests),
+        firstAction: 'connect',
+      });
     }
   };
 
