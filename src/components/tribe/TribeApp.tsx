@@ -337,10 +337,14 @@ const TribeAppMain: React.FC<{
     setLoadedEventCount(0);
     setHasMoreEvents(true);
     fetchEvents(true);
+  }, [selectedCity]);
+
+  // Load community posts when profile becomes available (does not reset events)
+  useEffect(() => {
     if (userProfile) {
       loadPosts();
     }
-  }, [selectedCity, userProfile]);
+  }, [userProfile?.username]);
 
   // Calculate match scores when events load
   useEffect(() => {
